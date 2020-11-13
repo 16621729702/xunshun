@@ -1,0 +1,45 @@
+.topic {
+    width: 100%;
+    padding-left: 40px;
+    background: #fff;
+    overflow: hidden;
+}
+.topic ul li {
+    float: left;
+    margin: 0 20px 10px 0;
+    width: 175px;
+    height: 200px;
+    background: #fff;
+    position: relative;
+}
+.topic ul li a {
+    display: block;
+    height: 210px;
+    padding-top: 60px;
+    box-sizing: border-box;
+}
+.topic ul li:hover{
+    box-shadow:2px 0px 20px rgba(102,102,102,0.16);
+    -webkit-box-shadow:2px 0px 20px rgba(102,102,102,0.16);
+    -moz-box-shadow:2px 0px 20px rgba(102,102,102,0.16);
+    -ms-box-shadow:2px 0px 20px rgba(102,102,102,0.16);
+}
+.topic ul li img {
+    width: 57px;
+    height: 55px;
+    display: block;
+    margin: 0 auto 20px;
+}
+.topic ul li p {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+}
+.shuju {
+    background: #fff;
+    width: 100%;
+    line-height: 46px;
+    font-size: 14px;
+    color: #666;
+    text-indent: 0.5em;
+}

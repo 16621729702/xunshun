@@ -1,0 +1,52 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <parent>
+		<groupId>com.wink</groupId>
+		 <artifactId>livemall-parent</artifactId>
+		 <version>1.0.1-SNAPSHOT</version>
+	 </parent>
+	 <modelVersion>4.0.0</modelVersion>
+	 <artifactId>livemall-utils</artifactId>
+	 <packaging>jar</packaging>
+	 <name>livemall-utils</name>
+	 <dependencies>
+	  			
+	  		  <dependency>
+	            <groupId>org.springframework.boot</groupId>
+	            <artifactId>spring-boot-starter-data-redis</artifactId>
+	        </dependency>  
+	  			
+	        <dependency>
+	            <groupId>org.apache.commons</groupId>
+	            <artifactId>commons-pool2</artifactId> 
+	        </dependency>
+
+		<!--阿里短信发送-->
+		 <dependency>
+			 <groupId>com.aliyun</groupId>
+			 <artifactId>aliyun-java-sdk-core</artifactId>
+			 <version>4.0.6</version> <!-- 注：如提示报错，先升级基础包版，无法解决可联系技术支持 -->
+		 </dependency>
+		 <dependency>
+			 <groupId>com.aliyun</groupId>
+			 <artifactId>aliyun-java-sdk-dysmsapi</artifactId>
+			 <version>1.1.0</version>
+		 </dependency>
+	        <dependency> 
+		        <groupId>com.fasterxml.jackson.core</groupId>
+		        <artifactId>jackson-databind</artifactId>  
+		        <version>2.9.8</version>
+			</dependency>
+			<dependency> 
+		        <groupId>com.fasterxml.jackson.core</groupId> 
+		        <artifactId>jackson-annotations</artifactId>   
+		        <version>2.9.0</version> 
+			</dependency>
+			<dependency>
+		        <groupId>com.fasterxml.jackson.core</groupId>
+		        <artifactId>jackson-core</artifactId> 
+		        <version>2.9.8</version> 
+			</dependency>
+	 </dependencies>
+</project>
+ 

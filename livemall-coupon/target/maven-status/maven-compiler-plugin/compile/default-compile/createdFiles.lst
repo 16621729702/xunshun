@@ -1,0 +1,11 @@
+com\wink\livemall\coupon\dao\LmCouponsDao$LmCouponsDaoprovider.class
+com\wink\livemall\coupon\dao\LmCouponsDao.class
+com\wink\livemall\coupon\service\LmCouponsService.class
+com\wink\livemall\coupon\service\impl\LmMerchCouponsServiceImpl.class
+com\wink\livemall\coupon\dao\LmCouponLogDao.class
+com\wink\livemall\coupon\dto\LmCouponLog.class
+com\wink\livemall\coupon\dto\LmCoupons.class
+com\wink\livemall\coupon\dao\LmMerchCouponsDao$sqlprovider.class
+com\wink\livemall\coupon\service\LmMerchCouponsService.class
+com\wink\livemall\coupon\dao\LmMerchCouponsDao.class
+com\wink\livemall\coupon\service\impl\LmCouponsServiceImpl.class

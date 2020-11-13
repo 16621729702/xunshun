@@ -1,0 +1,33 @@
+package com.wink.livemall.member.dao;
+
+import com.wink.livemall.member.dto.LmMember;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.SelectProvider;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Map;
+
+@Mapper
+public interface LmMemberDao extends tk.mybatis.mapper.common.Mapper<LmMember> {
+
+    @SelectProvider(type = LmMemberDaoprovider.class, method = "findListByCondient")
+    List<LmMember> findByCondient(Map<String, String> condient);
+
+    @Select("SELECT * FROM lm_member WHERE mobile = #{mobile}")
+    LmMember findByMobile(@Param("mobile")String mobile);
+
+    class LmMemberDaoprovider{
+
+        public String findListByCondient(Map<String, String> condient) {
+            String sql = "SELECT * from lm_member where 1=1 ";
+            if(!StringUtils.isEmpty(condient.get("realname"))){
+                sql += " and realname like '%"+condient.get("realname")+"%'";
+            }
+            return sql;
+        }
+
+    }
+}

@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.wink</groupId>
+  <artifactId>livemall-parent</artifactId>
+  <version>1.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>livemall-parent</name>
+  
+  
+  
+      <parent>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-parent</artifactId>
+             <version>2.1.7.RELEASE</version>
+           
+         </parent>
+         
+         
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <java.version>1.8</java.version>
+	<maven.compiler.source>${java.version}</maven.compiler.source>
+	<maven.compiler.target>${java.version}</maven.compiler.target>
+  </properties>
+  
+  
+  <modules>
+   	<module>livemall-web</module> <!--后台管理-->
+     <module>livemall-api</module>  <!--移动端API层-->
+	<module>livemall-utils</module> <!--工具包-->	
+	<module>livemall-goods</module><!--商品服务-->	
+	<module>livemall-orders</module><!--订单服务-->	
+	<module>livemall-live</module><!--直播服务-->	
+	<module>livemall-sys</module><!--系统基础配置-->	
+	<module>livemall-member</module><!--会员服务-->	
+	<module>livemall-help</module><!--帮助手册-->	
+	<module>livemall-merch</module><!--商户-->	
+	<module>livemall-coupon</module><!--商户-->
+	<module>livemall-video</module><!--短视频-->
+	<module>livemall-job</module><!--任务触发-->
+  </modules>
+  
+      <dependencies>
+      	 <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+        
+        <dependency>
+           <groupId>org.springframework.boot</groupId>
+           <artifactId>spring-boot-devtools</artifactId>
+           <optional>true</optional>
+       </dependency>
+ 	    <dependency>
+			    <groupId>org.springframework.boot</groupId>
+			    <artifactId>spring-boot-configuration-processor</artifactId>
+			    <optional>true</optional>
+			</dependency>
+	<dependency>
+	    <groupId>org.springframework.boot</groupId>
+	    <artifactId>spring-boot-autoconfigure</artifactId>
+	    <version>2.1.7.RELEASE</version>
+	</dependency>
+        
+      </dependencies>
+  
+    
+  
+  <dependencyManagement>
+      <dependencies>
+      
+      	<!--  
+          <dependency>
+              <groupId>org.springframework.data</groupId>
+              <artifactId>spring-data-releasetrain</artifactId>
+              <version>Fowler-SR2</version>
+              <scope>import</scope>
+              <type>pom</type>
+         </dependency>
+         <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-dependencies</artifactId>
+             <version>2.1.7.RELEASE</version>
+             <type>pom</type>
+             <scope>import</scope>
+         </dependency> -->
+       </dependencies>
+	</dependencyManagement>
+
+</project>

@@ -1,0 +1,30 @@
+package com.wink.livemall.admin.util;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+@Component
+public class PhpTask {
+
+	@Scheduled(cron = "0 0 0 * * *")
+	public void task() throws IOException {
+		try {
+			System.out.println("-->start");
+			URL url=new URL("http://lxf.lyuekj.com/app/index.php?i=15&c=entry&m=ewei_shopv2&do=mobile&r=util.product");
+			HttpURLConnection connection=(HttpURLConnection) url.openConnection();
+			InputStream is=(InputStream) connection.getInputStream();
+
+			
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+}

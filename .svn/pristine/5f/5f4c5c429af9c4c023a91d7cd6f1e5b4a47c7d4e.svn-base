@@ -1,0 +1,139 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+	<groupId>com.wink</groupId>
+	 <artifactId>livemall-parent</artifactId>
+	 <version>1.0.1-SNAPSHOT</version>
+ </parent>
+ <modelVersion>4.0.0</modelVersion>
+ <artifactId>livemall-job</artifactId>
+ <packaging>jar</packaging>
+ <name>livemall-job</name>
+
+   <dependencies>
+   		 
+		
+        <!-- SpringBoot Web容器 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+       <dependency>
+           <groupId>org.springframework.boot</groupId>
+           <artifactId>spring-boot-starter-data-redis</artifactId>
+       </dependency>
+
+       <dependency>
+           <groupId>commons-logging</groupId>
+           <artifactId>commons-logging</artifactId>
+           <version>1.2</version>
+       </dependency>
+       <dependency>
+           <groupId>org.apache.httpcomponents</groupId>
+           <artifactId>httpclient</artifactId>
+           <version>4.5.5</version>
+       </dependency>
+       <dependency>
+           <groupId>log4j</groupId>
+           <artifactId>log4j</artifactId>
+           <version>1.2.17</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-goods</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-sys</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-utils</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-merch</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-member</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-help</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-coupon</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-orders</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-video</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+           <scope>compile</scope>
+       </dependency>
+       <dependency>
+           <groupId>com.wink</groupId>
+           <artifactId>livemall-live</artifactId>
+           <version>1.0.1-SNAPSHOT</version>
+           <scope>compile</scope>
+       </dependency>
+       <dependency>
+           <groupId>com.alibaba</groupId>
+           <artifactId>fastjson</artifactId>
+           <version>1.2.50</version>
+           <scope>compile</scope>
+       </dependency>
+       <dependency>
+           <groupId>com.github.tencentyun</groupId>
+           <artifactId>tls-sig-api-v2</artifactId>
+           <version>1.1</version>
+       </dependency>
+
+       <dependency>
+           <groupId>org.apache.commons</groupId>
+           <artifactId>commons-lang3</artifactId>
+       </dependency>
+       <dependency>
+           <groupId>net.sf.json-lib</groupId>
+           <artifactId>json-lib</artifactId>
+           <version>2.4</version>
+           <classifier>jdk15</classifier>
+       </dependency>
+	
+   </dependencies>
+   
+   
+   	<build>
+	    <plugins>
+	      <plugin>
+	        <groupId>org.springframework.boot</groupId>
+	        <artifactId>spring-boot-maven-plugin</artifactId> 
+	         <configuration>
+     			  <mainClass>com.wink.livemall.job.Runner</mainClass>
+   			 </configuration>
+	          <executions>
+	              <execution>
+	                  <goals>
+	                      <goal>repackage</goal>
+	                  </goals>
+	              </execution>
+	          </executions>
+	      </plugin>
+	    </plugins>
+	 </build>
+	 
+	 
+</project>

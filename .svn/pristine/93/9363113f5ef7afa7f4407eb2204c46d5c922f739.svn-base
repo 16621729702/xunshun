@@ -1,0 +1,151 @@
+package com.wink.livemall.order.service.impl;
+
+import com.wink.livemall.order.dao.LmMerchOrderDao;
+import com.wink.livemall.order.dao.LmOrderRefundLogDao;
+import com.wink.livemall.order.dao.LmShopOrderDao;
+import com.wink.livemall.order.dto.LmOrder;
+import com.wink.livemall.order.dto.LmOrderRefundLog;
+import com.wink.livemall.order.service.LmOrderService;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+@Service
+public class LmShopOrderServiceImpl implements LmOrderService {
+    @Resource
+    private LmOrderRefundLogDao lmOrderRefundLogDao;
+    @Resource
+    private LmShopOrderDao lmShopOrderDao;
+
+    @Override
+    public List<Map<String, Object>> findByCondient(Map<String, String> condient) {
+        return lmShopOrderDao.findByCondient(condient);
+    }
+
+    @Override
+    public LmOrder findById(String id) {
+        return lmShopOrderDao.selectByPrimaryKey(Integer.parseInt(id));
+    }
+
+    @Override
+    public void updateService(LmOrder lmOrder) {
+        lmShopOrderDao.updateByPrimaryKey(lmOrder);
+    }
+
+    @Override
+    public Map<String, Object> findInfoById(String id) {
+        return lmShopOrderDao.findInfoById(Integer.parseInt(id));
+    }
+
+    @Override
+    public void delete(String id) {
+        lmShopOrderDao.deleteByPrimaryKey(Integer.parseInt(id));
+    }
+
+    @Override
+    public LmOrder findByOrderId(String orderid) {
+        return lmShopOrderDao.findByOrderId(orderid);
+    }
+
+    @Override
+    public List<Map<String, Object>> findListByTypeByApi(String status,int userid) {
+        return lmShopOrderDao.findListByTypeByApi(status,userid);
+    }
+
+    @Override
+    public List<Map<String, String>> findListByMerchidByApi(int merchid) {
+        return lmShopOrderDao.findListByMerchidByApi(merchid);
+    }
+
+    @Override
+    public List<Map<String, String>> findCommentinfiByMerchidByApi(int merchid) {
+        return lmShopOrderDao.findCommentinfiByMerchidByApi(merchid);
+    }
+
+    @Override
+    public void insertService(LmOrder lmOrder) {
+        lmShopOrderDao.insert(lmOrder);
+    }
+
+    @Override
+    public Integer findMaxId() {
+        return lmShopOrderDao.findMaxId();
+    }
+
+    @Override
+    public LmOrder findTopOrder(int goodid, int merchid) {
+        return lmShopOrderDao.findTopOrder(goodid,merchid);
+    }
+
+    @Override
+    public void insertRefindLogService(LmOrderRefundLog lmOrderRefundLog) {
+        lmOrderRefundLogDao.insert(lmOrderRefundLog);
+    }
+
+    @Override
+    public void updateRefundLogService(LmOrderRefundLog lmOrderRefundLog) {
+        lmOrderRefundLogDao.updateByPrimaryKey(lmOrderRefundLog);
+    }
+
+    @Override
+    public LmOrderRefundLog findRefundLogById(int refundid) {
+        return lmOrderRefundLogDao.selectByPrimaryKey(refundid);
+    }
+
+    @Override
+    public List<LmOrder> findOrderListByPid(int id) {
+        return lmShopOrderDao.findOrderListByPid(id);
+    }
+
+    @Override
+    public List<Map<String, Object>> findMyshare(int status, int userid) {
+        return lmShopOrderDao.findMyshare(status,userid);
+    }
+
+    @Override
+    public List<Map<String, Object>> findSharelist(int status, int liveid,int userid) {
+        return lmShopOrderDao.findSharelist(status,liveid,userid);
+    }
+
+    @Override
+    public List<Map<String, Object>> findMyshare2(int status, int merchid) {
+        return lmShopOrderDao.findMyshare2(status, merchid);
+    }
+
+    @Override
+    public List<LmOrder> findListByDate(Date olddate) {
+        return lmShopOrderDao.findListByDate(olddate);
+    }
+
+    @Override
+    public List<Map<String, Object>> findMerchshareList(String merchid, String type) {
+        return lmShopOrderDao.findMerchshareList(Integer.parseInt(merchid),type);
+    }
+
+    @Override
+    public List<Map<String, Object>> findOrderList(String status, int userid) {
+        return lmShopOrderDao.findOrderList(status,userid);
+    }
+
+    @Override
+    public List<LmOrder> findShareOrderListByMerchid(int merchid) {
+        return lmShopOrderDao.findShareOrderListByMerchid(merchid);
+    }
+
+    @Override
+    public List<LmOrder> findTopOrderList() {
+        return lmShopOrderDao.findTopOrderList();
+    }
+
+    @Override
+    public List<LmOrder> findChildOrder(int id) {
+        return lmShopOrderDao.findChildOrder(id);
+    }
+
+
+
+
+}

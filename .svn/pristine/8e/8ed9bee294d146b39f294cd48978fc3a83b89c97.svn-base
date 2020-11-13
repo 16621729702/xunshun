@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>lazy.js</title>
+  <link rel="stylesheet" href="assets/layui/css/layui.css">
+  <script type="text/javascript" src="assets/js/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="assets/layui/layui.js"></script>
+  <script type="text/javascript" src="assets/js/lazy.js"></script>
+ 
+
+</head>
+
+<body>
+<blockquote class="layui-elem-quote">
+Lazy.js是一个将常用JS方法、AJAX方法、easyui操作方法进行总结归集的JS工具类。目的很简单，就是将前端WEB开发常用的JS操作方法归集成一个js对象，以方便今后爽快的调用。<br/>
+它包括3个方法集，如果你的前端没有使用easyui，你可以在lazy.js中去除前两个方法集。<br/>
+lazy.easyui.methods();  //需要引入jquery和easyui文件 <br/>
+lazy.ajax.methods();  //需要引入jquery和easyui文件 <br/>
+lazy.kit.methods();  //需要引入jquery
+</blockquote>
+<div class="layui-row layui-col-space10">
+  <div class="layui-col-md1">
+
+  </div>
+  <div class="layui-col-md10">
+		<table class="layui-table">
+		  <colgroup>
+			<col width="360">
+			<col width="430">
+			<col>
+		  </colgroup>
+		  <thead>
+			<tr>
+			  <th>功能名称</th>
+			  <th>前端调用方法</th>
+			  <th>返回结果</th>
+			</tr> 
+		  </thead>
+		  <tbody>
+		    <tr>
+			  <td>自定义条件搜索，并更新结果集</td>
+			  <td>lazy.easyui.search(gridId,formId)</td>
+			  <td id="search" rowspan="15" colspan="2">
+			  <pre>
+1、需要引入与easyui相关的文件
+2、datagrid数据表格ID命名规则：id="dg-system-user-list"
+3、treegrid树形表格ID命名规则：id="tg-system-user-list"
+4、toolbar工具栏ID命名规则：id="tb-system-user-list"
+5、dialog对话框ID命名规则：id="dlg-system-user-save"
+6、form表单ID命名规则：id="fm-system-user-save"
+			  </pre>
+			  </td>
+			</tr>
+			<tr>
+			  <td>选择一行数据提交(适用于删除单行数据或修改单行数据属性值等操作)</td>
+			  <td>lazy.easyui.selected(gridId,url,primarykeyName)</td>
+			</tr>
+			<tr>
+			  <td>选择多行数据提交(适用对多行数据删除或修改多行数据属性值等操作)</td>
+			  <td>lazy.easyui.selections(gridId,url,primarykeyName)</td>
+			</tr>
+			<tr>
+			  <td>查询并导出结果集,formId用于拼接参数</td>
+			  <td>lazy.easyui.exportSearch(url,formId)</td>
+			</tr>
+			<tr>
+			  <td>依据一行选中数据的主键，导出结果集</td>
+			  <td>lazy.easyui.exportSelected(gridId,url,primarykeyName)</td>
+			</tr>
+			<tr>
+			  <td>打开填报数据对话框</td>
+			  <td>lazy.easyui.openDialog(dialogId,_func)</td>
+			</tr>
+			<tr>
+			  <td>打开修改数据对话框</td>
+			  <td>lazy.easyui.editDialog(gridId,dialogId,formId,_func)</td>
+			</tr>
+			<tr>
+			  <td>关闭对话框，清除form表单内容</td>
+			  <td>lazy.easyui.closeDialog(dialogId,formId)</td>
+			</tr>
+			<tr>
+			  <td>提交数据，关闭对话框，刷新数据表格</td>
+			  <td>lazy.easyui.submitDialog(gridId,dialogId,formId,formClearRest)</td>
+			</tr>
+			<tr>
+			  <td>删除一行数据</td>
+			  <td>lazy.easyui.delete(gridId,url,primarykeyName)</td>
+			</tr>
+			<tr>
+			  <td>刷新数据表格的内容</td>
+			  <td>lazy.easyui.reload(gridId)</td>
+			</tr>
+			<tr>
+			  <td>使用url提交待修改的数据或分页查询，并更新结果集</td>
+			  <td>lazy.easyui.urlReload(gridId,url)</td>
+			</tr>
+			<tr>
+			  <td>使用form提交待修改的数据，并更新结果集</td>
+			  <td>lazy.easyui.formReload(gridId,formId)</td>
+			</tr>
+		  	<tr>
+			  <td>使用url方式提交ajax请求，返回JSON格式数据</td>
+			  <td align="left">
+			  <pre>
+lazy.ajax.useUrl('system/user/save',{id:'1',name:'admin'},function(){
+	//数据返回成功后，要执行的方法。
+});
+			  </pre>
+			  </td>
+			</tr>
+		    <tr>
+			  <td>使用form方式提交ajax请求，返回JSON格式数据</td>
+			  <td align="left">
+			  <pre>
+lazy.ajax.useForm('fm-system-user-save',function(){
+	//数据返回成功后，要执行的方法。
+});
+			  </pre>
+			  </td>
+			</tr>
+		  	<tr>
+			  <td>获取项目的URL地址</td>
+			  <td>lazy.kit.getBaseUrl()</td>
+			  <td id="getBaseUrl"></td>
+			</tr>
+			<tr>
+			  <td>返回当前时间戳</td>
+			  <td>lazy.kit.getTimeStamp()</td>
+			  <td id="getTimeStamp"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期</td>
+			  <td>lazy.kit.getDate()</td>
+			  <td id="getDate"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期</td>
+			  <td>lazy.kit.getDate('2017/1/1')</td>
+			  <td id="getDate1"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期</td>
+			  <td>lazy.kit.getFullDate()</td>
+			  <td id="getFullDate"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期</td>
+			  <td>lazy.kit.getFullDate('2017/1/1')</td>
+			  <td id="getFullDate1"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期和星期</td>
+			  <td>lazy.kit.getFullDateWeek()</td>
+			  <td id="getFullDateWeek"></td>
+			</tr>
+			<tr>
+			  <td>返回本年度的第一天</td>
+			  <td>lazy.kit.getFirstDate()</td>
+			  <td id="getFirstDate"></td>
+			</tr>
+			<tr>
+			  <td>返回本月的第一天</td>
+			  <td>lazy.kit.getMonthFirstDate()</td>
+			  <td id="getMonthFirstDate"></td>
+			</tr>
+			<tr>
+			  <td>返回本月的最后一天</td>
+			  <td>lazy.kit.getMonthLastDate()</td>
+			  <td id="getMonthLastDate"></td>
+			</tr>
+			<tr>
+			  <td>返回本年度的最后一天</td>
+			  <td>lazy.kit.getLastDate()</td>
+			  <td id="getLastDate"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的日期和时间</td>
+			  <td>lazy.kit.getDateTime()</td>
+			  <td id="getDateTime"></td>
+			</tr>
+			<tr>
+			  <td>返回字符串格式的时间</td>
+			  <td>lazy.kit.getTime()</td>
+			  <td id="getTime"></td>
+			</tr>
+			<tr>
+			  <td>去除字符串两边的空格</td>
+			  <td>lazy.kit.trim('  string  ')</td>
+			  <td id="trim"></td>
+			</tr>
+			<tr>
+			  <td>获取文件后缀名</td>
+			  <td>lazy.kit.getFileExt('demo.doc')</td>
+			  <td id="getFileExt"></td>
+			</tr>
+			<tr>
+			  <td>获取文件名</td>
+			  <td>lazy.kit.getFileName('demo.doc')</td>
+			  <td id="getFileName"></td>
+			</tr>
+			<tr>
+			  <td>图片格式验证</td>
+			  <td>lazy.kit.isImage('demo.jpg')</td>
+			  <td id="isImage"></td>
+			</tr>
+			<tr>
+			  <td>音频格式验证</td>
+			  <td>lazy.kit.isAudio('demo.mp3')</td>
+			  <td id="isAudio"></td>
+			</tr>
+			<tr>
+			  <td>视频格式验证</td>
+			  <td>lazy.kit.isVideo('demo.mp4')</td>
+			  <td id="isVideo"></td>
+			</tr>
+			<tr>
+			  <td>Office文档格式验证</td>
+			  <td>lazy.kit.isOffice('demo.ppt')</td>
+			  <td id="isOffice"></td>
+			</tr>
+			<tr>
+			  <td>Office文档和图片格式验证</td>
+			  <td>lazy.kit.isOfficeAndImage('demo.ppt')</td>
+			  <td id="isOfficeAndImage"></td>
+			</tr>
+			<tr>
+			  <td>自定义文档格式验证</td>
+			  <td>lazy.kit.isDocument('doc|xls|ppt','demo.ppt')</td>
+			  <td id="isDocument"></td>
+			</tr>
+			<tr>
+			  <td>手机号码验证</td>
+			  <td>lazy.kit.isMobile('18234567890')</td>
+			  <td id="isMobile"></td>
+			</tr>
+			<tr>
+			  <td>座机号码验证</td>
+			  <td>lazy.kit.isPhone('0858-1234567')</td>
+			  <td id="isPhone"></td>
+			</tr>
+			<tr>
+			  <td>身份证件号码验证</td>
+			  <td>lazy.kit.isIdCard('52012111111111111X')</td>
+			  <td id="isIdCard"></td>
+			</tr>
+			<tr>
+			  <td>16位或19位的银行卡/信用卡验证</td>
+			  <td>lazy.kit.isBankCard('6282880011111111')</td>
+			  <td id="isBankCard"></td>
+			</tr>
+			<tr>
+			  <td>短号验证(6位数字)</td>
+			  <td>lazy.kit.isDh('541983')</td>
+			  <td id="isDh"></td>
+			</tr>
+			<tr>
+			  <td>数字验证</td>
+			  <td>lazy.kit.isNum('123A')</td>
+			  <td id="isNum"></td>
+			</tr>
+			<tr>
+			  <td>整数验证</td>
+			  <td>lazy.kit.isInt('123.00')</td>
+			  <td id="isInt"></td>
+			</tr>
+			<tr>
+			  <td>中文验证</td>
+			  <td>lazy.kit.isChinese('梦想oO天堂')</td>
+			  <td id="isChinese"></td>
+			</tr>
+			<tr>
+			  <td>空值验证</td>
+			  <td>lazy.kit.isBlank('')</td>
+			  <td id="isBlank"></td>
+			</tr>
+			<tr>
+			  <td>非空值验证</td>
+			  <td>lazy.kit.notBlank('')</td>
+			  <td id="notBlank"></td>
+			</tr>
+			<tr>
+			  <td>获取浏览器类型</td>
+			  <td>lazy.kit.getBrowserType()</td>
+			  <td id="getBrowserType"></td>
+			</tr>
+		  </tbody>
+		</table>
+  </div>
+  <div class="layui-col-md1">
+
+  </div>
+</div>
+<script>
+//常用类
+$('#getBaseUrl').html(lazy.kit.getBaseUrl());
+//日期类
+$('#getTimeStamp').html(lazy.kit.getTimeStamp());
+$('#getDate').html(lazy.kit.getDate());
+$('#getDate1').html(lazy.kit.getDate('2017/1/1'));
+$('#getFullDate').html(lazy.kit.getFullDate());
+$('#getFullDate1').html(lazy.kit.getFullDate('2017/1/1'));
+$('#getFullDateWeek').html(lazy.kit.getFullDateWeek());
+$('#getFirstDate').html(lazy.kit.getFirstDate());
+$('#getMonthFirstDate').html(lazy.kit.getMonthFirstDate());
+$('#getMonthLastDate').html(lazy.kit.getMonthLastDate());
+$('#getLastDate').html(lazy.kit.getLastDate());
+$('#getDateTime').html(lazy.kit.getDateTime());
+$('#getTime').html(lazy.kit.getTime());
+//操作类
+$('#trim').html(lazy.kit.trim('  string  '));
+$('#getFileExt').html(lazy.kit.getFileExt('demo.doc'));
+$('#getFileName').html(lazy.kit.getFileName('demo.doc'));
+//验证类
+$('#isImage').html('' + lazy.kit.isImage('demo.jpg') + '');
+$('#isAudio').html('' + lazy.kit.isAudio('demo.mp3') + '');
+$('#isVideo').html('' + lazy.kit.isVideo('demo.mp4') + '');
+$('#isOffice').html('' + lazy.kit.isOffice('demo.ppt') + '');
+$('#isOfficeAndImage').html('' + lazy.kit.isOfficeAndImage('demo.ppt') + '');
+$('#isDocument').html('' + lazy.kit.isDocument("doc|xls|ppt","demo.ppt") + '');
+$('#isMobile').html('' + lazy.kit.isMobile('18234567890') + '');
+$('#isPhone').html('' + lazy.kit.isPhone('0858-1234567') + '');
+$('#isIdCard').html('' + lazy.kit.isIdCard('52012111111111111X') + '');
+$('#isBankCard').html('' + lazy.kit.isBankCard('6282880011111111') + '');
+$('#isDh').html('' + lazy.kit.isDh('541983') + '');
+$('#isNum').html('' + lazy.kit.isNum('123A') + '');
+$('#isInt').html('' + lazy.kit.isInt('123.00') + '');
+$('#isChinese').html('' + lazy.kit.isChinese('梦想oO天堂') + '');
+$('#isBlank').html('' + lazy.kit.isBlank('') + '');
+$('#notBlank').html('' + lazy.kit.notBlank('') + '');
+$('#getBrowserType').html('' + lazy.kit.getBrowserType() + '');
+</script>
+</body>
+
+</html>

@@ -1,0 +1,113 @@
+.switch {
+    text-align: center;
+}
+
+.switch .layui-form-switch {
+    margin-top: 0px;
+    margin-left: 10px;
+}
+
+.switch .form-text {
+    color: red;
+    font-size: 12px;
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.main {
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.main .cellphone {
+    float: left;
+    height: auto;
+    min-height: 745px;
+    width: 380px;
+    background: #f5f5f5;
+}
+.top-img {
+    max-width: 100%;
+    height: 236px;
+}
+
+.top-img img {
+    width: 100%;
+}
+
+.main .layui-tab-title li {
+    padding: 0 10px;
+}
+.layui-tab-item{
+    height: 100%;
+    width: 100%;
+}
+.chat-content {
+    height: 375px;
+    overflow-y: scroll;
+}
+.chat-content-box {
+    background-color: rgb(255, 255, 255);
+    height: 100%;
+}
+.chat-content-box img {
+    width: 100%;
+}
+.main .form {
+    float: left;
+    height: auto;
+    min-height: 600px;
+    width: 60%;
+    margin-left: 10px;
+    background: #F7F7F7;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding-bottom: 10px;
+}
+.top-menu{
+    display: inline-block;
+    flex: 1;
+    box-sizing:border-box;
+    padding: 5px;
+    width: 100%;
+}
+.live-intro {
+
+}
+.live-intro .intro-title{
+    padding-left: 10px;
+    color: rgb(51, 136, 255);
+    font-size: 16px;
+    margin-top: 5px;
+}
+.menu-name {
+    text-indent: 6px;
+}
+.menu {
+    background-color: #fff;
+    border: solid 1px #f2f2f2;
+    display: inline-block;
+    width: 110px;
+    height: 26px;
+    border-radius: 4px;
+    margin: 0 10px;
+}
+.menu-select{
+    display: inline-block;
+    float: right;
+}
+.form-content{
+    min-height: 530px;
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+    margin-bottom: 5px;
+}
+.form-footer{
+    margin-top: 18px;
+}
+.form-footer .btn-box{
+    float: right;
+}

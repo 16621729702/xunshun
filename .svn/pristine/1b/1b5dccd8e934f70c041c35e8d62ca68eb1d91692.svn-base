@@ -1,0 +1,27 @@
+/*修复样式css*/
+.modal-title {
+    font-size: 14px;
+}
+
+.modal-header {
+    padding: 15px;
+    border-radius: 2px;
+    background: #f6f6f6;
+    border: none;
+    display: block;
+}
+
+.modal-content {
+    -webkit-box-shadow: 0 6px 12px rgba(0, 0, 0, .1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .1);
+    border: none;
+    border-radius: 2px;
+}
+.modal-footer {
+    display: block;
+    margin: 0 auto !important;
+    width: 100%;
+    padding: 15px !important;
+    background-color: #f4f5f9;
+    border: none;
+}

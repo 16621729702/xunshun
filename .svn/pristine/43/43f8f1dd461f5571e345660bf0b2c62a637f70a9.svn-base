@@ -1,0 +1,678 @@
+package com.wink.livemall.admin.api.shop;
+
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import com.wink.livemall.goods.dto.*;
+import com.wink.livemall.goods.service.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+
+import com.wink.livemall.admin.api.good.GoodController;
+import com.wink.livemall.admin.util.JsonResult;
+import com.wink.livemall.admin.util.VerifyFields;
+import com.wink.livemall.merch.dto.LmMerchInfo;
+import com.wink.livemall.merch.service.LmMerchFollowService;
+import com.wink.livemall.merch.service.LmMerchInfoService;
+import com.wink.livemall.order.service.LmMerchOrderService;
+
+import net.bytebuddy.build.Plugin.Engine.Source.Empty;
+
+@Controller
+@RequestMapping("merchgoods")
+public class MerchGoodsController {
+
+	Logger logger = LogManager.getLogger(MerchGoodsController.class);
+
+	@Autowired
+	private GoodCategoryService goodCategoryService;
+
+	@Autowired
+	private MerchWareHouseService merchWareHouseService;
+
+	@Autowired
+	private MerchGoodService merchGoodService;
+
+	@Autowired
+	private LmMerchInfoService lmMerchInfoService;
+
+	@Autowired
+	private GoodService goodService;
+	
+	@Autowired
+	private LmMerchOrderService lmMerchOrderService;
+
+	@Autowired
+	private LmGoodAuctionService lmGoodAuctionService;
+	
+
+	/**
+	 * 获取商品详情
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("get_goods_detail")
+	@ResponseBody
+	public JsonResult findGoodByid(HttpServletRequest request) {
+		JsonResult jsonResult=new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("id"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("id为空");
+			return jsonResult;
+		}	
+		try {
+			Map<String, Object> good=merchGoodService.findGoodByid((request.getParameter("id")));
+			
+			SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String auction_start_time_str="";
+			String auction_end_time_str="";
+			if(!StringUtils.isEmpty(good.get("auction_start_time"))) {
+				 auction_start_time_str=sf.format((Date)good.get("auction_start_time"));
+			}
+			if(!StringUtils.isEmpty(good.get("auction_end_time"))) {
+				 auction_end_time_str=sf.format((Date)good.get("auction_end_time"));
+			}
+			good.put("auction_start_time", auction_start_time_str);
+			good.put("auction_end_time", auction_end_time_str);
+			good.put("auction_start_time_str", auction_start_time_str);
+			good.put("auction_end_time_str", auction_end_time_str);
+			jsonResult.setCode(jsonResult.SUCCESS);
+			jsonResult.setData(good);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+		}
+		
+		return  jsonResult;
+	}
+	
+	/**
+	 * 搜索店铺商品
+	 * 
+	 * @param request type 不传值所有商品 1一口价商品 2直播商品
+	 * @return
+	 */
+	@RequestMapping("ser_goods")
+	@ResponseBody
+	public JsonResult getLiveGoods(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("merchid"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("merchid为空");
+			return jsonResult;
+		}
+//		if (StringUtils.isEmpty(request.getParameter("keyword"))) {
+//			jsonResult.setCode(jsonResult.ERROR);
+//			jsonResult.setMsg("搜索内容为空");
+//			return jsonResult;
+//		}
+
+		try {
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("merchid", request.getParameter("merchid"));
+			params.put("keyword", request.getParameter("keyword"));
+			params.put("type", request.getParameter("type"));
+			List<Map<String, Object>> list = merchGoodService.findListByCondition(params);
+			Map<String, Object> res = new HashMap<String, Object>();
+			res.put("list", list);
+			jsonResult.setData(res);
+
+			jsonResult.setCode(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * @return 材质列表
+	 */
+	@RequestMapping("get_material_list")
+	@ResponseBody
+	public JsonResult getMaterialList(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+
+		try {
+			List<LmGoodMaterial> list = goodService.getGoodMaterialByApi();
+			Map<String, Object> res = new HashMap<String, Object>();
+			res.put("list", list);
+			jsonResult.setData(res);
+			jsonResult.setCode(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * 获取商品库
+	 */
+	@RequestMapping("get_warehouse_list")
+	@ResponseBody
+	public JsonResult findGoodsCate() {
+		JsonResult jsonResult = new JsonResult();
+
+		try {
+			List<WareHouse> list = merchWareHouseService.findList();
+			Map<String, Object> res = new HashMap<String, Object>();
+			res.put("list", list);
+			jsonResult.setData(res);
+			jsonResult.setMsg(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * 获取商品分类 返回二级分类集合
+	 */
+	@RequestMapping("get_goods_cate")
+	@ResponseBody
+	public JsonResult findGoodsWarehouse() {
+		JsonResult jsonResult = new JsonResult();
+
+		try {
+			List<GoodCategory> list = goodCategoryService.findActiveList();
+			List<Menu> menulist = new ArrayList<MerchGoodsController.Menu>();
+			if (list.size() > 0) {
+				int len = list.size();
+				for (int i = 0; i < len; i++) {
+					GoodCategory cate = list.get(i);
+					if (cate.getParent_id() == 0) {
+						List<Menu> child = getChild(list, cate.getId());
+						Menu menu = new Menu();
+						menu.setId(list.get(i).getId());
+						menu.setHome_pic(list.get(i).getHome_pic());
+						menu.setName(list.get(i).getName());
+						menu.setPic(list.get(i).getPic());
+						menu.setChildren(child);
+						menulist.add(menu);
+					}
+				}
+
+			}
+
+			Map<String, Object> res = new HashMap<String, Object>();
+			res.put("list", menulist);
+			jsonResult.setData(res);
+			jsonResult.setMsg(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+
+	}
+
+	/**
+	 * 筛选子分类
+	 * 
+	 * @param list
+	 * @param parentid
+	 * @return
+	 */
+	private List<Menu> getChild(List<GoodCategory> list, int parentid) {
+		List<Menu> child = new ArrayList<MerchGoodsController.Menu>();
+		for (int i = 0; i < list.size(); i++) {
+
+			if (list.get(i).getParent_id() == parentid) {
+				Menu menu = new Menu();
+				menu.setId(list.get(i).getId());
+				menu.setHome_pic(list.get(i).getHome_pic());
+				menu.setName(list.get(i).getName());
+				menu.setPic(list.get(i).getPic());
+				menu.setParent_id(parentid);
+				child.add(menu);
+			}
+		}
+
+		return child;
+	}
+
+	/**
+	 * 添加商品
+	 */
+	@RequestMapping("add_goods")
+	@ResponseBody
+	public JsonResult addGoods(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		// 判断商户是否存在可用
+		String mer_id = request.getParameter("mer_id");
+		int fg = lmMerchInfoService.checkMerchEnable(mer_id);
+
+		if (fg == 0) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("商户不存在或者被禁用");
+			return jsonResult;
+		}
+		try {
+			VerifyFields ver = new VerifyFields();
+			String[] fields = { "weight", "mer_id", "type", "category_id", "place", "spec", "material", "title",
+					"description", "sn", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
+			Map<String, Object> res = ver.verifytoEntity(fields, request, "com.wink.livemall.goods.dto.Good");
+			if ((int) res.get("error") == 0) {
+				Good entity = (Good) res.get("entity");
+				System.out.println(entity.toString());
+//				if (!StringUtils.isEmpty(entity.getThumbs())) {
+//					String[] arr = entity.getThumbs().split(",");
+//					entity.setThumb(arr[0]);
+//				}
+				entity.setCreate_at(new Date());
+				if(entity.getType()==1){
+					if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
+						entity.setStartprice(new BigDecimal(request.getParameter("startprice")));
+					}
+					if (!StringUtils.isEmpty(request.getParameter("stepprice"))) {
+						entity.setStepprice(new BigDecimal(request.getParameter("stepprice")));
+					}
+					if (!StringUtils.isEmpty(request.getParameter("delaytime"))) {
+						entity.setDelaytime(Integer.parseInt(request.getParameter("delaytime")));
+					}
+					SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					if (!StringUtils.isEmpty(request.getParameter("auction_start_time"))) {
+						Date auction_start_time = sf.parse(request.getParameter("auction_start_time"));
+						entity.setAuction_start_time(auction_start_time);
+					}
+					if (!StringUtils.isEmpty(request.getParameter("auction_end_time"))) {
+						Date auction_end_time = sf.parse(request.getParameter("auction_end_time"));
+						entity.setAuction_end_time(auction_end_time);
+					}
+				}
+				if(entity.getType()==2){
+					if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
+						entity.setStartprice(new BigDecimal(request.getParameter("startprice")));
+					}
+					if (!StringUtils.isEmpty(request.getParameter("stepprice"))) {
+						entity.setStepprice(new BigDecimal(request.getParameter("stepprice")));
+					}
+					if (!StringUtils.isEmpty(request.getParameter("delaytime"))) {
+						entity.setDelaytime(Integer.parseInt(request.getParameter("delaytime")));
+					}
+					SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					if (!StringUtils.isEmpty(request.getParameter("auction_start_time"))) {
+						Date auction_start_time = sf.parse(request.getParameter("auction_start_time"));
+						entity.setAuction_start_time(auction_start_time);
+					}
+					if (!StringUtils.isEmpty(request.getParameter("auction_end_time"))) {
+						Date auction_end_time = sf.parse(request.getParameter("auction_end_time"));
+						entity.setAuction_end_time(auction_end_time);
+					}
+				}
+				if (!StringUtils.isEmpty(request.getParameter("expressprice"))) {
+					entity.setExpressprice(new BigDecimal(request.getParameter("expressprice")));
+				}
+				if (!StringUtils.isEmpty(request.getParameter("ischipped"))) {
+					entity.setIschipped(Integer.parseInt(request.getParameter("ischipped")));
+				}
+				if (!StringUtils.isEmpty(request.getParameter("chipped_num"))) {
+					entity.setChipped_num(Integer.parseInt(request.getParameter("chipped_num")));
+				}
+				if (!StringUtils.isEmpty(request.getParameter("chipped_price"))) {
+					entity.setChipped_price(new BigDecimal(request.getParameter("chipped_price")));
+				}
+				entity.setState(1);
+				merchGoodService.addGoods(entity);
+
+				jsonResult.setCode(JsonResult.SUCCESS);
+			} else {
+				jsonResult.setMsg((String) res.get("msg"));
+				jsonResult.setCode(JsonResult.ERROR);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * 修改商品
+	 */
+	@RequestMapping("upd_goods")
+	@ResponseBody
+	public JsonResult updGoods(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("id"))) {
+			jsonResult.setMsg("id不能为空");
+			jsonResult.setCode(JsonResult.ERROR);
+			return jsonResult;
+		}
+		try {
+			VerifyFields ver = new VerifyFields();
+			String[] fields = { "weight", "auction_start_time", "auction_end_time", "startprice", "stepprice",
+					"delaytime", "mer_id", "type", "category_id", "place", "spec", "material", "title", "description",
+					"sn", "stock", "warehouse", "productprice", "freeshipping", "thumbs","thumb" };
+			List<Map<String, String>> field_ = ver.checkEmptyField(fields, request);
+			Date date = new Date();
+			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			String datestr = sf.format(date);
+			Map<String, String> d = new HashMap<String, String>();
+			d.put("field", "update_at");
+			d.put("value", datestr);
+			String status = request.getParameter("state");
+			field_.add(d);
+			System.out.println(status);
+			if(status!=null&&status.equals("1")){
+				//设置上架
+				Map<String, String> state = new HashMap<String, String>();
+				state.put("field", "state");
+				state.put("value", "1");
+				field_.add(state);
+				Map<String, String> state2 = new HashMap<String, String>();
+				state2.put("field", "auction_status");
+				state2.put("value", "0");
+				field_.add(state2);
+				Map<String, String> state3 = new HashMap<String, String>();
+				state3.put("field", "bidsnum");
+				state3.put("value", "0");
+				field_.add(state3);
+				//清空出价记录
+				List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"),0);
+				for(LmGoodAuction lm:list){
+					lmGoodAuctionService.deleteService(lm);
+				}
+			}else{
+				Map<String, String> state = new HashMap<String, String>();
+				state.put("field", "state");
+				state.put("value", "0");
+				field_.add(state);
+				//清空出价记录
+				List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"),0);
+				for(LmGoodAuction lm:list){
+					lmGoodAuctionService.deleteService(lm);
+				}
+			}
+			System.out.println(field_.toString());
+			merchGoodService.updateByFields(field_, request.getParameter("id"));
+			jsonResult.setCode(JsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * 获取商品列表
+	 */
+	@RequestMapping("get_goods_list_merch")
+	@ResponseBody
+	public JsonResult getGoodsPage(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("merchid"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("商户id为空");
+			return jsonResult;
+		}
+		try {
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("pageindex", request.getParameter("pageindex"));
+			params.put("pagesize", request.getParameter("pagesize"));
+			if (!StringUtils.isEmpty(request.getParameter("merchid"))) {
+				params.put("merchid", request.getParameter("merchid"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("warehouse"))) {
+				params.put("warehouse", request.getParameter("warehouse"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("type"))) {
+				params.put("type", request.getParameter("type"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("category_id"))) {
+				params.put("category_id", request.getParameter("category_id"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("sn"))) {
+				params.put("sn", request.getParameter("sn"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("title"))) {
+				params.put("title", request.getParameter("title"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("price_start"))) {
+				params.put("price_start", request.getParameter("price_start"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("price_end"))) {
+				params.put("price_end", request.getParameter("price_end"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("date"))) {
+				params.put("date", request.getParameter("date"));
+			}
+			if (!StringUtils.isEmpty(request.getParameter("sort"))) {
+				params.put("sort", request.getParameter("sort"));
+			}
+
+			List<Map<String, Object>> list = merchGoodService.getPage(params);
+			Map<String, Object> res = new HashMap<String, Object>();
+			res.put("pageindex", request.getParameter("pageindex"));
+			res.put("pagesize", request.getParameter("pagesize"));
+			
+			if(list.size()>0) {
+				SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				for (int i = 0; i < list.size(); i++) {
+					Map<String, Object> m=list.get(i);
+					if( m.get("auction_start_time")!=null) {
+						Date auction_start_time=(Date) m.get("auction_start_time");
+						String auction_start_time_str=sf.format(auction_start_time);
+						m.put("auction_start_time_str", auction_start_time_str);
+					}else {
+						m.put("auction_start_time_str", "");
+					}
+					if(m.get("auction_end_time")!=null) {
+						Date auction_end_time=(Date) m.get("auction_end_time");
+						String auction_end_time_str=sf.format(auction_end_time);
+						m.put("auction_end_time_str", auction_end_time_str);
+					}else {
+						m.put("auction_end_time_str", "");
+					}
+					if(!StringUtils.isEmpty(m.get("warehouse"))){
+						List<Map<String, Object>> w=merchGoodService.findWarehouses(m.get("warehouse")+"");
+						String warehouse_str="";
+						if(w.size()>0) {
+							for (int j = 0; j < w.size(); j++) {
+								Map<String, Object> s=w.get(j);
+								warehouse_str+=s.get("name")+",";
+							}
+						}
+						m.put("warehouse_str", warehouse_str.substring(0, warehouse_str.length()-1));
+					}
+				}
+			}
+			System.out.println(list.size());
+			res.put("list", list);
+			jsonResult.setData(res);
+
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+	/**
+	 * 删除商品
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("del_goods")
+	@ResponseBody
+	public JsonResult delGoods(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("id"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("商品id为空");
+			return jsonResult;
+		}
+		try {
+			merchGoodService.delGoods(Integer.parseInt(request.getParameter("id")));
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+	/**
+	 * 商品库信息
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("get_warehouse_info")
+	@ResponseBody
+	public JsonResult warehouseInfo(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("merchid"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("商户id为空");
+			return jsonResult;
+		}
+		try {
+			Map<String, Object> map = new HashMap<String, Object>();
+			int merchid = Integer.parseInt(request.getParameter("merchid"));
+			LmMerchInfo info = lmMerchInfoService.findById(request.getParameter("merchid"));
+			int goodsnum = merchGoodService.countGoodsNum(merchid);
+			int ordernum = merchGoodService.countOrderNum(merchid);
+			Map<String, Object> res1=lmMerchOrderService.staticOrderMonth(request.getParameter("merchid"), "1");
+			Map<String, Object> res2=lmMerchOrderService.staticOrderMonth(request.getParameter("merchid"), "2");
+//			int orderprice = merchGoodService.countOrderPrice(merchid) == null ? 0
+//					: merchGoodService.countOrderPrice(merchid);
+			int orderpay=lmMerchOrderService.countPay(request.getParameter("merchid"));
+			int orderrefund=lmMerchOrderService.countRefund(request.getParameter("merchid"));
+			map.put("info", info);
+			map.put("goodsnum", goodsnum);
+			map.put("orderpay", orderpay);
+			map.put("orderrefund", orderrefund);
+			map.put("orderprice_curr", res1.get("price"));
+			map.put("orderprice_last", res2.get("price"));
+			jsonResult.setCode(jsonResult.SUCCESS);
+			jsonResult.setData(map);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+	/**
+	 * 合买商品抽签
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("draw_lots")
+	@ResponseBody
+	public JsonResult auditOrder(HttpServletRequest request) {
+		JsonResult jsonResult = new JsonResult();
+		if (StringUtils.isEmpty(request.getParameter("id"))) {
+			jsonResult.setCode(jsonResult.ERROR);
+			jsonResult.setMsg("id为空");
+			return jsonResult;
+		}
+		try {
+			Good good=	goodService.findById(Integer.parseInt(request.getParameter("id")));
+			
+			jsonResult.setCode(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+
+		return jsonResult;
+	}
+
+	/**
+	 * @return 构造菜单返回对象
+	 */
+	class Menu {
+		private int id;
+		private int parent_id;
+		private String name;
+		private String pic;
+		private String home_pic;
+		private List<Menu> children;
+
+		public int getId() {
+			return id;
+		}
+
+		public void setId(int id) {
+			this.id = id;
+		}
+
+		public int getParent_id() {
+			return parent_id;
+		}
+
+		public void setParent_id(int parent_id) {
+			this.parent_id = parent_id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public String getPic() {
+			return pic;
+		}
+
+		public void setPic(String pic) {
+			this.pic = pic;
+		}
+
+		public String getHome_pic() {
+			return home_pic;
+		}
+
+		public void setHome_pic(String home_pic) {
+			this.home_pic = home_pic;
+		}
+
+		public List<Menu> getChildren() {
+			return children;
+		}
+
+		public void setChildren(List<Menu> children) {
+			this.children = children;
+		}
+
+	}
+
+}

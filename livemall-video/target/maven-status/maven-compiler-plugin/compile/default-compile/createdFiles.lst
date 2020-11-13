@@ -1,0 +1,10 @@
+com\wink\livemall\video\dao\LmVideoCoreDao$LmVideoCoreDaoprovider.class
+com\wink\livemall\video\dto\LmVideoCategoary.class
+com\wink\livemall\video\dto\LmVideoCore.class
+com\wink\livemall\video\service\impl\LmVideoCategoaryServiceImpl.class
+com\wink\livemall\video\service\LmVideoCategoaryService.class
+com\wink\livemall\video\service\LmVideoCoreService.class
+com\wink\livemall\video\dao\LmVideoCategoaryDao$LmVideoCategoaryDaoprovider.class
+com\wink\livemall\video\dao\LmVideoCoreDao.class
+com\wink\livemall\video\service\impl\LmVideoCoreServiceImpl.class
+com\wink\livemall\video\dao\LmVideoCategoaryDao.class
