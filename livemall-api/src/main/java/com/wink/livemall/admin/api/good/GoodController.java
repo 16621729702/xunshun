@@ -204,12 +204,15 @@ public class GoodController {
                 if(goodCategory!=null){
                     map.put("category",goodCategory.getName());
                 }
-                if(good.getThumbs().contains(",")){
-                    String [] imgs = good.getThumbs().split(",");
-                    map.put("goodimg",imgs[0]);
+               /*if(good.getThumbs().contains(",")){
+                    String[] imgs = good.getThumbs().split(",");
+                    *//*map.put("goodimg",imgs[0]);*//*
+                    map.put("goodimg",imgs);
                 }else{
                     map.put("goodimg",good.getThumbs());
-                }
+                }*/
+                map.put("thumbimg",good.getThumb());
+                map.put("goodimg",good.getThumbs());
                 map.put("state",good.getState());
                 map.put("productprice",good.getProductprice());
                 map.put("description",good.getDescription());

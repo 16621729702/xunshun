@@ -47,7 +47,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.postage as postage ," +
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
-            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 order by lg.sale_num desc")
+            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 order by rand()")
     List<Map> findHotList();
 
 
