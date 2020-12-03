@@ -9,8 +9,10 @@ import com.wink.livemall.admin.util.PageUtil;
 import com.wink.livemall.admin.util.VerifyFields;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.LivedGood;
+import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.dto.LmShareGood;
 import com.wink.livemall.goods.service.GoodService;
+import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.goods.service.LotsService;
 import com.wink.livemall.goods.service.MerchGoodService;
 import com.wink.livemall.live.dto.LmLive;
@@ -48,6 +50,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
+
+import static org.springframework.util.StringUtils.isEmpty;
+
 @Api(tags = "商户信息接口")
 @RestController
 @RequestMapping("merch")
@@ -92,6 +97,8 @@ public class MerchController {
 	private ConfigsService configsService;
 	@Autowired
 	private LmWithdrawalService lmWithdrawalService;
+	@Autowired
+	private LmGoodAuctionService lmGoodAuctionService;
 	
 	
 	
@@ -144,6 +151,19 @@ public class MerchController {
 				//添加商品信息
 				Integer merchid = (int)map.get("id");
 				List<Map<String,Object>> goodlist = goodService.findByMerchIdByApi(merchid);
+				for(Map<String,Object> goodlists:goodlist){
+					Integer id =(int)goodlists.get("goodid");
+					Integer ordertype =(int)goodlists.get("type");
+					if(1==ordertype) {
+						int types = 0;
+						LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+						if (!isEmpty(lmGoodAuction)) {
+							goodlists.put("goodprice", lmGoodAuction.getPrice());
+						} else {
+							goodlists.put("goodprice", 0);
+						}
+					}
+				}
 				if(goodlist!=null&&goodlist.size()>0){
 					map.put("goodlist",new Gson().toJson(goodlist));
 				}
@@ -161,6 +181,7 @@ public class MerchController {
 		}
 		return jsonResult;
 	}
+
 
 
 	/**

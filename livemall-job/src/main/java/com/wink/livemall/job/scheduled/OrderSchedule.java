@@ -90,6 +90,7 @@ public class OrderSchedule {
         String datetime = DateUtils.sdfyMdHm.format(new Date());
         Configs configs =configsService.findByTypeId(Configs.type_pay);
         Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+
         String prfix=map.get("msgSrcId")+"";
         for(Good good:list){
             //查看延迟时间是否结束
@@ -108,7 +109,7 @@ public class OrderSchedule {
                         good.setAuction_status(1);
                         goodService.updateGoods(good);
                         LmOrder lmOrder = new LmOrder();
-                        lmOrder.setOrderid(prfix+datetime+maxId);
+                        lmOrder.setOrderid(prfix+datetime+(int)(Math.random()*(9999-1000)+1000));
                         lmOrder.setStatus("0");
                         lmOrder.setType(2);
                         lmOrder.setPaynickname(lmMember.getNickname());
@@ -117,6 +118,44 @@ public class OrderSchedule {
                         lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
                         lmOrder.setChargename(address.getRealname());
                         lmOrder.setChargephone(address.getMobile());
+                        lmOrder.setMemberid(memberid);
+                        lmOrder.setDeposit_type(0);
+                        lmOrder.setTotalprice(auction.getPrice());
+                        if(good.getFreeshipping()==1){
+                            lmOrder.setRealexpressprice(new BigDecimal(0));
+                            lmOrder.setRealpayprice(auction.getPrice());
+                        }else{
+                            lmOrder.setRealexpressprice(good.getExpressprice());
+                            lmOrder.setRealpayprice(auction.getPrice().add(good.getExpressprice()));
+                        }
+                        orderService.insertService(lmOrder);
+                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
+                        lmOrderGoods.setGoodid(good.getId());
+                        lmOrderGoods.setGoodnum(1);
+                        lmOrderGoods.setGoodprice(auction.getPrice());
+                        lmOrderGoods.setOrderid(lmOrder.getId());
+                        lmOrderGoodsService.insertService(lmOrderGoods);
+                        //发送通知 同时用户竞拍成功
+                        String msg = "您拍卖的商品："+good.getTitle()+"已竞拍成功，请尽快支付订单";
+//                    pushmsgService.send(0,msg,"2",memberid,0);
+                        HttpClient httpClient = new HttpClient();
+                        httpClient.send("拍品消息",memberid+"",msg);
+                        LmOrderLog lmOrderLog = new LmOrderLog();
+                        lmOrderLog.setOrderid(lmOrder.getOrderid());
+                        lmOrderLog.setOperatedate(new Date());
+                        lmOrderLog.setOperate("订单生产");
+                        lmOrderLogService.insert(lmOrderLog);
+                    } else {
+                        LmMember lmMember = lmMemberService.findById(memberid+"");
+                        good.setAuction_status(1);
+                        goodService.updateGoods(good);
+                        LmOrder lmOrder = new LmOrder();
+                        lmOrder.setOrderid(prfix+datetime+(int)(Math.random()*(9999-1000)+1000));
+                        lmOrder.setStatus("0");
+                        lmOrder.setType(2);
+                        lmOrder.setPaynickname(lmMember.getNickname());
+                        lmOrder.setCreatetime(new Date());
+                        lmOrder.setMerchid(good.getMer_id());
                         lmOrder.setMemberid(memberid);
                         lmOrder.setDeposit_type(0);
                         lmOrder.setTotalprice(auction.getPrice());
@@ -157,6 +196,59 @@ public class OrderSchedule {
         }
     }
 
+
+    //拍卖到期之前15分钟提示
+   @Scheduled(fixedDelay = 1000*60)
+    public void tishigood(){
+        System.out.println("寻找前15分钟拍卖时间到时的商品");
+        Calendar calendar = Calendar.getInstance();
+        String tishigoodtime="13";
+        calendar.setTime(new Date());
+        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + Integer.parseInt(tishigoodtime));
+        //获取n小时前的时间
+        Date nowdate =calendar.getTime();
+        System.out.println(nowdate);
+       Date nowdate1=new Date();
+
+       long c=nowdate1.getTime()-1000*60*2;//1000*60*1 是1分钟
+       Date olddate1=new Date(c);
+       System.out.println(olddate1);
+
+
+       String oldgoodtime="15";
+       calendar.setTime(new Date());
+       calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + Integer.parseInt(oldgoodtime));
+       Date olddate =calendar.getTime();
+       System.out.println(olddate);
+
+        List<Good> list = goodService.findwaitGoodInfo15(nowdate,olddate);
+
+        Configs configs =configsService.findByTypeId(Configs.type_pay);
+        Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+        String prfix=map.get("msgSrcId")+"";
+        for(Good good:list){
+
+                System.out.println(good.getAuction_end_time());
+                //根据商品 查询商品出价最高的用户
+                List<LmGoodAuction> lmGoodAuctionList =goodService.findAuctionlistByGoodid2(good.getId(),0);
+                if(lmGoodAuctionList!=null&&lmGoodAuctionList.size()>0){
+                    LmGoodAuction auction = lmGoodAuctionList.get(0);
+                    int memberid = auction.getMemberid();
+                    List<LmMemberAddress> addresses = lmMemberAddressService.findByMemberid(memberid);
+                        //发送通知 同时用户竞拍成功
+                        String msg = "您拍卖的商品："+good.getTitle()+"还有不到15分钟剩余时间就下架了，请及时关注。";
+//                    pushmsgService.send(0,msg,"2",memberid,0);
+                        HttpClient httpClient = new HttpClient();
+                        httpClient.send("拍品消息",memberid+"",msg);
+                    System.out.println(good.getTitle()+memberid);
+                }
+
+        }
+
+    }
+
+
+
     //定时下架直播拍卖到时商品
     @Scheduled(fixedDelay = 1000*30)
     public void closelivegood(){
@@ -174,6 +266,7 @@ public class OrderSchedule {
         }
     }
 
+    /*0 0/10 * * * ?*/
 
     //定时下架拍卖到时商品
     @Scheduled(fixedDelay = 1000*30)
@@ -186,6 +279,7 @@ public class OrderSchedule {
             goodService.updateGoods(good);
         }
     }
+
 
     //设置自动收货
     @Scheduled(fixedDelay = 1000*30)
@@ -258,11 +352,9 @@ public class OrderSchedule {
 //        Map tradmap =  com.alibaba.fastjson.JSONObject.parseObject(tradconfigs.getConfig());
         //获取支付限时（小时数）
 //        String paytime = tradmap.get("order_cancel_time")+"";
-        String paytime = "5";//5分钟
         //当前时间
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) - Integer.parseInt(paytime));
+
         //获取n小时前的时间
         Date olddate =calendar.getTime();
         for(LmOrder order:lmordersList){
@@ -284,9 +376,31 @@ public class OrderSchedule {
                         }
                     }
                 }
-            }else{
+            }else if(order.getType()==2){
                 //订单创建时间
                 Date createtime = order.getCreatetime();
+                String paytime = "1";//1天
+                //当前时间
+                calendar.setTime(new Date());
+                calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) - Integer.parseInt(paytime));
+                //获取n小时前的时间
+                olddate =calendar.getTime();
+                if(createtime!=null){
+                    if(olddate.getTime()>createtime.getTime()){
+                        //订单失效
+                        order.setStatus("-1");
+                        orderService.updateService(order);
+                    }
+                }
+            } else {
+                //订单创建时间
+                Date createtime = order.getCreatetime();
+                String paytime = "5";//1天
+                //当前时间
+                calendar.setTime(new Date());
+                calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) - Integer.parseInt(paytime));
+                //获取n小时前的时间
+                olddate =calendar.getTime();
                 if(createtime!=null){
                     if(olddate.getTime()>createtime.getTime()){
                         //订单失效

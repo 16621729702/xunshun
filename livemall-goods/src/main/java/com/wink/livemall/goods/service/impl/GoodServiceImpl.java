@@ -134,6 +134,11 @@ public class GoodServiceImpl implements GoodService {
     }
 
     @Override
+    public List<Good> findwaitGoodInfo15(Date nowdate,Date olddate) {
+        return goodDao.findwaitGoodInfo15(nowdate,olddate);
+    }
+
+    @Override
     public List<Good> findAllwaitGoodInfo(Date nowdate) {
         return goodDao.findAllwaitGoodInfo(nowdate);
     }

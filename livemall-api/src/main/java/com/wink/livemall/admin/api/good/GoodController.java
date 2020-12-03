@@ -12,6 +12,7 @@ import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.dto.LmGoodMaterial;
 import com.wink.livemall.goods.service.GoodCategoryService;
 import com.wink.livemall.goods.service.GoodService;
+import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.member.dto.LmMember;
@@ -37,6 +38,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static org.springframework.util.StringUtils.isEmpty;
+
 @Api(tags = "商品信息接口")
 @RestController
 @RequestMapping("good")
@@ -60,6 +63,9 @@ public class GoodController {
     private LmCouponsService lmCouponsService;
     @Autowired
     private LmMemberTraceService lmMemberTraceService;
+    @Autowired
+    private LmGoodAuctionService lmGoodAuctionService;
+
     /**
      * 获取所有顶级分类
      * @return
@@ -143,6 +149,14 @@ public class GoodController {
             }
             List<Map> goodlist =  goodService.findInfoByApi(categoryid,goodname,topprice,lowprice,isauction,isdirect,isquality,postage,refund,isoem,material,sorttype,sortway,type,pid);
             for(Map mapinfo:goodlist){
+                int id =(int)mapinfo.get("goodid");
+                int types =0;
+                LmGoodAuction  lmGoodAuction=lmGoodAuctionService.findnowPriceByGoodidByApi(id,types);
+                if(!isEmpty(lmGoodAuction)){
+                    mapinfo.put("price",lmGoodAuction.getPrice());
+                }else {
+                    mapinfo.put("price", 0);
+                }
                 mapinfo.put("showtype","good");
             }
             if(goodlist!=null){
@@ -331,6 +345,19 @@ public class GoodController {
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
             List<Map<String,Object>> returnlist = goodService.findhotByMerchIdByApi(merchid);
+            for(Map<String,Object> returnlist1:returnlist){
+                Integer id=(int)returnlist1.get("goodid");
+                Integer goodtype =(int)returnlist1.get("type");
+                int type =0;
+                if(1==goodtype) {
+                    LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, type);
+                    if (!isEmpty(lmGoodAuction)) {
+                        returnlist1.put("goodprice", lmGoodAuction.getPrice());
+                    } else {
+                        returnlist1.put("goodprice", 0);
+                    }
+                }
+            }
             jsonResult.setData(PageUtil.startPage(returnlist,page,pagesize));
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());

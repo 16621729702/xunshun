@@ -72,6 +72,13 @@ public interface GoodService {
      */
     List<Good> findwaitGoodInfo(Date nowdate);
 
+
+    /**
+     * 开始寻找拍卖前15分钟订单
+     * @return
+     */
+    List<Good> findwaitGoodInfo15(Date nowdate,Date olddate);
+
     List<LmGoodAuction> findAuctionlistByGoodid2(int goodid,int type);
 
     List<Map<String, Object>> findAuctionlistByUseridAndType(int userid, int type);

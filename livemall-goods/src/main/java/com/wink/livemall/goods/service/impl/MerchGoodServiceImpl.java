@@ -47,6 +47,12 @@ public class MerchGoodServiceImpl implements MerchGoodService {
 		MerchGoodDao.updateByFields(params, id);
 	}
 
+	@Override
+	public void addByFields(List<Map<String, String>> params) {
+		// TODO Auto-generated method stub
+		MerchGoodDao.addByFields(params);
+	}
+
 
 	@Override
 	public List<Map<String, Object>> getPage(Map<String, String> params) {

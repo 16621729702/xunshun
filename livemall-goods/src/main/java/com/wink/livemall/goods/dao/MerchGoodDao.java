@@ -39,6 +39,9 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 	@SelectProvider(type = sqlprovider.class, method = "updateByFields")
 	void updateByFields(List<Map<String, String>> params, String id);
 
+	@SelectProvider(type = sqlprovider.class, method = "addByFields")
+	void addByFields(List<Map<String, String>> params);
+
 	@SelectProvider(type = sqlprovider.class, method = "getpagesql")
 	List<Map<String, Object>> getpage(Map<String, String> params);
 	
@@ -97,7 +100,7 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 			String pagesize = (String) params.get("pagesize");
 
 			StringBuilder sql = new StringBuilder();
-			sql.append("select g.state,g.auction_start_time,g.auction_end_time,c.name catename,g.thumb,g.id,g.material,g.place,g.spec,g.stock,g.title,g.productprice,g.warehouse from lm_goods g left join lm_goods_categories c on g.category_id=c.id where mer_id=" + params.get("merchid"));
+			sql.append("select g.state,g.auction_start_time,g.auction_end_time,c.name catename,g.thumb,g.id,g.material,g.place,g.spec,g.stock,g.title,g.productprice,g.warehouse,g.sn from lm_goods g left join lm_goods_categories c on g.category_id=c.id where mer_id=" + params.get("merchid"));
 
 			if (!StringUtils.isEmpty(params.get("warehouse"))) {
 				sql.append(" and find_in_set(" + params.get("warehouse") + ",g.warehouse)");
@@ -187,6 +190,37 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 			builder.append(" where id=" + id);
 			
 			return builder.toString();
+		}
+
+		public String addByFields(List<Map<String, String>> params) {
+			StringBuilder builder1 = new StringBuilder();
+			builder1.append("insert into lm_goods(");
+			String field=null;
+			for (int i = 0; i < params.size(); i++) {
+				Map<String, String> m = params.get(i);
+				 field = m.get("field");
+				if (i == params.size() - 1) {
+					builder1.append("" + field );
+
+				} else {
+					builder1.append("" + field +  ",");
+				}
+			}
+			builder1.append(") value");
+
+			String value=null;
+			for (int j = 0; j < params.size(); j++) {
+				Map<String, String> m = params.get(j);
+				 value = m.get("value");
+				if (j == params.size() - 1) {
+					builder1.append("'" + value +"'");
+
+				} else {
+					builder1.append("'" + value +  "',");
+				}
+			}
+			builder1.append(")");
+			return builder1.toString();
 		}
 
 		private String calc_date(int day) {

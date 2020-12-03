@@ -47,6 +47,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static org.springframework.util.StringUtils.isEmpty;
 
 @Api(tags = "订单信息接口")
 @RestController
@@ -95,7 +98,7 @@ public class OrderController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
-            String header = request.getHeader("Authorization");
+           String header = request.getHeader("Authorization");
             String userid = "";
             if (!StringUtils.isEmpty(header)) {
                 if(!StringUtils.isEmpty(redisUtils.get(header))){
@@ -108,7 +111,10 @@ public class OrderController {
             //获取订单基本信息
             List<Map<String,Object>> list = lmOrderService.findOrderList(status,Integer.parseInt(userid));
             for(Map<String,Object> map:list){
-                System.out.println(map.toString());
+                String address = StringUtils.isEmpty(map.get("chargephone"))?null:(String) map.get("chargeaddress");
+                String phone = StringUtils.isEmpty(map.get("chargephone"))?null:(String) map.get("chargephone");
+                map.put("address",address);
+                map.put("phone",phone);
                 if(map.get("type")!=null){
                     if((int)map.get("type")==3){
                         //合买
@@ -147,6 +153,40 @@ public class OrderController {
             }
 
             jsonResult.setData(PageUtil.startPage(list,page,pagesize));
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
+    @ApiOperation(value = "获取订单列表长度")
+    @PostMapping("/listsize")
+    public JsonResult getorderlistsize(HttpServletRequest request
+                                       ){
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+            String header = request.getHeader("Authorization");
+            String userid = "";
+            if (!StringUtils.isEmpty(header)) {
+                if(!StringUtils.isEmpty(redisUtils.get(header))){
+                    userid = redisUtils.get(header)+"";
+                }else{
+                    jsonResult.setCode(JsonResult.LOGIN);
+                    return jsonResult;
+                }
+            }
+            //获取订单基本信息
+            Map<String, Object> map = new ConcurrentHashMap<>();
+            for(int i=-2;i<7;i++) {
+                Integer ordersize = lmOrderService.ordersize(i, Integer.parseInt(userid));
+                System.out.print(ordersize+"+");
+                map.put("ordersize"+i,ordersize);
+            }
+            jsonResult.setData(map);
         } catch (Exception e) {
             e.printStackTrace();
             jsonResult.setMsg(e.getMessage());

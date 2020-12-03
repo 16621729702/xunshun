@@ -37,9 +37,11 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.postage as postage ," +
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
+            " lg.stepprice as stepprice ," +
             " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.isrecommend = 1 and lg.state = 1 ")
     List<Map> findRecommendList();
 
+    //order by rand()
     @Select("SELECT lg.id as goodid,lg.bidsnum as bidsnum ,lg.title as name , lg.thumb as goodimg," +
             " lm.isauction as isauction ," +
             " lm.isdirect as isdirect ," +
@@ -47,11 +49,17 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.postage as postage ," +
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
-            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 order by rand()")
+            " lg.stepprice as stepprice ," +
+            " lg.type as type ," +
+            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 ")
     List<Map> findHotList();
 
 
-    @Select("SELECT lg.type as type,lg.id as goodid,lg.id as goodid,lg.title as name , lg.thumb as goodimg, lg.productprice as goodprice FROM lm_goods lg  where lg.mer_id = #{merchid} and lg.state = 1 order by sale_num ")
+    @Select("SELECT lg.type as type,lg.id as goodid,lg.id as goodid,lg.title as name , lg.thumb as goodimg, " +
+            " lg.productprice as goodprice," +
+            " lg.stepprice as stepprice," +
+            " lg.bidsnum as bidsnum " +
+            "FROM lm_goods lg  where lg.mer_id = #{merchid} and lg.state = 1 order by sale_num ")
     List<Map<String, Object>> findByMerchIdByApi(@Param("merchid")int merchid);
 
     @Select("SELECT lg.id as goodid," +
@@ -61,6 +69,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.postage as postage ," +
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
+            " lg.stepprice as stepprice," +
             "lg.title as name ,lg.bidsnum as bidsnum, lg.thumb as goodimg, lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.mer_id = #{merchid} and lg.type = #{type} and lg.state = 1 order by sale_num ")
     List<Map<String, String>> findByMerchIdAndTypeByApi(@Param("merchid")int merchid, @Param("type")int type);
 
@@ -75,12 +84,22 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.postage as postage ," +
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
+            " lg.stepprice as stepprice," +
+            " lg.type as type," +
             "lg.bidsnum as bidsnum FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.mer_id = #{merchid} and lg.state = 1 order by sale_num ")
     List<Map<String, Object>> findhotByMerchIdByApi(@Param("merchid")int merchid);
 
 
     @Select("SELECT * FROM lm_goods lg  where lg.type = 1 and lg.auction_status = 0 and lg.auction_end_time < #{nowdate} ")
     List<Good> findwaitGoodInfo(@Param("nowdate")Date nowdate);
+
+    /**
+     * 开始寻找拍卖前15分钟订单
+     * @return
+     */
+    @Select("SELECT * FROM lm_goods lg  where lg.type = 1 and lg.auction_status = 0 and #{nowdate} < lg.auction_end_time and lg.auction_end_time < #{olddate} ")
+    List<Good> findwaitGoodInfo15(@Param("nowdate")Date nowdate,@Param("olddate")Date olddate);
+
 
     @Select("SELECT * FROM lm_goods lg  where lg.type = 1  and lg.auction_end_time < #{nowdate} ")
     List<Good> findAllwaitGoodInfo(@Param("nowdate")Date nowdate);
@@ -133,6 +152,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
                     " lm.postage as postage ," +
                     " lm.refund as refund ," +
                     " lm.isoem as isoem ," +
+                    " lg.stepprice as stepprice," +
                     " lg.bidsnum as bidsnum" +
                     " from lm_goods lg left join lm_merch_info lm on lg.mer_id = lm.id " +
                     " left join lm_goods_categories lgc on lg.category_id = lgc.id  where lg.state = 1  ";
@@ -219,12 +239,14 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
                     " lg.id as goodid, " +
                     " lg.productprice as price," +
                     " lg.title as name , " +
+                    " lg.type as type , " +
                     " lm.isauction as isauction ," +
                     " lm.isdirect as isdirect ," +
                     " lm.isquality as isquality ," +
                     " lm.postage as postage ," +
                     " lm.refund as refund ," +
                     " lm.isoem as isoem ," +
+                    " lg.stepprice as stepprice ," +
                     " lg.bidsnum as bidsnum" +
                     " from lm_goods lg left join lm_merch_info lm on lg.mer_id = lm.id " +
                     " left join lm_goods_categories lgc on lg.category_id = lgc.id  where lg.state = 1 ";

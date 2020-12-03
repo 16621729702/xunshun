@@ -75,6 +75,7 @@
                                             <option value="2" ${(lideshow.type==2)?string('selected','')}>店铺</option>
                                             <option value="3" ${(lideshow.type==3)?string('selected','')}>商城</option>
                                             <option value="4" ${(lideshow.type==4)?string('selected','')}>分类</option>
+                                            <option value="9" ${(lideshow.type==9)?string('selected','')}>直播</option>
                                         </select>
                                     </div>
                                 </div>

@@ -13,7 +13,7 @@ import java.util.Map;
 @Mapper
 public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
 
-    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.categoryid = #{pid} and ll.status = 0 and ll.isstart = 1 and ll.type = 0 order by ll.watchnum desc")
+    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.categoryid = #{pid} and ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
     List<Map<String,String>> findListByCategoryIdByApi(@Param("pid") int pid);
 
 
@@ -36,23 +36,23 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
             " left join lm_member_follow lmf on ll.id = lmf.follow_id where ll.status = 0 and lmf.follow_type = 2 and ll.isstart = 1 and lmf.member_id =#{memberid} and ll.type = 1  ")
     List<Map<String, String>> findsharefollewLiveByApi(@Param("memberid")int memberid);
 
-    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where lm.categoryid = #{pid} and ll.status = 0 and ll.type = 1 and ll.isstart = 1")
+    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where lm.categoryid = #{pid} and ll.status = 0 and ll.type = 1 ")
     List<Map<String, String>> findshareListByCategoryIdByApi(int pid);
 
     @Select("SELECT ll.* ,lm.store_name as store_name,lm.avatar as avatar " +
             " FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.type = 1 and ll.isstart = 1 and ll.status = 0 order by ll.isrecommend,ll.watchnum desc limit 0,1")
     Map<String, Object> findsharehotlive();
 
-    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.type = 0 and ll.isstart = 1 order by ll.isrecommend,ll.watchnum desc limit 0,1")
+    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.type = 0  order by ll.isrecommend,ll.watchnum desc limit 0,1")
     Map<String, String> findRecommendLiveByapi();
 
-    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.isstart = 1 and ll.type = 0 order by ll.watchnum desc")
+    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
     List<Map<String, String>> findHotLiveByApi();
 
     @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.isstart = 1 and ll.type = 1  order by ll.isrecommend,ll.watchnum desc limit 0,1")
     Map<String, String> findShareRecommendLiveByapi();
 
-    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.isstart = 1 and ll.type = 1 order by ll.watchnum desc")
+    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0  and ll.type = 1 order by ll.watchnum desc")
     List<Map<String, String>> findShareHotLiveByApi();
 
     @SelectProvider(type = sqlprovider.class, method = "findByCondient")

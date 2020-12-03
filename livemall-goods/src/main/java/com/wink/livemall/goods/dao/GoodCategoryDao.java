@@ -53,7 +53,7 @@ public interface GoodCategoryDao extends tk.mybatis.mapper.common.Mapper<GoodCat
     @Select("SELECT id as id ,name as name,pic as pic FROM lm_goods_categories where parent_id = 0 and isshow = 0 order by sort ")
     List<Map<String, String>> findtopgoodscategorybyapi();
 
-    @Select("SELECT id as id ,name as name,pic as pic,parent_id as parent_id FROM lm_goods_categories where isrecommend = 1 and isshow = 0")
+    @Select("SELECT id as id ,name as name,pic as pic,parent_id as parent_id FROM lm_goods_categories where parent_id != 0 and isshow = 0 and isshow = 0")
     List<Map<String, String>> findrecommendByapi();
 
     @Select("SELECT id as id ,name as name,pic as pic,parent_id as parent_id FROM lm_goods_categories where parent_id = #{pid} and isshow = 0")

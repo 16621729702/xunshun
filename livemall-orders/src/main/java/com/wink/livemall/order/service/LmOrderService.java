@@ -33,6 +33,8 @@ public interface LmOrderService {
 
     Integer findMaxId();
 
+    //订单长度
+    Integer ordersize(int status,int userid);
 
     LmOrder findTopOrder(int goodid, int merchid);
 

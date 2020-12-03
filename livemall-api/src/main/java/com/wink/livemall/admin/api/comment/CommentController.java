@@ -6,7 +6,9 @@ import com.qiniu.util.Auth;
 import com.wink.livemall.admin.api.good.GoodController;
 import com.wink.livemall.admin.exception.CustomException;
 import com.wink.livemall.admin.util.*;
+import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
+import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.merch.dto.LmMerchConfigs;
@@ -40,6 +42,8 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static org.springframework.util.StringUtils.isEmpty;
+
 /**
  * 获取隐私政策 和 用户协议
  */
@@ -64,6 +68,9 @@ public class CommentController {
     private GoodService goodService;
     @Autowired
     private VersionService versionService;
+    @Autowired
+    private LmGoodAuctionService lmGoodAuctionService;
+
     /**
      * 获取轮播图
      * @return
@@ -391,6 +398,20 @@ public class CommentController {
                 }
                 //模糊查询所有上架的商品和 未截拍的商品
                 List<Map> goodlist =  goodService.findInfoByName(name);
+                for(Map goodlists:goodlist){
+                    Integer id =(int)goodlists.get("goodid");
+                    Integer goodtype =(int)goodlists.get("type");
+                    Integer types =0;
+                    if(1==goodtype) {
+                        LmGoodAuction auction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                        if (!isEmpty(auction)) {
+                            goodlists.put("price", auction.getPrice());
+                        } else {
+                            goodlists.put("price", 0);
+                        }
+                    }
+                }
+
                 for(Map mapinfo:goodlist){
                     mapinfo.put("showtype","good");
                 }
@@ -404,8 +425,21 @@ public class CommentController {
                 List<Map<String,Object>> returnlist = new ArrayList<>();
                 for(Map<String,Object> map : merchlist){
                     //添加商品信息
-                    Integer merchid = (int)map.get("id");
+                    Integer merchid = (int)map.get("goodid");
                     List<Map<String,Object>> goodlist = goodService.findByMerchIdByApi(merchid);
+                    for(Map goodlists:goodlist){
+                        int id =(int)goodlists.get("id");
+                        Integer goodtype =(int)goodlists.get("type");
+                        int types =0;
+                        if(1==goodtype) {
+                            LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                            if (!isEmpty(lmGoodAuction)) {
+                                goodlists.put("goodprice", lmGoodAuction.getPrice());
+                            } else {
+                                goodlists.put("goodprice", 0);
+                            }
+                        }
+                    }
                     if(goodlist!=null&&goodlist.size()>0){
                         map.put("goodlist",new Gson().toJson(goodlist));
                     }

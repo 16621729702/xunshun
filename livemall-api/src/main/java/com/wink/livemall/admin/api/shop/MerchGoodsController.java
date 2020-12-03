@@ -1,6 +1,7 @@
 package com.wink.livemall.admin.api.shop;
 
 import java.math.BigDecimal;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.wink.livemall.goods.dto.*;
 import com.wink.livemall.goods.service.*;
+import net.sourceforge.pinyin4j.PinyinHelper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -273,7 +275,7 @@ public class MerchGoodsController {
 		try {
 			VerifyFields ver = new VerifyFields();
 			String[] fields = { "weight", "mer_id", "type", "category_id", "place", "spec", "material", "title",
-					"description", "sn", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
+					"description", "marketprice", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
 			Map<String, Object> res = ver.verifytoEntity(fields, request, "com.wink.livemall.goods.dto.Good");
 			if ((int) res.get("error") == 0) {
 				Good entity = (Good) res.get("entity");
@@ -282,6 +284,21 @@ public class MerchGoodsController {
 //					String[] arr = entity.getThumbs().split(",");
 //					entity.setThumb(arr[0]);
 //				}
+				String material =request.getParameter("material");
+				String materials="";
+				for (int j = 0; j < 2; j++) {
+					char word = material.charAt(j);
+					String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(word);
+					if (pinyinArray != null) {
+						materials += Character.toUpperCase(pinyinArray[0].charAt(0));
+					} else {
+						materials += Character.toUpperCase(word);
+					}
+				}
+				DateFormat format1= new SimpleDateFormat("MMdd");//日期格式
+				Integer sns =Integer.parseInt(mer_id);
+				String sn=materials+String.format("%04d", sns)+format1.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
+				entity.setSn(sn);
 				entity.setCreate_at(new Date());
 				if(entity.getType()==1){
 					if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
@@ -370,7 +387,7 @@ public class MerchGoodsController {
 			VerifyFields ver = new VerifyFields();
 			String[] fields = { "weight", "auction_start_time", "auction_end_time", "startprice", "stepprice",
 					"delaytime", "mer_id", "type", "category_id", "place", "spec", "material", "title", "description",
-					"sn", "stock", "warehouse", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
+					 "stock", "warehouse", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
 			List<Map<String, String>> field_ = ver.checkEmptyField(fields, request);
 			Date date = new Date();
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -380,38 +397,84 @@ public class MerchGoodsController {
 			d.put("value", datestr);
 			String status = request.getParameter("state");
 			field_.add(d);
-			if(status!=null&&status.equals("1")){
-				//设置上架
-				Map<String, String> state = new HashMap<String, String>();
-				state.put("field", "state");
-				state.put("value", "1");
-				field_.add(state);
-				Map<String, String> state2 = new HashMap<String, String>();
-				state2.put("field", "auction_status");
-				state2.put("value", "0");
-				field_.add(state2);
-				Map<String, String> state3 = new HashMap<String, String>();
-				state3.put("field", "bidsnum");
-				state3.put("value", "0");
-				field_.add(state3);
-				//清空出价记录
-				List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"),0);
-				for(LmGoodAuction lm:list){
-					lmGoodAuctionService.deleteService(lm);
+			Integer type=new Integer(request.getParameter("type"));
+			if(type==1) {
+				VerifyFields vers = new VerifyFields();
+				String[] fieldes = { "weight", "mer_id", "type", "category_id", "place", "spec", "material", "title",
+						"description", "marketprice", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
+				Map<String, Object> ress = vers.checkEmptytoEntity(fieldes, request, "com.wink.livemall.goods.dto.Good");
+				String material =request.getParameter("material");
+				String materials="";
+				Good entityes = (Good) ress.get("entity");
+				for (int j = 0; j < material.length(); j++) {
+					char word = material.charAt(j);
+					String[] pinyinArray = PinyinHelper.toHanyuPinyinStringArray(word);
+					if (pinyinArray != null) {
+						materials += Character.toUpperCase(pinyinArray[0].charAt(0));
+					} else {
+						materials += Character.toUpperCase(word);
+					}
 				}
-			}else{
-				Map<String, String> state = new HashMap<String, String>();
-				state.put("field", "state");
-				state.put("value", "0");
-				field_.add(state);
-				//清空出价记录
-				List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"),0);
-				for(LmGoodAuction lm:list){
-					lmGoodAuctionService.deleteService(lm);
+				if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
+					entityes.setStartprice(new BigDecimal(request.getParameter("startprice")));
 				}
-			}
+				if (!StringUtils.isEmpty(request.getParameter("stepprice"))) {
+					entityes.setStepprice(new BigDecimal(request.getParameter("stepprice")));
+				}
+				if (!StringUtils.isEmpty(request.getParameter("delaytime"))) {
+					entityes.setDelaytime(Integer.parseInt(request.getParameter("delaytime")));
+				}
+				SimpleDateFormat sesf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				if (!StringUtils.isEmpty(request.getParameter("auction_start_time"))) {
+					Date auction_start_time = sesf.parse(request.getParameter("auction_start_time"));
+					entityes.setAuction_start_time(auction_start_time);
+				}
+				if (!StringUtils.isEmpty(request.getParameter("auction_end_time"))) {
+					Date auction_end_time = sesf.parse(request.getParameter("auction_end_time"));
+					entityes.setAuction_end_time(auction_end_time);
+				}
+				String mer_id =request.getParameter("mer_id");
+				DateFormat format1= new SimpleDateFormat("MMdd");//日期格式
+				Integer sns =Integer.parseInt(mer_id);
+				String sn=materials+String.format("%04d", sns)+format1.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
+				entityes.setSn(sn);
+				entityes.setCreate_at(new Date());
+				entityes.setState(1);
+				merchGoodService.addGoods(entityes);
+			}else {
+				if (status != null && status.equals("1")) {
+					//设置上架
+					Map<String, String> state = new HashMap<String, String>();
+					state.put("field", "state");
+					state.put("value", "1");
+					field_.add(state);
+					Map<String, String> state2 = new HashMap<String, String>();
+					state2.put("field", "auction_status");
+					state2.put("value", "0");
+					field_.add(state2);
+					Map<String, String> state3 = new HashMap<String, String>();
+					state3.put("field", "bidsnum");
+					state3.put("value", "0");
+					field_.add(state3);
+					//清空出价记录
+					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					for (LmGoodAuction lm : list) {
+						lmGoodAuctionService.deleteService(lm);
+					}
+				} else {
+					Map<String, String> state = new HashMap<String, String>();
+					state.put("field", "state");
+					state.put("value", "0");
+					field_.add(state);
+					//清空出价记录
+					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					for (LmGoodAuction lm : list) {
+						lmGoodAuctionService.deleteService(lm);
+					}
+				}
 
-			merchGoodService.updateByFields(field_, request.getParameter("id"));
+				merchGoodService.updateByFields(field_, request.getParameter("id"));
+			}
 			jsonResult.setCode(JsonResult.SUCCESS);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());

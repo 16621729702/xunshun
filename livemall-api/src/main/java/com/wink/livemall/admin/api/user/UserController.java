@@ -9,7 +9,9 @@ import com.wink.livemall.admin.util.Md5Util;
 import com.wink.livemall.admin.util.PageUtil;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.Good;
+import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
+import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.member.dto.*;
 import com.wink.livemall.member.service.*;
 import com.wink.livemall.merch.dto.LmMerchAdmin;
@@ -32,7 +34,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.*;
+
+import static org.springframework.util.StringUtils.isEmpty;
+
 @Api(tags = "用户信息接口")
 @RestController
 @RequestMapping("user")
@@ -58,6 +64,9 @@ public class UserController {
     private LmMemberLevelService lmMemberLevelService;
     @Autowired
     private LmMemberCouponService lmMemberCouponService;
+
+    @Autowired
+    private LmGoodAuctionService lmGoodAuctionService;
     /**
      * 修改密码接口
      */
@@ -386,6 +395,17 @@ public class UserController {
                 lmMemberFav.setState(0);
                 if(type==0){
                     lmMemberFav.setGoods_id(id);
+                   Good good = goodService.findById(id);
+                    LmMemberFollow lmMemberFollow =lmMemberFollowService.findByMemberidAndTypeAndId(userid,1,good.getMer_id());
+                    if(lmMemberFollow==null){
+                        lmMemberFollow = new LmMemberFollow();
+                        lmMemberFollow.setFollow_id(good.getMer_id());
+                        lmMemberFollow.setFollow_type(1);
+                        lmMemberFollow.setFollow_time(new Date());
+                        lmMemberFollow.setMember_id(userid);
+                        lmMemberFollow.setState(0);
+                        lmMemberFollowService.addService(lmMemberFollow);
+                    }
                 }else{
                     lmMemberFav.setVideo_id(id);
                 }
@@ -598,6 +618,19 @@ public class UserController {
         List<Map> returnlist = new ArrayList<>();
         try {
             List<Map> goodlist = goodService.findHotList();
+            for(Map hotLists:goodlist){
+                Integer id =(int)hotLists.get("goodid");
+                Integer ordertype =(int)hotLists.get("type");
+                if(1==ordertype) {
+                    int type = 0;
+                    LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, type);
+                    if (!isEmpty(lmGoodAuction)) {
+                        hotLists.put("goodprice", lmGoodAuction.getPrice());
+                    } else {
+                        hotLists.put("goodprice", 0);
+                    }
+                }
+            }
             if(goodlist!=null&&goodlist.size()>2){
                 returnlist = getRandomList(goodlist,2);
             }

@@ -32,6 +32,13 @@ public interface MerchGoodService {
 	void updateByFields(List<Map<String, String>> params, String id);
 
 	/**
+	 * 添加
+	 *
+	 * @param params
+	 */
+	void addByFields(List<Map<String, String>> params);
+
+	/**
 	 * 商品列表分页
 	 * 
 	 * @param params

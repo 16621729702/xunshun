@@ -1,9 +1,11 @@
 package com.wink.livemall.admin.api.index;
 
+import com.wink.livemall.admin.util.JedisUtil;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.PageUtil;
-import com.wink.livemall.goods.dto.Good;
+import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
+import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.sys.setting.dto.Lideshow;
@@ -14,17 +16,21 @@ import io.swagger.annotations.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import qiniu.happydns.local.SystemDnsServer;
+import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.util.*;
+
+import static org.springframework.util.StringUtils.isEmpty;
+
 @Api(tags = "首页模块")
 @RestController
 @RequestMapping("/index")
@@ -37,6 +43,12 @@ public class IndexController {
     private LmLiveService lmLiveService;
     @Autowired
     private GoodService goodService;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+    @Autowired
+    private LmGoodAuctionService lmGoodAuctionService;
+
     /**
      * 获取轮播图
      * @return
@@ -111,10 +123,12 @@ public class IndexController {
     @Transactional
     public JsonResult recommend(HttpServletRequest request){
         String page = StringUtils.isEmpty(request.getParameter("page"))?"0":request.getParameter("page");
+        String mobileid = StringUtils.isEmpty(request.getParameter("mobileid"))?"0":request.getParameter("mobileid");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"10":request.getParameter("pagesize");
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         List<Map> list = new ArrayList<>();
+
         try {
         	 Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
              if(map!=null){
@@ -127,8 +141,32 @@ public class IndexController {
                 mapinfo.put("showtype","good");
             }
             //查询销售最多的10个商品
-            List<Map> hotList = goodService.findHotList();
-            List<Map> returnlist = PageUtil.startPage(hotList,Integer.parseInt(page),Integer.parseInt(pagesize));
+            List<Map> returnlist=null;
+            List<Map> hotList1=null;
+            if(Integer.parseInt(page)==1){
+                redisTemplate.delete("hotList"+mobileid);
+                List<Map> hotList = goodService.findHotList();
+                    for(Map hotLists:hotList){
+                        int id =(int)hotLists.get("goodid");
+                        int ordertype =(int)hotLists.get("type");
+                        if(1==ordertype) {
+                            int types = 0;
+                            LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                            if (!isEmpty(lmGoodAuction)) {
+                                hotLists.put("goodprice", lmGoodAuction.getPrice());
+                            } else {
+                                hotLists.put("goodprice", 0);
+                            }
+                        }
+                    }
+                Collections.shuffle(hotList);
+                redisTemplate.opsForList().rightPushAll("hotList"+mobileid,hotList);
+               returnlist = PageUtil.startPage(hotList,Integer.parseInt(page),Integer.parseInt(pagesize));
+            }else {
+                hotList1 =redisTemplate.opsForList().range("hotList"+mobileid,0,-1);
+                returnlist = PageUtil.startPage(hotList1,Integer.parseInt(page),Integer.parseInt(pagesize));
+            }
+
             for(Map mapinfo:returnlist){
                 mapinfo.put("showtype","good");
             }

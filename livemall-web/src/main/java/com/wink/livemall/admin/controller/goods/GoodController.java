@@ -394,7 +394,6 @@ public class GoodController {
             good.setKeyword(keyword);
             good.setCategory_id(category_id);
             good.setThumb(thumb);
-            good.setThumbs(thumbs);
             good.setStock(Integer.parseInt(stock));
             good.setProductprice(new BigDecimal(productprice));
             good.setMarketprice(new BigDecimal(marketprice));

@@ -26,6 +26,10 @@ public class Configs {
     public static int type_live=8;
     //上传配置
     public static int type_upload=9;
+    //短信拍卖前15分钟
+    public static int type_sms15=10;
+    //短信拍卖成功消息
+    public static int type_smsz=11;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY,generator = "JDBC")
     private int id;

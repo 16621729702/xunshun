@@ -35,6 +35,9 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
     @Select("SELECT id FROM lm_orders order by id desc limit 0,1")
     Integer findMaxId();
 
+    @SelectProvider(type = LmShopOrderDaoprovider.class, method = "ordersize")
+    Integer ordersize(@Param("status") int status, @Param("userid") int userid);
+
     @Select("SELECT lo.* FROM lm_orders lo,lm_order_goods log where lo.id = log.orderid and lo.merchid = #{merchid} and log.goodid = #{goodid} and lo.porderid = 0 and lo.type = 3 order by id desc limit 0,1")
     LmOrder findTopOrder(@Param("goodid")int goodid,@Param("merchid") int merchid);
 
@@ -285,7 +288,9 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
                     " lo.orderid as orderid," +
                     " log.goodid as goodid," +
                     " log.goodprice as goodprice," +
-                    " log.goodnum as goodnum  " +
+                    " log.goodnum as goodnum, " +
+                    " lo.chargeaddress as chargeaddress," +
+                        " lo.chargephone as chargephone" +
                     " FROM lm_orders lo,lm_order_goods log,lm_merch_info lm " +
                     " WHERE lo.merchid = lm.id " +
                     " AND lo.id = log.orderid " +
@@ -302,6 +307,23 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
                 sql+=" and lo.backstatus > 0 ";
             }
             sql+=" order by lo.createtime desc";
+            return sql;
+        }
+        public String ordersize(@Param("status")int status,@Param("userid")int userid) {
+            String sql = "SELECT count(*)" +
+                    " FROM lm_orders lo" +
+                    " WHERE lo.memberid=#{userid} " ;
+            if(-2!=status&&6!=status){
+                if(3==status){
+                    //待评价
+                    sql+=" and lo.commentstatus= 0 and lo.backstatus = 0 and lo.status = 4 ";
+                }else{
+                    sql+=" and lo.status=#{status} and lo.backstatus = 0";
+                }
+            }
+            if(6==status){
+                sql+=" and lo.backstatus > 0 ";
+            }
             return sql;
         }
 

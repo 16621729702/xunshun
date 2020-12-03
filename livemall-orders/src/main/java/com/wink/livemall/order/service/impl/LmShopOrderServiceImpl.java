@@ -104,6 +104,11 @@ public class LmShopOrderServiceImpl implements LmOrderService {
     }
 
     @Override
+    public Integer ordersize(int status,int userid) {
+        return lmShopOrderDao.ordersize(status,userid);
+    }
+
+    @Override
     public LmOrder findTopOrder(int goodid, int merchid) {
         return lmShopOrderDao.findTopOrder(goodid,merchid);
     }
