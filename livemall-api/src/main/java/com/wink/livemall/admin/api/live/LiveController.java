@@ -14,8 +14,10 @@ import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.dto.LmLiveCategory;
+import com.wink.livemall.live.dto.LmLiveInfo;
 import com.wink.livemall.live.service.LmLiveCategoryService;
 import com.wink.livemall.live.service.LmLiveGoodService;
+import com.wink.livemall.live.service.LmLiveInfoService;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.live.util.QiniuUtil;
 import com.wink.livemall.member.dto.LmMember;
@@ -26,6 +28,7 @@ import com.wink.livemall.member.service.LmMemberAddressService;
 import com.wink.livemall.member.service.LmMemberFollowService;
 import com.wink.livemall.member.service.LmMemberService;
 import com.wink.livemall.member.service.LmMemberTraceService;
+import com.wink.livemall.merch.dto.LmMerchAdmin;
 import com.wink.livemall.merch.dto.LmMerchInfo;
 import com.wink.livemall.merch.service.LmMerchInfoService;
 import com.wink.livemall.order.dto.LmOrder;
@@ -89,6 +92,8 @@ public class LiveController {
     private LmOrderGoodsService lmOrderGoodsService;
     @Autowired
     private LmOrderLogService lmOrderLogService;
+    @Autowired
+    private LmLiveInfoService lmLiveInfoService;
     
     /**
      * 获取所有顶级分类
@@ -142,15 +147,33 @@ public class LiveController {
             //查询关注列表
             if("1".equals(type)){
                 if(!StringUtils.isEmpty(userid)){
-                    List<Map<String,String>> livelist = lmLiveService.findfollewLiveByApi(Integer.parseInt(userid));
+                    List<Map<String,Object>> livelist = lmLiveService.findfollewLiveByApi(Integer.parseInt(userid));
+                    for(Map<String,Object> maps:livelist){
+                        int liveid=(int)maps.get("id");
+                        LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                        LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                        maps.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
+                    }
                     returnmap.put("list",PageUtil.startPage(livelist,page,pagesize));
                 }
             }else if("2".equals(type)){
                 //查询热门直播
-                List<Map<String,String>> livelist = lmLiveService.findHotLiveByApi();
+                List<Map<String,Object>> livelist = lmLiveService.findHotLiveByApi();
+                for(Map<String,Object> maps:livelist){
+                    int liveid=(int)maps.get("id");
+                    LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                    LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                    maps.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
+                }
                 returnmap.put("list",PageUtil.startPage(livelist,page,pagesize));
             }else{
-                List<Map<String,String>> livelist = lmLiveService.findListByCategoryIdByApi(Integer.parseInt(categoryid));
+                List<Map<String,Object>> livelist = lmLiveService.findListByCategoryIdByApi(Integer.parseInt(categoryid));
+                for(Map<String,Object> maps:livelist){
+                    int liveid=(int)maps.get("id");
+                    LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                    LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                    maps.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
+                }
                 returnmap.put("list",PageUtil.startPage(livelist,page,pagesize));
 
             }
@@ -459,7 +482,7 @@ public class LiveController {
                 if(lmMerchInfo!=null){
                     returnmap.put("name",lmMerchInfo.getStore_name());
                     returnmap.put("avatar",lmMerchInfo.getAvatar());
-                    returnmap.put("focusnum",lmMerchInfo.getFocusnum());
+                    //returnmap.put("focusnum",lmMerchInfo.getFocusnum());
                 }
                 if(!StringUtils.isEmpty(userid)){
                     //直播间是否关注
@@ -470,12 +493,40 @@ public class LiveController {
                     }else{
                     	returnmap.put("liveisfollow","no");
                     }
-                    //商户是否关注
-                    List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(0,lmLive.getId());
+                    //商户关注长度
+                    /*List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(0,lmLive.getId());
                     if(merchfollowlist!=null&&merchfollowlist.size()>0){
-                        returnmap.put("focusnum",merchfollowlist.size());
+                        returnmap.put("focusnum", merchfollowlist.size());
                     }else{
                         returnmap.put("focusnum",0);
+                    }*/
+                    returnmap.put("focusnum",0);
+                    //判断是否为该店铺管理员
+                    LmMerchAdmin lmMerchAdmin = lmMerchInfoService.findMerchAdmin(Integer.parseInt(userid),lmLive.getMerch_id());
+                    List<Map<String,Object>> memberinfo = new ArrayList<>();
+                    if(lmMerchAdmin!=null){
+                        returnmap.put("isadmin",1);
+                        returnmap.put("admininfo",null);
+                    }else{
+                        returnmap.put("isadmin",0);
+                        List<LmMerchAdmin>  byadmins=lmMerchInfoService.findAdminByMerchid(lmLive.getMerch_id());
+                        if(byadmins!=null){
+                           for(LmMerchAdmin Admins:byadmins){
+                            LmMember lmMember=lmMemberService.findById(String.valueOf(Admins.getMemberid()));
+                            Map<String,Object> merchmap = new HashMap<>();
+                            merchmap.put("adminid",lmMember.getId());
+                            merchmap.put("adminname",lmMember.getNickname());
+                            merchmap.put("adminavatar",lmMember.getAvatar());
+                            memberinfo.add(merchmap);
+                          }
+                            LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(lmLive.getId());
+                             int  addnum= lmLiveInfo.getAddnum();
+                            lmLiveInfo.setAddnum(addnum+1);
+                            lmLiveInfoService.updateService(lmLiveInfo);
+                            returnmap.put("admininfo",memberinfo);
+                        }else {
+                            returnmap.put("admininfo",null);
+                        }
                     }
                     LmMemberFollow merchfollow = lmMemberFollowService.findByMemberidAndTypeAndId(Integer.parseInt(userid), 1,lmMerchInfo.getId());
                     if(merchfollow!=null){
@@ -556,11 +607,11 @@ public class LiveController {
      * 获取直播拍卖商品
      * @return
      */
-    @ApiOperation(value = "获取直播拍卖商品")
+    @ApiOperation(value = "获取直播拍卖商品购物车里面")
     @PostMapping("livegoodlist")
     public JsonResult livegoodlist(
             @ApiParam(name = "liveid", value = "直播间id",defaultValue = "0",required=true) @RequestParam(value = "liveid") String liveid,
-            @ApiParam(name = "type", value = "类型0一口价1拍卖",defaultValue = "0",required=true) @RequestParam(value = "type") String type
+            @ApiParam(name = "type", value = "类型0一口价1拍卖2私价",defaultValue = "0",required=true) @RequestParam(value = "type") String type
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
@@ -799,26 +850,26 @@ public class LiveController {
                 goodService.updateAuctionService(auction);
                 int memberid = auction.getMemberid();
                 List<LmMemberAddress> addresses = lmMemberAddressService.findByMemberid(memberid);
-                if(addresses!=null&&addresses.size()>0){
+                LmOrder lmOrder = new LmOrder();
+                LmMember lmMember = lmMemberService.findById(memberid + "");
+                if(addresses!=null&&addresses.size()>0) {
                     LmMemberAddress address = addresses.get(0);
-                    LmMember lmMember = lmMemberService.findById(memberid+"");
-                    LmOrder lmOrder = new LmOrder();
+                    lmOrder.setChargeaddress(address.getProvince() + address.getCity() + address.getDistrict() + address.getAddress_info());
+                    lmOrder.setChargename(address.getRealname());
+                    lmOrder.setChargephone(address.getMobile());
+                }
                     lmOrder.setOrderid(prfix+datetime+maxId);
                     lmOrder.setStatus("0");
                     lmOrder.setType(2);
                     lmOrder.setPaynickname(lmMember.getNickname());
                     lmOrder.setCreatetime(new Date());
                     lmOrder.setMerchid(live.getMerch_id());
-                    lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-                    lmOrder.setChargename(address.getRealname());
-                    lmOrder.setChargephone(address.getMobile());
                     lmOrder.setMemberid(memberid);
                     lmOrder.setDeposit_type(0);
                     lmOrder.setTotalprice(auction.getPrice());
                     lmOrder.setRealexpressprice(new BigDecimal(0));
                     lmOrder.setRealpayprice(auction.getPrice());
                     lmOrder.setIslivegood(1);
-
                     lmOrderService.insertService(lmOrder);
                     LmOrderGoods lmOrderGoods = new LmOrderGoods();
                     lmOrderGoods.setGoodid(good.getId());
@@ -851,8 +902,10 @@ public class LiveController {
                     msgmap.put("resttime",Integer.parseInt(paytime)*3600*1000);
                     msgmap.put("orderno",lmOrder.getOrderid());
                     msgmap.put("userid",lmMember.getId());
-                    httpClient.sendgroup(live.getLivegroupid(),new Gson().toJson(msgmap),10);
-                }
+
+                        httpClient.sendgroup(live.getLivegroupid(), new Gson().toJson(msgmap), 10);
+
+
             }else{
                 //设置流拍
                 good.setStatus(1);
@@ -1008,14 +1061,20 @@ public class LiveController {
      * 获取直播间人数
      * @return
      */
-    @ApiOperation(value = "获取直播间人数")
+    @ApiOperation(value = "获取直播间人数和粉丝数")
     @PostMapping("getlivenum")
     public JsonResult getlivenum( @ApiParam(name = "liveid", value = "直播ld",defaultValue = "0",required=true) @RequestParam(value = "liveid") int liveid){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
             LmLive lmLive = lmLiveService.findbyId(liveid+"");
-            jsonResult.setData(lmLive.getWatchnum());
+            LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+
+            List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(0,lmLive.getId());
+            Map<String, Object> num = new HashMap<String, Object>();
+            num.put("focusnum", merchfollowlist.size()+lmLiveInfo.getFocusnum());
+            num.put("watchnum", lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
+            jsonResult.setData(num);
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);
@@ -1024,26 +1083,20 @@ public class LiveController {
         return jsonResult;
     }
 
-
-
     /**
-     * 获取直播间粉丝数
+     * 获取直播间人数
      * @return
      */
     @ApiOperation(value = "获取直播间粉丝数")
-    @PostMapping("getlivefans")
-    public JsonResult getlivefans( @ApiParam(name = "liveid", value = "直播ld",defaultValue = "0",required=true) @RequestParam(value = "liveid") String liveid){
+    @PostMapping("getlivefanes")
+    public JsonResult getlivefanes( @ApiParam(name = "liveid", value = "直播ld",defaultValue = "0",required=true) @RequestParam(value = "liveid") int liveid){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
-            LmLive lmLive = lmLiveService.findbyId(liveid);
-            //商户是否关注
-            List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(1,lmLive.getMerch_id());
-            if(merchfollowlist!=null&&merchfollowlist.size()>0){
-                jsonResult.setData(merchfollowlist.size());
-            }else{
-                jsonResult.setData(0);
-            }
+            LmLive lmLive = lmLiveService.findbyId(liveid+"");
+            List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(0,lmLive.getId());
+            String livefanes=String.valueOf(merchfollowlist.size());
+            jsonResult.setData(livefanes);
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);
@@ -1051,6 +1104,8 @@ public class LiveController {
         }
         return jsonResult;
     }
+
+
 
 
 

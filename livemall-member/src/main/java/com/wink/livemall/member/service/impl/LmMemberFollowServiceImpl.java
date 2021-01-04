@@ -90,4 +90,9 @@ public class LmMemberFollowServiceImpl implements LmMemberFollowService {
         return lmMemberFollowDao.findByMerchidAndType(i,id);
     }
 
+    @Override
+    public List<LmMemberFollow> findByMerchidCount(int i, int id, int userid) {
+        return lmMemberFollowDao.findByMerchidCount(i,id,userid);
+    }
+
 }

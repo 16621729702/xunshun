@@ -283,13 +283,24 @@ public class MerchController {
 
 				List<Map<String,Object>> goods = goodService.findByMerchIdByApi(id);
 				for(Map<String,Object> mapinfo:goods){
-					mapinfo.put("showtype","good");
-					int type = (int)mapinfo.get("type");
-					if(type==1){
+					Integer ids=(int)mapinfo.get("goodid");
+					Integer goodtype =(int)mapinfo.get("type");
+					int type =0;
+					if(1==goodtype) {
+						LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(ids, type);
+						if (!isEmpty(lmGoodAuction)) {
+							mapinfo.put("goodprice", lmGoodAuction.getPrice());
+						} else {
+							mapinfo.put("goodprice", 0);
+						}
+					}
+					int types = (int)mapinfo.get("type");
+					if(types==1){
 						auctiongoodnum++;
 					}else{
 						pricegoodnum++;
 					}
+					mapinfo.put("showtype","good");
 				}
 				goodlist.addAll(goods);
 				returnmap.put("goodlist",goodlist);
@@ -298,9 +309,9 @@ public class MerchController {
 				List<Lideshow> lideshows = lideshowService.findListBytype(Lideshow.MERCH);
 				returnmap.put("lideshowlist",lideshows);
 				LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
-				returnmap.put("merchscore",lmMerchInfo.getScore());//商户评分
-				returnmap.put("goodper",lmMerchInfo.getGoodper());//好评率
-				returnmap.put("successper",lmMerchInfo.getSuccessper());//成交率
+				returnmap.put("merchscore",100);//商户评分
+				returnmap.put("goodper",100.0);//好评率
+				returnmap.put("successper",100.0);//成交率
 				returnmap.put("backper",lmMerchInfo.getBackper());//退货率
 				returnmap.put("credit",lmMerchInfo.getCredit());//余额
 
@@ -339,8 +350,19 @@ public class MerchController {
             	 map.put("showtype","live");
      			goodlist.add(map);
             }
-			List<Map<String,String>> goods = goodService.findByMerchIdAndTypeByApi(id,type);
-			for(Map<String,String> mapinfo:goods){
+			List<Map<String,Object>> goods = goodService.findByMerchIdAndTypeByApi(id,type);
+			for(Map<String,Object> mapinfo:goods){
+				Integer ids =(int)mapinfo.get("goodid");
+				Integer ordertype =(int)mapinfo.get("type");
+				if(1==ordertype) {
+					int types = 0;
+					LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(ids, types);
+					if (!isEmpty(lmGoodAuction)) {
+						mapinfo.put("goodprice", lmGoodAuction.getPrice());
+					} else {
+						mapinfo.put("goodprice", 0);
+					}
+				}
 				mapinfo.put("showtype","good");
 			}
 			goodlist.addAll(goods);
@@ -656,6 +678,9 @@ public class MerchController {
 				if(merchfollowlist!=null&&merchfollowlist.size()>0){
 					lmMerchInfo.setFocusnum(merchfollowlist.size());
 				}
+				if(lmMerchInfo.getScore()==null){
+					lmMerchInfo.setScore(0.0);
+				}
 				//合买订单数量
 				List<LmOrder> orderlist = lmOrderService.findShareOrderListByMerchid(Integer.parseInt(request.getParameter("id")));
 				res.put("shareorders", orderlist!=null?orderlist.size():0);
@@ -862,7 +887,7 @@ public class MerchController {
 	 * @return
 	 *  添加商户管理员
 	 */
-	@ApiOperation(value = "添加商户管理员")
+	@ApiOperation(value = " ")
 	@PostMapping("set_admin")
 	public JsonResult setAdmin(HttpServletRequest request,
 							   @ApiParam(name = "merchid", value = "商户id",defaultValue = "", required = true)@RequestParam(required = true) String merchid,
@@ -1020,7 +1045,7 @@ public class MerchController {
 			//查看是否已有竞拍一口价商品存在
 			List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(liveid);
 			if(oldgood!=null&&oldgood.size()>0){
-				if(type!=2){
+				if(type==1){
 					for(LivedGood good:oldgood){
 						if(good.getType()==1){
 							jsonResult.setCode(JsonResult.ERROR);
@@ -1072,13 +1097,19 @@ public class MerchController {
 			//推送消息给app
 			HttpClient httpClient = new HttpClient();
 			if(type==0){
+
 				httpClient.sendgroup(lmLive.getLivegroupid(),"直播一口价商品发布",5);
+
 			}
 			if(type==1){
-				httpClient.sendgroup(lmLive.getLivegroupid(),"直播拍卖商品发布",6);
+
+					httpClient.sendgroup(lmLive.getLivegroupid(), "直播拍卖商品发布", 6);
+
 			}
-			if(type==2){
-				httpClient.sendgroup(lmLive.getLivegroupid(),livedGood.getTomemberid()+"",4);
+			if(type==2) {
+
+					httpClient.sendgroup(lmLive.getLivegroupid(), livedGood.getTomemberid() + "", 4);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

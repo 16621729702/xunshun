@@ -148,16 +148,19 @@ public class GoodController {
                 list.add(map);
             }
             List<Map> goodlist =  goodService.findInfoByApi(categoryid,goodname,topprice,lowprice,isauction,isdirect,isquality,postage,refund,isoem,material,sorttype,sortway,type,pid);
-            for(Map mapinfo:goodlist){
-                int id =(int)mapinfo.get("goodid");
-                int types =0;
-                LmGoodAuction  lmGoodAuction=lmGoodAuctionService.findnowPriceByGoodidByApi(id,types);
-                if(!isEmpty(lmGoodAuction)){
-                    mapinfo.put("price",lmGoodAuction.getPrice());
-                }else {
-                    mapinfo.put("price", 0);
+            for(Map mapinfo:goodlist) {
+                Integer id = (int) mapinfo.get("goodid");
+                Integer ordertype = (int) mapinfo.get("type");
+                if (1 == ordertype) {
+                    int types = 0;
+                    LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                    if (!isEmpty(lmGoodAuction)) {
+                        mapinfo.put("price", lmGoodAuction.getPrice());
+                    } else {
+                        mapinfo.put("price", 0);
+                    }
+                    mapinfo.put("showtype", "good");
                 }
-                mapinfo.put("showtype","good");
             }
             if(goodlist!=null){
                 list.addAll(goodlist);

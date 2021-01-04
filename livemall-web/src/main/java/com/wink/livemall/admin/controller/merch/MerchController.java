@@ -152,7 +152,6 @@ public class MerchController {
         String bg_image = StringUtils.isEmpty(request.getParameter("bg_image"))?"":request.getParameter("bg_image");
         String mobile = StringUtils.isEmpty(request.getParameter("mobile"))?"":request.getParameter("mobile");
         String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
-        String member_id = StringUtils.isEmpty(request.getParameter("member_id"))?"0":request.getParameter("member_id");
         String weixin = StringUtils.isEmpty(request.getParameter("weixin"))?"":request.getParameter("weixin");
 
         try {
@@ -165,7 +164,6 @@ public class MerchController {
             lmMerchInfo.setBg_image(bg_image);
             lmMerchInfo.setUpdate_at(new Date());
             lmMerchInfo.setDescription(description);
-            lmMerchInfo.setMember_id(Integer.parseInt(member_id));
             lmMerchInfoService.updateService(lmMerchInfo);
         } catch (NumberFormatException e) {
             e.printStackTrace();

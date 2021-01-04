@@ -65,5 +65,15 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
         //生产物流消息机器人
         memberinfo.put("nickname","物流消息");
         httpClient.login("http://oss.xunshun.net/head/PToWmdrGyUiEXUIZNmZ0PwUq9re2ifgZ","物流消息",new Gson().toJson(memberinfo));
+
+
+       /*List<LmMember> list= lmMemberService.findAll();
+       for(LmMember lmMember:list){
+           String msg = "【直播预告 ：12月30日  晚 19:30-22:30】\n" +
+                   "尊敬的"+lmMember.getNickname()+"用户：\n" +
+                   "元旦焕新季，翡翠专场来袭，顶尖好货冰点价尽在——滴雨轩拍卖行直播间，与您不见不散！";
+           httpClient.send("拍品消息",lmMember.getId()+"",msg);
+       }*/
+
     }
 }

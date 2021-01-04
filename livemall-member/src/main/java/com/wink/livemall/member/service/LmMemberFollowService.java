@@ -2,6 +2,7 @@ package com.wink.livemall.member.service;
 
 import com.wink.livemall.member.dto.LmMemberFav;
 import com.wink.livemall.member.dto.LmMemberFollow;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -60,4 +61,6 @@ public interface LmMemberFollowService {
     int countNumYed(String merchid);
 
     List<LmMemberFollow> findByMerchidAndType(int i, int id);
+
+    List<LmMemberFollow> findByMerchidCount(int i, int id,int userid);
 }

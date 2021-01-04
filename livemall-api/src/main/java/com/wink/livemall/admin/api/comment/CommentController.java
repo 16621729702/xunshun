@@ -300,18 +300,25 @@ public class CommentController {
                               @ApiParam(name = "type", value = "发货/退货物流0发货1退货", required = true)@RequestParam("type") String type){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        Map<String,Object> map =new HashMap<>();
         try {
             LmOrder order = lmOrderService.findById(id);
             ExpressUtil expressUtil = new ExpressUtil();
             if(order!=null){
                 if("0".equals(type)){
                     String result = expressUtil.synQueryData(order.getExpress(), order.getExpresssn(),"","","",0);
-                    jsonResult.setData(result);
+                    map.put("express",order.getExpressname());
+                    map.put("results",result);
+                    map.put("expresssn",order.getExpresssn());
+                    jsonResult.setData(map);
                 }else{
                     LmOrderRefundLog lmOrderRefundLog = lmOrderService.findRefundLogById(order.getRefundid());
                     if(lmOrderRefundLog!=null){
                         String result = expressUtil.synQueryData(lmOrderRefundLog.getExpress(), lmOrderRefundLog.getSn(),"","","",0);
-                        jsonResult.setData(result);
+                        map.put("express",lmOrderRefundLog.getExpressname());
+                        map.put("results",result);
+                        map.put("expresssn",lmOrderRefundLog.getSn());
+                        jsonResult.setData(map);
                     }
                 }
             }

@@ -275,7 +275,7 @@ public class MerchGoodsController {
 		try {
 			VerifyFields ver = new VerifyFields();
 			String[] fields = { "weight", "mer_id", "type", "category_id", "place", "spec", "material", "title",
-					"description", "marketprice", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
+					"description", "marketprice", "stock",  "productprice", "freeshipping", "thumbs", "thumb","state"};
 			Map<String, Object> res = ver.verifytoEntity(fields, request, "com.wink.livemall.goods.dto.Good");
 			if ((int) res.get("error") == 0) {
 				Good entity = (Good) res.get("entity");
@@ -295,10 +295,15 @@ public class MerchGoodsController {
 						materials += Character.toUpperCase(word);
 					}
 				}
-				DateFormat format1= new SimpleDateFormat("MMdd");//日期格式
-				Integer sns =Integer.parseInt(mer_id);
-				String sn=materials+String.format("%04d", sns)+format1.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
-				entity.setSn(sn);
+				if(entity.getState()==0){
+					entity.setWarehouse("1");
+				}else {
+					DateFormat format1 = new SimpleDateFormat("MMdd");//日期格式
+					Integer sns = Integer.parseInt(mer_id);
+					String sn = materials + String.format("%04d", sns) + format1.format(new Date()) + (int) (Math.random() * (9999 - 1000) + 1000);
+					entity.setSn(sn);
+					entity.setWarehouse("2");
+				}
 				entity.setCreate_at(new Date());
 				if(entity.getType()==1){
 					if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
@@ -385,9 +390,9 @@ public class MerchGoodsController {
 		}
 		try {
 			VerifyFields ver = new VerifyFields();
-			String[] fields = { "weight", "auction_start_time", "auction_end_time", "startprice", "stepprice",
+			String[] fields = { "weight",  "startprice", "stepprice","marketprice",
 					"delaytime", "mer_id", "type", "category_id", "place", "spec", "material", "title", "description",
-					 "stock", "warehouse", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
+					 "stock", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
 			List<Map<String, String>> field_ = ver.checkEmptyField(fields, request);
 			Date date = new Date();
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -401,7 +406,7 @@ public class MerchGoodsController {
 			if(type==1) {
 				VerifyFields vers = new VerifyFields();
 				String[] fieldes = { "weight", "mer_id", "type", "category_id", "place", "spec", "material", "title",
-						"description", "marketprice", "stock", "warehouse", "productprice", "freeshipping", "thumbs", "thumb" };
+						"description", "marketprice", "stock",  "productprice", "freeshipping", "thumbs", "thumb" ,"state" };
 				Map<String, Object> ress = vers.checkEmptytoEntity(fieldes, request, "com.wink.livemall.goods.dto.Good");
 				String material =request.getParameter("material");
 				String materials="";
@@ -415,6 +420,7 @@ public class MerchGoodsController {
 						materials += Character.toUpperCase(word);
 					}
 				}
+
 				if (!StringUtils.isEmpty(request.getParameter("startprice"))) {
 					entityes.setStartprice(new BigDecimal(request.getParameter("startprice")));
 				}
@@ -433,15 +439,58 @@ public class MerchGoodsController {
 					Date auction_end_time = sesf.parse(request.getParameter("auction_end_time"));
 					entityes.setAuction_end_time(auction_end_time);
 				}
-				String mer_id =request.getParameter("mer_id");
-				DateFormat format1= new SimpleDateFormat("MMdd");//日期格式
-				Integer sns =Integer.parseInt(mer_id);
-				String sn=materials+String.format("%04d", sns)+format1.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
-				entityes.setSn(sn);
 				entityes.setCreate_at(new Date());
-				entityes.setState(1);
-				merchGoodService.addGoods(entityes);
+				if(entityes.getState()==0){
+					SimpleDateFormat times = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					Date start_time = times.parse(request.getParameter("auction_start_time"));
+					Date end_time = times.parse(request.getParameter("auction_end_time"));
+					String auction_start_times = times.format(start_time);
+					String auction_end_times = times.format(end_time);
+					Map<String, String> state6 = new HashMap<String, String>();
+					state6.put("field", "auction_start_time");
+					state6.put("value", auction_start_times);
+					field_.add(state6);
+					Map<String, String> state5 = new HashMap<String, String>();
+					state5.put("field", "auction_end_time");
+					state5.put("value", auction_end_times);
+					field_.add(state5);
+					Map<String, String> state = new HashMap<String, String>();
+					state.put("field", "state");
+					state.put("value", "0");
+					field_.add(state);
+					Map<String, String> state2 = new HashMap<String, String>();
+					state2.put("field", "auction_status");
+					state2.put("value", "0");
+					field_.add(state2);
+					Map<String, String> state3 = new HashMap<String, String>();
+					state3.put("field", "warehouse");
+					state3.put("value", "1");
+					field_.add(state3);
+					merchGoodService.updateByFields(field_, request.getParameter("id"));
+				}else {
+					String mer_id = request.getParameter("mer_id");
+					DateFormat format1 = new SimpleDateFormat("MMdd");//日期格式
+					Integer sns = Integer.parseInt(mer_id);
+					String sn = materials + String.format("%04d", sns) + format1.format(new Date()) + (int) (Math.random() * (9999 - 1000) + 1000);
+					entityes.setSn(sn);
+					entityes.setWarehouse("2");
+					merchGoodService.addGoods(entityes);
+					Good good=goodService.findById(Integer.parseInt(request.getParameter("id")));
+					good.setState(0);
+					good.setAuction_status(2);
+					good.setIsdelete(1);
+					merchGoodService.updateEntity(good);
+				}
 			}else {
+				Map<String, String> state6 = new HashMap<String, String>();
+				state6.put("field", "auction_start_time");
+				state6.put("value", "null");
+				field_.add(state6);
+				Map<String, String> state5 = new HashMap<String, String>();
+				state5.put("field", "auction_end_time");
+				state5.put("value", "null");
+				field_.add(state5);
+
 				if (status != null && status.equals("1")) {
 					//设置上架
 					Map<String, String> state = new HashMap<String, String>();
@@ -456,21 +505,29 @@ public class MerchGoodsController {
 					state3.put("field", "bidsnum");
 					state3.put("value", "0");
 					field_.add(state3);
+					Map<String, String> state4 = new HashMap<String, String>();
+					state4.put("field", "warehouse");
+					state4.put("value", "2");
+					field_.add(state4);
 					//清空出价记录
-					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					/*List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
 					for (LmGoodAuction lm : list) {
 						lmGoodAuctionService.deleteService(lm);
-					}
+					}*/
 				} else {
 					Map<String, String> state = new HashMap<String, String>();
 					state.put("field", "state");
 					state.put("value", "0");
 					field_.add(state);
+					Map<String, String> state4 = new HashMap<String, String>();
+					state4.put("field", "warehouse");
+					state4.put("value", "1");
+					field_.add(state4);
 					//清空出价记录
-					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					/*List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
 					for (LmGoodAuction lm : list) {
 						lmGoodAuctionService.deleteService(lm);
-					}
+					}*/
 				}
 
 				merchGoodService.updateByFields(field_, request.getParameter("id"));
@@ -596,7 +653,11 @@ public class MerchGoodsController {
 			return jsonResult;
 		}
 		try {
-			merchGoodService.delGoods(Integer.parseInt(request.getParameter("id")));
+			    Good good=goodService.findById(Integer.parseInt(request.getParameter("id")));
+				good.setState(0);
+				good.setAuction_status(2);
+			    good.setIsdelete(1);
+			merchGoodService.updateEntity(good);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());
 			jsonResult.setCode(JsonResult.ERROR);

@@ -49,7 +49,7 @@ public interface LmMemberFavService {
 
     void addService(LmMemberFav lmMemberFav);
 
-    List<Map<String, String>> findInfoByMemberidByApi(int userid, int type);
+    List<Map<String, Object>> findInfoByMemberidByApi(int userid, int type);
 
     LmMemberFav findByMemberidAndTypeAndId(int userid, int type, int id);
 }

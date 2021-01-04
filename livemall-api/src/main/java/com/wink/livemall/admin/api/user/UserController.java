@@ -354,11 +354,23 @@ public class UserController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        List<Map<String,String>> list = new ArrayList<>();
+        List<Map<String,Object>> list = new ArrayList<>();
         try {
             if(type==1){
                 list = lmMemberFavService.findInfoByMemberidByApi(userid,type);
-
+                for(Map<String,Object> returnlist1:list){
+                    Integer id=(int)returnlist1.get("id");
+                    Integer goodtype =(int)returnlist1.get("type");
+                    int types =0;
+                    if(1==goodtype) {
+                        LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                        if (!isEmpty(lmGoodAuction)) {
+                            returnlist1.put("goodprice", lmGoodAuction.getPrice());
+                        } else {
+                            returnlist1.put("goodprice", 0);
+                        }
+                    }
+                }
             }else{
                 list = lmMemberFavService.findInfoByMemberidByApi(userid,type);
             }
@@ -489,6 +501,13 @@ public class UserController {
         try {
             LmMemberFollow lmMemberFollow =lmMemberFollowService.findByMemberidAndTypeAndId(userid,type,id);
             if(lmMemberFollow==null){
+                if(type==1){
+                    LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
+                    //获取店铺关注人数
+                    int count= lmMerchInfo.getFocusnum();
+                    lmMerchInfo.setFocusnum(count+1);
+                    lmMerchInfoService.updateService(lmMerchInfo);
+                }
                 lmMemberFollow = new LmMemberFollow();
                 lmMemberFollow.setFollow_id(id);
                 lmMemberFollow.setFollow_type(type);
@@ -497,18 +516,16 @@ public class UserController {
                 lmMemberFollow.setState(0);
                 lmMemberFollowService.addService(lmMemberFollow);
             }else{
-                lmMemberFollowService.deleteService(lmMemberFollow.getId());
-            }
-            //设置店铺关注人数
-            if(type==1){
-                LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
-                //获取店铺关注人数
-                List<LmMemberFollow> list = lmMemberFollowService.findByMerchidAndType(id,type);
-                if(list!=null){
-                    lmMerchInfo.setFocusnum(list.size());
+                if(type==1){
+                    LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
+                    //获取店铺关注人数
+                    int count= lmMerchInfo.getFocusnum();
+                    lmMerchInfo.setFocusnum(count-1);
                     lmMerchInfoService.updateService(lmMerchInfo);
                 }
+                lmMemberFollowService.deleteService(lmMemberFollow.getId());
             }
+
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);

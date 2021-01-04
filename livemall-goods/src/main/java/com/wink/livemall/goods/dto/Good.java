@@ -69,10 +69,17 @@ public class Good   {
     private int ischipped; //是否合买 0否1是
     private int chipped_num;//合买份数0否1是
     private BigDecimal chipped_price;//合买单价0否1是
-    
-    
+    private int isdelete; //是否删除 1删除
 
-	public int getIschipped() {
+    public int getIsdelete() {
+        return isdelete;
+    }
+
+    public void setIsdelete(int isdelete) {
+        this.isdelete = isdelete;
+    }
+
+    public int getIschipped() {
 		return ischipped;
 	}
 
@@ -474,4 +481,6 @@ public class Good   {
     public void setFreeshipping(int freeshipping) {
         this.freeshipping = freeshipping;
     }
+
+
 }

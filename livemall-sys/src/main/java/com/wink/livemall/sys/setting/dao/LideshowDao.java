@@ -27,7 +27,7 @@ public interface LideshowDao extends tk.mybatis.mapper.common.Mapper<Lideshow>{
      * @param type
      * @return
      */
-    @Select("SELECT * FROM lm_setting_lideshows WHERE type = #{type}")
+    @Select("SELECT * FROM lm_setting_lideshows WHERE type = #{type} ORDER BY sort ")
     List<Lideshow> findListBytype(@Param("type")int type);
 
     class LideshowDaoprovider{

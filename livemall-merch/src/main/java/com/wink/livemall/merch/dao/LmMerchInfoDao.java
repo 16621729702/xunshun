@@ -116,6 +116,8 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
                    " WHERE  lm.state = 1";
             if(categoryid==0){
                 sql += " and lm.isrecommend = 1";
+            }else if(categoryid==9){
+                sql += " and lm.categoryid =2";
             }else{
                 sql += " and lm.categoryid =#{categoryid}";
             }

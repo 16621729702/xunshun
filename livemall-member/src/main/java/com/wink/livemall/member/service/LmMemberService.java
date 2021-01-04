@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface LmMemberService {
+
+
     /**
      * 根据主键查询
      * @param id

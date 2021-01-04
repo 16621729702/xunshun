@@ -48,7 +48,7 @@ public interface GoodService {
 
     List<Map<String,Object>> findByMerchIdByApi(Integer merchid);
 
-    List<Map<String, String>> findByMerchIdAndTypeByApi(int merchid, int type);
+    List<Map<String, Object>> findByMerchIdAndTypeByApi(int merchid, int type);
 
     /**
      * app获取商品材质

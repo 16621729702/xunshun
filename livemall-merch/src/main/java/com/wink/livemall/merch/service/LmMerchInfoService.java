@@ -3,6 +3,7 @@ package com.wink.livemall.merch.service;
 import com.wink.livemall.merch.dto.LmMerchAdmin;
 import com.wink.livemall.merch.dto.LmMerchApplyInfo;
 import com.wink.livemall.merch.dto.LmMerchInfo;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -103,4 +104,8 @@ public interface LmMerchInfoService {
     List<Map<String, Object>> findAdminInfo(String merchid);
 
     List<LmMerchAdmin> findAdminByMember(int id);
+
+    LmMerchAdmin findMerchAdmin(int memberid, int merchid);
+
+    List<LmMerchAdmin> findAdminByMerchid(int merchid);
 }

@@ -144,6 +144,7 @@ public class LmMerchInfoServiceImpl implements LmMerchInfoService {
         return lmMerchAdminDao.findAdminByMember(id);
     }
 
+
     @Override
 	public int checkMerchEnable(String id) {
 		// TODO Auto-generated method stub
@@ -157,7 +158,15 @@ public class LmMerchInfoServiceImpl implements LmMerchInfoService {
 		lmMerchInfoDao.updateByFields(params, id);
 	}
 
+    @Override
+    public LmMerchAdmin findMerchAdmin(int memberid, int merchid) {
+        return lmMerchAdminDao.findMerchAdmin(memberid,merchid);
+    }
 
+    @Override
+    public List<LmMerchAdmin> findAdminByMerchid(int merchid) {
+        return lmMerchAdminDao.findAdminByMerchid(merchid);
+    }
 
 
 }

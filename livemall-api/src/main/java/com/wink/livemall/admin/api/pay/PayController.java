@@ -77,7 +77,8 @@ import java.util.*;
 public class PayController {
     private static final Logger logger = LogManager.getLogger(PayController.class);
 
-    private static String NotifyUrl = "http://api.xunshun.net/api/pay/ordersuccess";
+    //private static String NotifyUrl = "http://api.xunshun.net/api/pay/ordersuccess";
+   private static String NotifyUrl = "http://58.33.105.174:8989/api/pay/ordersuccess";
 
     @Value("${server.servlet.context-path}")
     private String path;
@@ -106,55 +107,56 @@ public class PayController {
     private LmMerchOrderService lmMerchOrderService;
 
 
-    private Long getorderprice(LmOrder lmOrder,Long totalAmount){
-        if(lmOrder.getType()==3){
+    private Long getorderprice(LmOrder lmOrder, Long totalAmount) {
+        if (lmOrder.getType() == 3) {
             LmOrderGoods orderGood = lmOrderGoodsService.findByOrderid(lmOrder.getId());
             LmShareGood shareGood = goodService.findshareById(orderGood.getGoodid());
             //商品金额
             BigDecimal price = shareGood.getChipped_price().multiply(new BigDecimal("1")).multiply(new BigDecimal("100"));
             //如果是合买订单 则先支付定金
-            if(lmOrder.getType()==3&&lmOrder.getIsprepay()==1){
+            if (lmOrder.getType() == 3 && lmOrder.getIsprepay() == 1) {
                 //订金金额
                 BigDecimal payprice;
                 //是否支付过定金
-                if(lmOrder.getDeposit_type()==0){
+                if (lmOrder.getDeposit_type() == 0) {
                     payprice = price.multiply(new BigDecimal("0.3"));
-                    if(shareGood.getChipped_num()==1){
+                    if (shareGood.getChipped_num() == 1) {
                         BigDecimal s = price.multiply(new BigDecimal("0.05"));
-                        payprice =payprice.add(s);
+                        payprice = payprice.add(s);
                     }
-                }else{
+                } else {
                     payprice = price.multiply(new BigDecimal("0.3"));
-                    if(shareGood.getChipped_num()==1){
+                    if (shareGood.getChipped_num() == 1) {
                         BigDecimal s = price.multiply(new BigDecimal("0.05"));
-                        payprice =payprice.add(s);
+                        payprice = payprice.add(s);
                     }
                     payprice = lmOrder.getRealpayprice().multiply(new BigDecimal("100")).subtract(payprice);
                 }
                 System.out.println(payprice.longValue());
                 totalAmount = payprice.longValue();
-            }else{
-                if(shareGood.getChipped_num()==1){
+            } else {
+                if (shareGood.getChipped_num() == 1) {
                     totalAmount = price.multiply(new BigDecimal("1.05")).longValue();
                 }
             }
         }
         return totalAmount;
     }
+
     /**
      * 下单请求模块
      * 支付宝云闪付下单
      */
     @ApiOperation(value = "下单请求模块")
-    @RequestMapping(value = "/order",method = RequestMethod.POST)
-    public Map<String,Object> order(HttpServletRequest request,HttpServletResponse response, @ApiParam(name = "merOrderId", value = "订单号", required = true)@RequestParam(value = "merOrderId",defaultValue = "0") String merOrderId,
-                                    @ApiParam(name = "type", value = "支付类型", required = true)@RequestParam(value = "type",defaultValue = "0") String type,
-                                    @ApiParam(name = "totalAmount", value = "金额", required = true)@RequestParam(value = "totalAmount",defaultValue = "0") long totalAmount
-    ){
-        System.out.println("请求参数对象merOrderId{}totalAmount{}："+merOrderId+"  "+totalAmount);
-        Map<String,Object> returnmap = new HashMap<>();
+    @RequestMapping(value = "/order", method = RequestMethod.POST)
+    public Map<String, Object> order(HttpServletRequest request, HttpServletResponse response, @ApiParam(name = "merOrderId", value = "订单号", required = true) @RequestParam(value = "merOrderId", defaultValue = "0") String merOrderId,
+                                     @ApiParam(name = "type", value = "支付类型", required = true) @RequestParam(value = "type", defaultValue = "0") String type,
+                                     @ApiParam(name = "totalAmount", value = "金额", required = true) @RequestParam(value = "totalAmount", defaultValue = "0") long totalAmount
+    ) {
+        System.out.println("请求参数对象merOrderId{}totalAmount{}：" + merOrderId + "  " + totalAmount);
+        Map<String, Object> returnmap = new HashMap<>();
         LmOrder lmOrder = lmOrderService.findByOrderId(merOrderId);
-        if(lmOrder==null){
+        if (lmOrder == null) {
             return returnmap;
         }
 //        //如果是合买订单
@@ -185,17 +187,17 @@ public class PayController {
 //                return returnmap;
 //            }
 //        }
-        totalAmount = getorderprice(lmOrder,lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
+        totalAmount = getorderprice(lmOrder, lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
         //查询是否有相同订单下单请求
-        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(merOrderId,"placeorder");
-        if(oldlmPayLog!=null){
+        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(merOrderId, "placeorder");
+        if (oldlmPayLog != null) {
             merOrderId = getneworderno();
             lmOrder.setNeworderid(merOrderId);
         }
         {
-            Configs configs =configsService.findByTypeId(Configs.type_pay);
-            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-            returnmap.put("config",configs.getConfig());
+            Configs configs = configsService.findByTypeId(Configs.type_pay);
+            Map map = com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+            returnmap.put("config", configs.getConfig());
             //组织请求报文
             JSONObject json = new JSONObject();
             json.put("instMid", map.get("instMid"));
@@ -212,32 +214,32 @@ public class PayController {
             json.put("tid", map.get("tid"));
             json.put("totalAmount", totalAmount);
             Map<String, String> paramsMap = PayUtil.jsonToMap(json);
-            paramsMap.put("sign", PayUtil.makeSign(map.get("MD5Key")+"", paramsMap));
-            System.out.println("paramsMap："+paramsMap);
+            paramsMap.put("sign", PayUtil.makeSign(map.get("MD5Key") + "", paramsMap));
+            System.out.println("paramsMap：" + paramsMap);
             String strReqJsonStr = JSON.toJSONString(paramsMap);
-            System.out.println("strReqJsonStr:"+strReqJsonStr);
+            System.out.println("strReqJsonStr:" + strReqJsonStr);
             //调用银商平台获取二维码接口
             HttpURLConnection httpURLConnection = null;
             BufferedReader in = null;
             PrintWriter out = null;
 //        OutputStreamWriter out = null;
             String resultStr = null;
-            Map<String,String> resultMap = new HashMap<String,String>();
-            if (!StringUtils.isNotBlank(map.get("APIurl")+"")) {
-                resultMap.put("errCode","URLFailed");
+            Map<String, String> resultMap = new HashMap<String, String>();
+            if (!StringUtils.isNotBlank(map.get("APIurl") + "")) {
+                resultMap.put("errCode", "URLFailed");
                 resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
+                returnmap.put("returninfo", resultStr);
                 return returnmap;
             }
             try {
-                URL url = new URL(map.get("APIurl")+"");
+                URL url = new URL(map.get("APIurl") + "");
                 httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.setRequestMethod("POST");
                 httpURLConnection.setDoInput(true);
                 httpURLConnection.setDoOutput(true);
-                httpURLConnection.setRequestProperty("Content_Type","application/json");
-                httpURLConnection.setRequestProperty("Accept_Charset","UTF-8");
-                httpURLConnection.setRequestProperty("contentType","UTF-8");
+                httpURLConnection.setRequestProperty("Content_Type", "application/json");
+                httpURLConnection.setRequestProperty("Accept_Charset", "UTF-8");
+                httpURLConnection.setRequestProperty("contentType", "UTF-8");
                 //发送POST请求参数
                 out = new PrintWriter(httpURLConnection.getOutputStream());
                 out.write(strReqJsonStr);
@@ -246,18 +248,18 @@ public class PayController {
                 if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     StringBuffer content = new StringBuffer();
                     String tempStr = null;
-                    in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(),"UTF-8"));
-                    while ((tempStr=in.readLine()) != null){
+                    in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(), "UTF-8"));
+                    while ((tempStr = in.readLine()) != null) {
                         content.append(tempStr);
                     }
-                    System.out.println("content:"+content.toString());
+                    System.out.println("content:" + content.toString());
                     //转换成json对象
                     com.alibaba.fastjson.JSONObject respJson = JSON.parseObject(content.toString());
                     String resultCode = respJson.getString("errCode");
-                    resultMap.put("errCode",resultCode);
-                    resultMap.put("respStr",respJson.toString());
+                    resultMap.put("errCode", resultCode);
+                    resultMap.put("respStr", respJson.toString());
                     resultStr = JSONObject.fromObject(resultMap).toString();
-                    returnmap.put("returninfo",resultStr);
+                    returnmap.put("returninfo", resultStr);
                     //添加记录
                     LmPayLog lmPayLog = new LmPayLog();
                     lmPayLog.setCreatetime(new Date());
@@ -265,51 +267,52 @@ public class PayController {
                     lmPayLog.setType("placeorder");
                     lmPayLog.setSysmsg(resultStr);
                     lmPayLogService.insertService(lmPayLog);
-                    if("trade.precreate".equals(type)){
+                    if ("trade.precreate".equals(type)) {
                         lmOrder.setPaystatus("0");
                     }
-                    if("wx.unifiedOrder".equals(type)){
+                    if ("wx.unifiedOrder".equals(type)) {
                         lmOrder.setPaystatus("1");
                     }
-                    if("uac.appOrder".equals(type)){
+                    if ("uac.appOrder".equals(type)) {
                         lmOrder.setPaystatus("2");
                     }
                     lmOrderService.updateService(lmOrder);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                resultMap.put("errCode","HttpURLException");
-                resultMap.put("msg","调用银商接口出现异常："+e.toString());
+                resultMap.put("errCode", "HttpURLException");
+                resultMap.put("msg", "调用银商接口出现异常：" + e.toString());
                 resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
+                returnmap.put("returninfo", resultStr);
                 return returnmap;
-            }finally {
+            } finally {
                 if (out != null) {
                     out.close();
                 }
                 httpURLConnection.disconnect();
             }
-            System.out.println("resultStr:"+resultStr);
+            System.out.println("resultStr:" + resultStr);
             return returnmap;
         }
     }
+
     /**
      * 获取下单金额
      */
     @ApiOperation(value = "获取下单金额")
-    @RequestMapping(value = "/getorderprice",method = RequestMethod.POST)
-    public JsonResult getorderprice( @ApiParam(name = "merOrderId", value = "订单号", required = true)@RequestParam(value = "merOrderId",defaultValue = "0") String merOrderId,
-                            @ApiParam(name = "totalAmount", value = "金额", required = true)@RequestParam(value = "totalAmount",defaultValue = "0") long totalAmount
-    ){
+    @RequestMapping(value = "/getorderprice", method = RequestMethod.POST)
+    public JsonResult getorderprice(@ApiParam(name = "merOrderId", value = "订单号", required = true) @RequestParam(value = "merOrderId", defaultValue = "0") String merOrderId,
+                                    @ApiParam(name = "totalAmount", value = "金额", required = true) @RequestParam(value = "totalAmount", defaultValue = "0") long totalAmount
+    ) {
         JsonResult jsonResult = new JsonResult();
-        System.out.println("请求参数对象merOrderId{}totalAmount{}："+merOrderId+"  "+totalAmount);
+        System.out.println("请求参数对象merOrderId{}totalAmount{}：" + merOrderId + "  " + totalAmount);
         LmOrder lmOrder = lmOrderService.findByOrderId(merOrderId);
-        if(lmOrder==null){
+        if (lmOrder == null) {
             jsonResult.setCode(JsonResult.ERROR);
             jsonResult.setMsg("订单不存在");
             return jsonResult;
         }
-        totalAmount = getorderprice(lmOrder,lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
+        totalAmount = getorderprice(lmOrder, lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
         jsonResult.setData(totalAmount);
         return jsonResult;
     }
@@ -318,14 +321,14 @@ public class PayController {
      * 微信下单请求模块
      */
     @ApiOperation(value = "下单请求模块")
-    @RequestMapping(value = "/wxorder",method = RequestMethod.POST)
-    public JsonResult order(HttpServletRequest request,HttpServletResponse response, @ApiParam(name = "merOrderId", value = "订单号", required = true)@RequestParam(value = "merOrderId",defaultValue = "0") String merOrderId,
-                            @ApiParam(name = "totalAmount", value = "金额", required = true)@RequestParam(value = "totalAmount",defaultValue = "0") long totalAmount
-    ){
+    @RequestMapping(value = "/wxorder", method = RequestMethod.POST)
+    public JsonResult order(HttpServletRequest request, HttpServletResponse response, @ApiParam(name = "merOrderId", value = "订单号", required = true) @RequestParam(value = "merOrderId", defaultValue = "0") String merOrderId,
+                            @ApiParam(name = "totalAmount", value = "金额", required = true) @RequestParam(value = "totalAmount", defaultValue = "0") long totalAmount
+    ) {
         JsonResult jsonResult = new JsonResult();
-        System.out.println("请求参数对象merOrderId{}totalAmount{}："+merOrderId+"  "+totalAmount);
+        System.out.println("请求参数对象merOrderId{}totalAmount{}：" + merOrderId + "  " + totalAmount);
         LmOrder lmOrder = lmOrderService.findByOrderId(merOrderId);
-        if(lmOrder==null){
+        if (lmOrder == null) {
             jsonResult.setCode(JsonResult.ERROR);
             jsonResult.setMsg("订单不存在");
             return jsonResult;
@@ -352,17 +355,17 @@ public class PayController {
 //                return jsonResult;
 //            }
 //        }
-        totalAmount = getorderprice(lmOrder,lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
+        totalAmount = getorderprice(lmOrder, lmOrder.getRealpayprice().multiply(new BigDecimal("100")).longValue());
         //查询是否有相同订单下单请求
-        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(merOrderId,"placeorder");
-        if(oldlmPayLog!=null){
+        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(merOrderId, "placeorder");
+        if (oldlmPayLog != null) {
             merOrderId = getneworderno();
             lmOrder.setNeworderid(merOrderId);
         }
         try {
             WeixinpayUtil weixinpayUtil = new WeixinpayUtil();
-            Map<String,String> returninfo = weixinpayUtil.wxPayFunction(totalAmount+"",merOrderId,"微信下单",getIpAddr(request));
-            returninfo.put("merOrderId",merOrderId);
+            Map<String, String> returninfo = weixinpayUtil.wxPayFunction(totalAmount + "", merOrderId, "微信下单", getIpAddr(request));
+            returninfo.put("merOrderId", merOrderId);
             //添加记录
             LmPayLog lmPayLog = new LmPayLog();
             lmPayLog.setCreatetime(new Date());
@@ -384,6 +387,40 @@ public class PayController {
         return jsonResult;
     }
 
+    @ApiOperation(value = "开店无费用")
+    @RequestMapping(value = "/freemoney", method = RequestMethod.POST)
+    public JsonResult freemoney(HttpServletRequest request, HttpServletResponse response,
+                                @ApiParam(name = "id", value = "店铺id", required = true) @RequestParam(value = "id", defaultValue = "0") int id
+    ) {
+        JsonResult jsonResult = new JsonResult();
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!org.springframework.util.StringUtils.isEmpty(header)) {
+            if(!org.springframework.util.StringUtils.isEmpty(redisUtil.get(header))){
+                userid = redisUtil.get(header)+"";
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
+        try {
+            LmMerchInfo info=lmMerchInfoService.findById(id+"");
+            info.setState(1);
+            int r=lmMerchInfoService.updateService(info);
+            if(r>0) {
+                jsonResult.setCode(JsonResult.SUCCESS);
+            }else {
+                jsonResult.setCode(JsonResult.ERROR);
+            }
+            return jsonResult;
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setCode(JsonResult.ERROR);
+            jsonResult.setMsg(e.getMessage());
+            return jsonResult;
+        }
+    }
+
     /**
      * 微信支付保障金
      */
@@ -394,7 +431,6 @@ public class PayController {
                             @ApiParam(name = "totalAmount", value = "金额", required = true)@RequestParam(value = "totalAmount",defaultValue = "0") long totalAmount
     ){
         JsonResult jsonResult = new JsonResult();
-        totalAmount=1;
         Map<String,Object> returnmap = new HashMap<>();
         String header = request.getHeader("Authorization");
         String userid = "";
@@ -465,7 +501,7 @@ public class PayController {
                                        @ApiParam(name = "merchid", value = "商户id", required = true)@RequestParam(value = "merchid",defaultValue = "0") int merchid,
                                        @ApiParam(name = "totalAmount", value = "金额", required = true)@RequestParam(value = "totalAmount",defaultValue = "0") long totalAmount
     ){
-        totalAmount=1;
+
         Map<String,Object> returnmap = new HashMap<>();
         String header = request.getHeader("Authorization");
         String userid = "";
@@ -723,7 +759,7 @@ public class PayController {
                         LmMember member = lmMemberService.findById(lmOrder.getMemberid()+"");
                         LmMerchInfo info=lmMerchInfoService.findById(lmOrder.getMerchid()+"");
                         HttpClient httpClient = new HttpClient();
-                        httpClient.send("交易消息",info.getMember_id()+"","用户"+member.getNickname()+"付款成功尽快发货，订单号："+lmOrder.getOrderid());
+                        httpClient.send("交易消息",info.getMember_id()+"","用户"+member.getNickname()+"付款成功请尽快发货，订单号："+lmOrder.getOrderid());
                     }
                     return_data.put("return_code", "SUCCESS");
                     return_data.put("return_msg", "OK");

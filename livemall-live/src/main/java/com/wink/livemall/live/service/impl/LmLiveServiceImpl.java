@@ -16,12 +16,12 @@ public class LmLiveServiceImpl implements LmLiveService {
     private LmLiveDao lmLiveDao;
 
     @Override
-    public List<Map<String,String>> findListByCategoryIdByApi(int pid) {
+    public List<Map<String,Object>> findListByCategoryIdByApi(int pid) {
         return lmLiveDao.findListByCategoryIdByApi(pid);
     }
 
     @Override
-    public List<Map<String, String>> findfollewLiveByApi(int memberid) {
+    public List<Map<String,Object>> findfollewLiveByApi(int memberid) {
         return lmLiveDao.findfollewLiveByApi(memberid);
     }
 
@@ -56,7 +56,7 @@ public class LmLiveServiceImpl implements LmLiveService {
     }
 
     @Override
-    public List<Map<String, String>> findHotLiveByApi() {
+    public List<Map<String,Object>> findHotLiveByApi() {
         return lmLiveDao.findHotLiveByApi();
     }
 

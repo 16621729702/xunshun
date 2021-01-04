@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.wink.livemall.admin.util.*;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
+import com.wink.livemall.goods.dto.LivedGood;
+import com.wink.livemall.live.dto.*;
+import com.wink.livemall.live.service.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,15 +33,6 @@ import com.wink.livemall.goods.dto.GoodCategory;
 import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.MerchGoodService;
-import com.wink.livemall.live.dto.LmLive;
-import com.wink.livemall.live.dto.LmLiveCategory;
-import com.wink.livemall.live.dto.LmLiveGood;
-import com.wink.livemall.live.dto.LmLiveLog;
-import com.wink.livemall.live.service.LmLiveCategoryService;
-import com.wink.livemall.live.service.LmLiveGoodService;
-import com.wink.livemall.live.service.LmLiveLogService;
-import com.wink.livemall.live.service.LmLiveService;
-import com.wink.livemall.live.service.LmMerchLiveService;
 import com.wink.livemall.member.dto.LmMember;
 import com.wink.livemall.member.dto.LmMemberLog;
 import com.wink.livemall.member.service.LmMemberService;
@@ -77,6 +71,9 @@ public class MerchLiveController {
 	
 	@Autowired
 	private LmLiveLogService lmLiveLogService;
+
+	@Autowired
+	private LmLiveInfoService lmLiveInfoService;
 
 	/**
 	 * 直播商品列表
@@ -222,6 +219,16 @@ public class MerchLiveController {
 			liveLog.setLiveid(live.getId());
 			lmLiveLogService.addLog(liveLog);
 		} else {
+			//清除观看人数
+			LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(live.getId());
+			lmLiveInfo.setAddnum(0);
+			lmLiveInfoService.updateService(lmLiveInfo);
+			//清除直播间商品
+			List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(live.getId());
+			for(LivedGood good:oldgood){
+					good.setStatus(-1);
+					goodService.updateLivedGood(good);
+			}
 			//注销群组
 			client.deleteGroup(live.getLivegroupid());
 			live.setIsstart(0);
@@ -402,6 +409,11 @@ public class MerchLiveController {
 					entity.setType(0);
 				}
 				LmMerchLiveService.addLiveApply(entity);
+				LmLive lives = LmMerchLiveService.findLiveByMerchid(Integer.parseInt(request.getParameter("merch_id")));
+				LmLiveInfo lmLiveInfo=new LmLiveInfo();
+				lmLiveInfo.setLive_id(lives.getId());
+				lmLiveInfo.setCreate_time(new Date());
+				lmLiveInfoService.insertService(lmLiveInfo);
 				jsonResult.setCode(JsonResult.SUCCESS);
 			} else {
 				jsonResult.setMsg((String) res.get("msg"));

@@ -27,7 +27,7 @@ public interface LmMemberFavDao  extends tk.mybatis.mapper.common.Mapper<LmMembe
     LmMemberFav findByMemberidAndVideoidByApi(@Param("userid")int menberid, @Param("videoid")int videoid);
 
     @SelectProvider(type = LmMemberFavDaoprovider.class, method = "findInfoByMemberidByApi")
-    List<Map<String, String>> findInfoByMemberidByApi(@Param("userid")int userid, @Param("type")int type);
+    List<Map<String, Object>> findInfoByMemberidByApi(@Param("userid")int userid, @Param("type")int type);
 
     @SelectProvider(type = LmMemberFavDaoprovider.class, method = "findByMemberidAndTypeAndId")
     LmMemberFav findByMemberidAndTypeAndId(@Param("userid")int userid, @Param("type")int type, @Param("id")int id);
@@ -41,9 +41,10 @@ public interface LmMemberFavDao  extends tk.mybatis.mapper.common.Mapper<LmMembe
                         " lg.title as goodname," +
                         " lg.thumb as img," +
                         " lg.id as id," +
+                        " lg.type as type," +
                         " lmt.id as favid," +
                         " lg.productprice as price" +
-                        " from lm_member_fav lmt , lm_goods lg  where lmt.goods_id = lg.id  " +
+                        " from lm_member_fav lmt , lm_goods lg  where lmt.goods_id = lg.id and lg.isdelete =0 " +
                         " and lmt.member_id = #{userid}";
                 sql+=" and lmt.state = 0 ";
                 sql+=" order by create_time desc ";

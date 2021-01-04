@@ -11,6 +11,6 @@ import java.util.Map;
 @Mapper
 public interface LmMerchCategoryDao extends tk.mybatis.mapper.common.Mapper<LmMerchCategory>{
 
-    @Select("SELECT * FROM lm_merch_category WHERE isshow = 0")
+    @Select("SELECT * FROM lm_merch_category WHERE isshow = 0 order by sort ")
     List<LmMerchCategory> findActiceListByApi();
 }

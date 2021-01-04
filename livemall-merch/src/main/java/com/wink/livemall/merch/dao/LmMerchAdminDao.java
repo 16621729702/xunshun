@@ -21,4 +21,7 @@ public interface LmMerchAdminDao extends tk.mybatis.mapper.common.Mapper<LmMerch
 
     @Select("SELECT * FROM lm_merch_admin where memberid = #{memberid} ")
     List<LmMerchAdmin> findAdminByMember(int id);
+
+    @Select("SELECT * FROM lm_merch_admin where merchid = #{merchid} ")
+    List<LmMerchAdmin> findAdminByMerchid(int merchid);
 }

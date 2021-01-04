@@ -43,6 +43,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 
     //order by rand()
     @Select("SELECT lg.id as goodid,lg.bidsnum as bidsnum ,lg.title as name , lg.thumb as goodimg," +
+            " lg.thumbs as goodimgs ," +
             " lm.isauction as isauction ," +
             " lm.isdirect as isdirect ," +
             " lm.isquality as isquality ," +
@@ -50,12 +51,13 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
             " lg.stepprice as stepprice ," +
+            " lg.marketprice as marketprice ," +
             " lg.type as type ," +
             " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 ")
     List<Map> findHotList();
 
 
-    @Select("SELECT lg.type as type,lg.id as goodid,lg.id as goodid,lg.title as name , lg.thumb as goodimg, " +
+    @Select("SELECT lg.type as type,lg.id as goodid,lg.title as name ,lg.thumb as goodimg,lg.thumbs as goodimgs," +
             " lg.productprice as goodprice," +
             " lg.stepprice as stepprice," +
             " lg.bidsnum as bidsnum " +
@@ -70,8 +72,10 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
             " lg.stepprice as stepprice," +
+            " lg.type as type ," +
+            " lg.thumbs as goodimgs ," +
             "lg.title as name ,lg.bidsnum as bidsnum, lg.thumb as goodimg, lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.mer_id = #{merchid} and lg.type = #{type} and lg.state = 1 order by sale_num ")
-    List<Map<String, String>> findByMerchIdAndTypeByApi(@Param("merchid")int merchid, @Param("type")int type);
+    List<Map<String, Object>> findByMerchIdAndTypeByApi(@Param("merchid")int merchid, @Param("type")int type);
 
     @SelectProvider(type = GoodDaoprovider.class, method = "findInfoByApi")
     List<Map> findInfoByApi(String categoryid, String goodname, String topprice, String lowprice , String isauction, String isstores, String isgoodshop, String ispackage, String isback, String isstudio, String material, String sorttype, String sortway,String type,String pid);
@@ -85,6 +89,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
             " lg.stepprice as stepprice," +
+            " lg.thumbs as goodimgs," +
             " lg.type as type," +
             "lg.bidsnum as bidsnum FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.mer_id = #{merchid} and lg.state = 1 order by sale_num ")
     List<Map<String, Object>> findhotByMerchIdByApi(@Param("merchid")int merchid);
@@ -153,6 +158,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
                     " lm.refund as refund ," +
                     " lm.isoem as isoem ," +
                     " lg.stepprice as stepprice," +
+                    " lg.type as type," +
                     " lg.bidsnum as bidsnum" +
                     " from lm_goods lg left join lm_merch_info lm on lg.mer_id = lm.id " +
                     " left join lm_goods_categories lgc on lg.category_id = lgc.id  where lg.state = 1  ";
@@ -236,6 +242,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
         public String findInfoByName(String name) {
             String sql = "SELECT " +
                     " lg.thumb as goodimg, " +
+                    " lg.thumbs as goodimgs, " +
                     " lg.id as goodid, " +
                     " lg.productprice as price," +
                     " lg.title as name , " +

@@ -20,6 +20,7 @@ import com.wink.livemall.live.util.QiniuUtil;
 import com.wink.livemall.member.dto.LmMember;
 import com.wink.livemall.member.dto.LmMemberAddress;
 import com.wink.livemall.member.dto.LmMemberLevel;
+import com.wink.livemall.member.dto.LmMemberStart;
 import com.wink.livemall.member.service.LmMemberAddressService;
 import com.wink.livemall.member.service.LmMemberLevelService;
 import com.wink.livemall.member.service.LmMemberService;
@@ -135,11 +136,22 @@ public class OrderSchedule {
                         lmOrderGoods.setGoodprice(auction.getPrice());
                         lmOrderGoods.setOrderid(lmOrder.getId());
                         lmOrderGoodsService.insertService(lmOrderGoods);
-                        //发送通知 同时用户竞拍成功
+
+                       /* //发送通知 同时用户竞拍成功
                         String msg = "您拍卖的商品："+good.getTitle()+"已竞拍成功，请尽快支付订单";
 //                    pushmsgService.send(0,msg,"2",memberid,0);
                         HttpClient httpClient = new HttpClient();
-                        httpClient.send("拍品消息",memberid+"",msg);
+                        httpClient.send("拍品消息",memberid+"",msg);*/
+                        LmMerchInfo  lmMerchInfo=lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
+                        Map<String,Object> memberinfo= new HashMap<>();
+                        memberinfo.put("levelname","");
+                        memberinfo.put("levelcode","");
+                        String msg = "您拍卖的商品：-"+good.getTitle()+"-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
+//                    pushmsgService.send(0,msg,"2",memberid,0);
+                        HttpClient httpClient = new HttpClient();
+                        memberinfo.put("nickname",lmMerchInfo.getStore_name());
+                        httpClient.login(lmMerchInfo.getAvatar(),lmMerchInfo.getStore_name(),new Gson().toJson(memberinfo));
+                        httpClient.send(lmMerchInfo.getStore_name(),memberid+"",msg);
                         LmOrderLog lmOrderLog = new LmOrderLog();
                         lmOrderLog.setOrderid(lmOrder.getOrderid());
                         lmOrderLog.setOperatedate(new Date());
@@ -174,10 +186,17 @@ public class OrderSchedule {
                         lmOrderGoods.setOrderid(lmOrder.getId());
                         lmOrderGoodsService.insertService(lmOrderGoods);
                         //发送通知 同时用户竞拍成功
-                        String msg = "您拍卖的商品："+good.getTitle()+"已竞拍成功，请尽快支付订单";
+                        LmMerchInfo  lmMerchInfo=lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
+                        LmMember lmMembers= lmMemberService.findById(String.valueOf(lmMerchInfo.getMember_id()));
+                        Map<String,Object> memberinfo= new HashMap<>();
+                        memberinfo.put("levelname","");
+                        memberinfo.put("levelcode","");
+                        String msg = "您拍卖的商品：-"+good.getTitle()+"-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
 //                    pushmsgService.send(0,msg,"2",memberid,0);
                         HttpClient httpClient = new HttpClient();
-                        httpClient.send("拍品消息",memberid+"",msg);
+                        memberinfo.put("nickname",lmMerchInfo.getStore_name());
+                        httpClient.login(lmMerchInfo.getAvatar(),lmMerchInfo.getStore_name(),new Gson().toJson(memberinfo));
+                        httpClient.send(lmMerchInfo.getStore_name(),memberid+"",msg);
                         LmOrderLog lmOrderLog = new LmOrderLog();
                         lmOrderLog.setOrderid(lmOrder.getOrderid());
                         lmOrderLog.setOperatedate(new Date());
@@ -191,6 +210,7 @@ public class OrderSchedule {
                 }
                 //商品设置下架
                 good.setState(0);
+                good.setWarehouse("3");
                 goodService.updateGoods(good);
             }
         }
@@ -202,7 +222,7 @@ public class OrderSchedule {
     public void tishigood(){
         System.out.println("寻找前15分钟拍卖时间到时的商品");
         Calendar calendar = Calendar.getInstance();
-        String tishigoodtime="13";
+        String tishigoodtime="14";
         calendar.setTime(new Date());
         calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + Integer.parseInt(tishigoodtime));
         //获取n小时前的时间
@@ -236,7 +256,7 @@ public class OrderSchedule {
                     int memberid = auction.getMemberid();
                     List<LmMemberAddress> addresses = lmMemberAddressService.findByMemberid(memberid);
                         //发送通知 同时用户竞拍成功
-                        String msg = "您拍卖的商品："+good.getTitle()+"还有不到15分钟剩余时间就下架了，请及时关注。";
+                        String msg = "您拍卖的商品:"+good.getTitle()+"\n还有不到15分钟剩余时间就下架了，请及时关注,可在个人中心的我的竞拍中及时查看状态";
 //                    pushmsgService.send(0,msg,"2",memberid,0);
                         HttpClient httpClient = new HttpClient();
                         httpClient.send("拍品消息",memberid+"",msg);
@@ -276,6 +296,8 @@ public class OrderSchedule {
         for(Good good:list){
             //商品设置下架
             good.setState(0);
+            good.setWarehouse("3");
+            good.setAuction_status(2);
             goodService.updateGoods(good);
         }
     }
@@ -483,10 +505,16 @@ public class OrderSchedule {
                 if(!isliveed){
                     HttpClient httpClient = new HttpClient();
                     httpClient.deleteGroup(lmLive.getLivegroupid());
-
                     lmLive.setLivegroupid("0");
                     lmLive.setIsstart(0);
                     lmLiveService.updateService(lmLive);
+                    List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(lmLive.getId());
+                    for(LivedGood good:oldgood){
+                        if(good.getType()!=1) {
+                            good.setStatus(-1);
+                            goodService.updateLivedGood(good);
+                        }
+                    }
                 }
             }
         }
@@ -523,8 +551,10 @@ public class OrderSchedule {
         List<LivedGood> goodlist = goodService.findLiveGood(new Date());
         for(LivedGood good:goodlist){
             //商品设置下架
-            good.setStatus(-1);
-            goodService.updateLivedGood(good);
+            if(1==good.getType()) {
+                good.setStatus(-1);
+                goodService.updateLivedGood(good);
+            }
         }
     }
 

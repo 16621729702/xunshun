@@ -162,7 +162,7 @@ public class OrderController {
         return jsonResult;
     }
 
-    @ApiOperation(value = "获取订单列表长度")
+    @ApiOperation(value = "获取买家订单列表长度")
     @PostMapping("/listsize")
     public JsonResult getorderlistsize(HttpServletRequest request
                                        ){
@@ -182,9 +182,16 @@ public class OrderController {
             //获取订单基本信息
             Map<String, Object> map = new ConcurrentHashMap<>();
             for(int i=-2;i<7;i++) {
+                String size=null;
+                if(i==-2){
+                    size="count" ;
+                }else if(i==-1){
+                    size="false";
+                }else {
+                    size=""+i;
+                }
                 Integer ordersize = lmOrderService.ordersize(i, Integer.parseInt(userid));
-                System.out.print(ordersize+"+");
-                map.put("ordersize"+i,ordersize);
+                map.put("ordersize"+size,ordersize);
             }
             jsonResult.setData(map);
         } catch (Exception e) {
@@ -625,7 +632,8 @@ public class OrderController {
                     LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(lmOrder.getMerchid()+"");
 //                    pushmsgService.send(0,"有售后服务，请尽快处理","2",lmMerchInfo.getMember_id(),1);
                     HttpClient httpClient = new HttpClient();
-                    httpClient.send("交易消息",lmMerchInfo.getMember_id()+"","有售后服务，请尽快处理");
+                    String msg ="您的店铺"+lmMerchInfo.getStore_name()+":\n"+"有售后服务,请尽快处理";
+                    httpClient.send("交易消息",lmMerchInfo.getMember_id()+"",msg);
                 }else{
                     LmOrderRefundLog lmOrderRefundLog = new LmOrderRefundLog();
                     lmOrderRefundLog.setCreatetime(new Date());
@@ -656,7 +664,8 @@ public class OrderController {
                     LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(lmOrder.getMerchid()+"");
 //                    pushmsgService.send(0,"有售后服务，请尽快处理","2",lmMerchInfo.getMember_id(),1);
                     HttpClient httpClient = new HttpClient();
-                    httpClient.send("交易消息",lmMerchInfo.getMember_id()+"","有售后服务，请尽快处理");
+                    String msg ="您的店铺"+lmMerchInfo.getStore_name()+":\n"+"有售后服务,请尽快处理";
+                    httpClient.send("交易消息",lmMerchInfo.getMember_id()+"",msg);
                 }
             }
         } catch (Exception e) {
@@ -1139,6 +1148,10 @@ public class OrderController {
                 returnmap.put("realprice",lmOrder.getRealpayprice());
                 returnmap.put("status",lmOrder.getStatus());
                 returnmap.put("paystatus",lmOrder.getPaystatus());
+                returnmap.put("imid", lmOrder.getMemberid());
+                returnmap.put("imname",lmOrder.getPaynickname());
+                returnmap.put("immemberid", lmMerchInfo.getMember_id());
+                returnmap.put("immembername",lmMerchInfo.getStore_name());
                 returnmap.put("orderid",lmOrder.getOrderid());
                 returnmap.put("type",lmOrder.getType());
                 returnmap.put("id",lmOrder.getId());

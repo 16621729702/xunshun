@@ -7,9 +7,9 @@ import java.util.Map;
 
 public interface LmLiveService {
 
-    List<Map<String,String>> findListByCategoryIdByApi(int pid);
+    List<Map<String,Object>> findListByCategoryIdByApi(int pid);
 
-    List<Map<String, String>> findfollewLiveByApi(int id);
+    List<Map<String,Object>> findfollewLiveByApi(int id);
 
     Map<String, Object> finddirectlyinfoByApi();
 
@@ -23,7 +23,7 @@ public interface LmLiveService {
 
     Map<String, String> findRecommendLiveByapi();
 
-    List<Map<String, String>> findHotLiveByApi();
+    List<Map<String,Object>> findHotLiveByApi();
 
     Map<String, String> findShareRecommendLiveByapi();
 

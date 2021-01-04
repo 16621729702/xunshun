@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper
 public interface LiveGoodDao extends tk.mybatis.mapper.common.Mapper<LivedGood>{
 
-    @Select("SELECT * FROM lm_livegood lg  where lg.status = 0  and lg.liveid = #{liveid} and type <> 2 ")
+    @Select("SELECT * FROM lm_livegood lg  where lg.status = 0  and lg.liveid = #{liveid}  ")
     List<LivedGood> findLivedGoodByLiveid(@Param("liveid") int liveid);
 
     @Select("SELECT * FROM lm_livegood lg  where lg.status = 0  and lg.endtime < #{nowdate} ")

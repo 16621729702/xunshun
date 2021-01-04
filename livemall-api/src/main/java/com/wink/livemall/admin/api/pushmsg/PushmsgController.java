@@ -7,6 +7,7 @@ import com.wink.livemall.admin.util.DateUtils;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.Good;
+import com.wink.livemall.goods.dto.LivedGood;
 import com.wink.livemall.goods.dto.LmShareGood;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.merch.dto.LmMerchInfo;
@@ -79,11 +80,20 @@ public class PushmsgController {
                  msg = "提醒发货:订单号"+order.getOrderid()+"-商品："+good.getName()+"----------买家提醒发货啦！";
 
             }else{
-            	 Good good = goodService.findById(lmOrderGoods.getGoodid());
-                 if(good==null){
-                     return new JsonResult(JsonResult.ERROR,"商品信息异常");
-                 }
-                  msg = "提醒发货:订单号"+order.getOrderid()+"-商品："+good.getTitle()+"----------买家提醒发货啦！";
+                if(order.getIslivegood()==1){
+                    LivedGood good = goodService.findLivedGood(lmOrderGoods.getGoodid());
+                    if (good == null) {
+                        return new JsonResult(JsonResult.ERROR, "商品信息异常");
+                    }
+                    msg = "提醒发货:订单号" + order.getOrderid() + "-商品：" + good.getName()+ "----------买家提醒发货啦！";
+
+                }else {
+                    Good good = goodService.findById(lmOrderGoods.getGoodid());
+                    if (good == null) {
+                        return new JsonResult(JsonResult.ERROR, "商品信息异常");
+                    }
+                    msg = "提醒发货:订单号" + order.getOrderid() + "-商品：" + good.getTitle() + "----------买家提醒发货啦！";
+                }
             }
             HttpClient httpClient = new HttpClient();
             httpClient.send("交易消息",lmMerchInfo.getMember_id()+"",msg);

@@ -36,7 +36,7 @@ public class MemberStartController {
      */
     @ApiOperation(value = "获取该手机号码的优惠")
     @PostMapping("start")
-    public JsonResult category(HttpServletRequest request){
+    public JsonResult memberstart(HttpServletRequest request){
         JsonResult jsonResult = new JsonResult();
         String mobile=request.getParameter("mobile");
         Integer type=Integer.parseInt(request.getParameter("type"));
@@ -60,6 +60,30 @@ public class MemberStartController {
         }
         return jsonResult;
     }
+
+    @ApiOperation(value = "一次优惠")
+    @PostMapping("end")
+    public JsonResult memberend(HttpServletRequest request){
+        JsonResult jsonResult = new JsonResult();
+        String mobile=request.getParameter("mobile");
+        Integer type=Integer.parseInt(request.getParameter("type"));
+
+        try {
+            List<LmMemberStart> list = lmMemberStartService.findByMobile(mobile,type);
+            for(LmMemberStart end:list){
+                end.setIsstart(0);
+                lmMemberStartService.updateMobile(end);
+            }
+            jsonResult.setCode(JsonResult.SUCCESS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
 }
 
 

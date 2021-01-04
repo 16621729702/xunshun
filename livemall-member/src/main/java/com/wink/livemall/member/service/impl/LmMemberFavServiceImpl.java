@@ -66,7 +66,7 @@ public class LmMemberFavServiceImpl implements LmMemberFavService {
     }
 
     @Override
-    public List<Map<String, String>> findInfoByMemberidByApi(int userid, int type) {
+    public List<Map<String, Object>> findInfoByMemberidByApi(int userid, int type) {
         return lmMemberFavDao.findInfoByMemberidByApi(userid,type);
     }
 

@@ -2,6 +2,7 @@ package com.wink.livemall.admin.api.register;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +11,10 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.wink.livemall.merch.dao.LmMerchPriceLogDao;
+import com.wink.livemall.merch.dto.LmMerchPriceLog;
 import com.wink.livemall.merch.service.LmMerchInfoService;
+import com.wink.livemall.merch.service.LmMerchPriceLogService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,8 @@ public class RegisterController {
 	private LmMerchInfoService lmMerchInfoService;
 	@Autowired
 	private LmMerchConfigsService lmMerchConfigsService;
+	@Autowired
+	private LmMerchPriceLogService lmMerchPriceLogService;
 	
 	/**
 	 * 获取注册页面配置
@@ -192,7 +198,7 @@ public class RegisterController {
 				jsonResult.setMsg("商户不存在，检查id");
 				return jsonResult;
 			}
-			
+
 			String categoryid=request.getParameter("categoryid");
 			String businessid=request.getParameter("businessid");
 			String sellid=request.getParameter("sellid");
@@ -285,7 +291,7 @@ public class RegisterController {
 //		LmMerchInfo info=new LmMerchInfo();
 
 		VerifyFields verify=new VerifyFields();
-		String[] fields= {"marginprice","id"};
+		String[] fields= {"marginprice","id","freeprice"};
 		Map<String, Object> res=verify.verify(fields, request);
 		int error=(int) res.get("error");
 		if(error==1) {
@@ -295,8 +301,24 @@ public class RegisterController {
 		}
 		String id=request.getParameter("id");
 		String marginprice=request.getParameter("marginprice");
+		String freeprice=request.getParameter("freeprice");
+		//修改开店的保证金和结束时间
+		Calendar calendar = Calendar.getInstance();
+		String limittime="1";
+		calendar.set(Calendar.YEAR, calendar.get(Calendar.YEAR) + Integer.parseInt(limittime));
+		Date limittimes =calendar.getTime();
+		calendar.setTime(new Date());
 		LmMerchInfo info=lmMerchRegisterService.findMerchInfoByid(Integer.parseInt(id));
+		info.setLimit_time(limittimes);
 		info.setMargin(new BigDecimal(marginprice));
+		//开店优惠金额记录
+		LmMerchPriceLog lmMerchPriceLog=new LmMerchPriceLog();
+		lmMerchPriceLog.setPrice(new BigDecimal(freeprice));
+		lmMerchPriceLog.setCreate_time(new Date());
+		lmMerchPriceLog.setMember_id(info.getMember_id());
+		lmMerchPriceLog.setMerch_id(Integer.parseInt(id));
+		lmMerchPriceLogService.insertService(lmMerchPriceLog);
+
 		int r=lmMerchRegisterService.updateService(info);
 		if(r>0) {
 			jsonResult.setCode(jsonResult.SUCCESS);

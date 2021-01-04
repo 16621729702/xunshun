@@ -14,13 +14,13 @@ import java.util.Map;
 public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
 
     @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.categoryid = #{pid} and ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
-    List<Map<String,String>> findListByCategoryIdByApi(@Param("pid") int pid);
+    List<Map<String,Object>> findListByCategoryIdByApi(@Param("pid") int pid);
 
 
 
     @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id " +
-            " left join lm_member_follow lmf on ll.id = lmf.follow_id where ll.status = 0 and lmf.follow_type = 2 and ll.isstart = 1 and lmf.member_id =#{memberid} ")
-    List<Map<String, String>> findfollewLiveByApi(@Param("memberid")int memberid);
+            " left join lm_member_follow lmf on ll.id = lmf.follow_id where ll.status = 0 and lmf.follow_type = 0 and ll.isstart = 1 and lmf.member_id =#{memberid} ")
+    List<Map<String,Object>> findfollewLiveByApi(@Param("memberid")int memberid);
 
 
     @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where lm.isauction = 1 and ll.status = 0 and ll.isstart = 1  limit 0,1")
@@ -47,7 +47,7 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
     Map<String, String> findRecommendLiveByapi();
 
     @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
-    List<Map<String, String>> findHotLiveByApi();
+    List<Map<String,Object>> findHotLiveByApi();
 
     @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.isstart = 1 and ll.type = 1  order by ll.isrecommend,ll.watchnum desc limit 0,1")
     Map<String, String> findShareRecommendLiveByapi();

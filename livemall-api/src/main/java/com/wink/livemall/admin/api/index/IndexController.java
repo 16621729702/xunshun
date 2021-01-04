@@ -1,5 +1,6 @@
 package com.wink.livemall.admin.api.index;
 
+import com.sun.org.apache.xpath.internal.objects.XObject;
 import com.wink.livemall.admin.util.JedisUtil;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.PageUtil;
@@ -7,9 +8,12 @@ import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
+import com.wink.livemall.live.dto.LmLiveInfo;
+import com.wink.livemall.live.service.LmLiveInfoService;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.sys.setting.dto.Lideshow;
 import com.wink.livemall.sys.setting.service.LideshowService;
+import com.wink.livemall.utils.cache.redis.RedisUtil;
 import com.wink.livemall.video.dto.LmVideoCore;
 import com.wink.livemall.video.service.LmVideoCoreService;
 import io.swagger.annotations.*;
@@ -48,6 +52,11 @@ public class IndexController {
     private RedisTemplate redisTemplate;
     @Autowired
     private LmGoodAuctionService lmGoodAuctionService;
+    @Autowired
+    private LmLiveInfoService lmLiveInfoService;
+
+    @Autowired
+    private RedisUtil redisUtils;
 
     /**
      * 获取轮播图
@@ -95,11 +104,19 @@ public class IndexController {
             //查询普通热门直播间
             list = lmLiveService.findhotlive();
             for(Map<String,Object> map:list){
+               int liveid=(int)map.get("id");
+                LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                map.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
                 map.put("type","normal");
             }
             //查看合买直播间
             Map<String,Object> sharemap = lmLiveService.findsharehotlive();
             if(sharemap!=null){
+                int liveid=(int)sharemap.get("id");
+                LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                sharemap.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
                 sharemap.put("type","share");
                 list.add(sharemap);
             }
@@ -142,9 +159,9 @@ public class IndexController {
             }
             //查询销售最多的10个商品
             List<Map> returnlist=null;
-            List<Map> hotList1=null;
+            List<Object> hotList1=null;
             if(Integer.parseInt(page)==1){
-                redisTemplate.delete("hotList"+mobileid);
+                redisUtils.delete("hotList"+mobileid);
                 List<Map> hotList = goodService.findHotList();
                     for(Map hotLists:hotList){
                         int id =(int)hotLists.get("goodid");
@@ -161,9 +178,11 @@ public class IndexController {
                     }
                 Collections.shuffle(hotList);
                 redisTemplate.opsForList().rightPushAll("hotList"+mobileid,hotList);
+                //redisUtils.lSet("hotList"+mobileid,hotList);
                returnlist = PageUtil.startPage(hotList,Integer.parseInt(page),Integer.parseInt(pagesize));
             }else {
                 hotList1 =redisTemplate.opsForList().range("hotList"+mobileid,0,-1);
+                //hotList1 =redisUtils.lGet("hotList"+mobileid,0,-1);
                 returnlist = PageUtil.startPage(hotList1,Integer.parseInt(page),Integer.parseInt(pagesize));
             }
 

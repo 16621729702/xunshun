@@ -7,11 +7,7 @@ import java.math.BigDecimal;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -202,6 +198,75 @@ public class MerchOrderController {
 	}
 
 	/**
+	 * 获取商家订单长度
+	 *
+	 * @return
+	 */
+	@RequestMapping("get_order_size")
+	@ResponseBody
+	public JsonResult findOrderSize(HttpServletRequest request ) {
+		JsonResult jsonResult = new JsonResult();
+		String merchid = request.getParameter("merchid");
+		merchid = StringUtils.isEmpty(merchid) ? "0" : merchid;
+		Map<String, String> params = new HashMap<>();
+		params.put("pagesize", "100000");
+		params.put("pageindex", "1");
+		params.put("merchid", merchid);
+		try {
+			Map<String,Object> res = new LinkedHashMap<>();
+		for(int i=0;i<5;i++) {
+			String type = String.valueOf(i);
+			if(i==0){}else {
+			params.put("type", type);
+			}
+			List<Map<String, Object>> list = LmMerchOrderService.findPage(params);
+			if (i == 1){
+				res.put("obligation_size", list.size());
+		    }else if (i == 2){
+				res.put("pending_size", list.size());
+			}else if (i == 3){
+				res.put("dispatched_size", list.size());
+			}else if (i == 4) {
+				res.put("post-sale_size", list.size());
+			}else {
+				res.put("total_size", list.size());
+			}
+		}
+			jsonResult.setData(res);
+			jsonResult.setCode(jsonResult.SUCCESS);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+	/** 废弃
+	 * 获取合买子订单长度
+	 *
+	 * @return
+	 */
+	@RequestMapping("get_children_order_size")
+	@ResponseBody
+	public JsonResult findChildrenOrderSize(HttpServletRequest request ) {
+		JsonResult jsonResult = new JsonResult();
+		try {
+			Map<String, String> params = new HashMap<>();
+			params.put("porderid", request.getParameter("id"));
+
+
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+
+
+	/**
 	 * 获取快递列表
 	 * 
 	 * @return
@@ -271,7 +336,8 @@ public class MerchOrderController {
 			jsonResult.setCode(jsonResult.SUCCESS);
 			//pushmsgService.send(0,"商户已发货","2",order.getMemberid(),0);
 			HttpClient httpClient = new HttpClient();
-			httpClient.send("交易消息",order.getMemberid()+"","商户已发货");
+			String msg ="您订单号为:"+order.getOrderid()+"已发货\n"+"商户已打包成功,物流正在配送中,可及时查看您的物流信息";
+			httpClient.send("交易消息",order.getMemberid()+"",msg);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());
 			jsonResult.setCode(JsonResult.ERROR);

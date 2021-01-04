@@ -27,7 +27,7 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 	@Select("SELECT * FROM lm_good_auction where goodid = #{goodid} and status=1 limit 1 ")
 	LmGoodAuction findLast(@Param("goodid") int goodid);
 
-	@Select("SELECT count(*) FROM lm_goods where mer_id = #{mer_id} ")
+	@Select("SELECT count(*) FROM lm_goods where mer_id = #{mer_id} and isdelete =0 ")
 	int countGoodsNum(@Param("mer_id") int mer_id);
 
 	@Select("SELECT count(*) FROM lm_orders where merchid = #{merchid}  ")
@@ -57,7 +57,7 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 		public String countByStatus(Map<String, String> params) {
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			StringBuilder sql = new StringBuilder();
-			sql.append(" select count(*) from  lm_goods where mer_id=" + params.get("merchid"));
+			sql.append(" select count(*) from  lm_goods where isdelete = 0 and mer_id=" + params.get("merchid"));
 			if (!StringUtils.isEmpty(params.get("status"))) {
 				if (params.get("status").equals("1")) {
 					sql.append(" and  auction_end_time > '" + sf.format(new Date()) + "'");
@@ -78,7 +78,7 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 		public String findListByCondition(Map<String, String> params) {
 			
 			StringBuilder sql = new StringBuilder();
-			sql.append("select id,thumb,title,productprice,startprice from lm_goods where state=1 and mer_id=" + params.get("merchid"));
+			sql.append("select id,thumb,title,productprice,startprice from lm_goods where state = 1 and mer_id=" + params.get("merchid"));
 			if(!StringUtils.isEmpty(params.get("type"))) {
 				if(params.get("type").equals("1")) {
 					sql.append(" and type=0 ");
@@ -100,7 +100,7 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 			String pagesize = (String) params.get("pagesize");
 
 			StringBuilder sql = new StringBuilder();
-			sql.append("select g.state,g.auction_start_time,g.auction_end_time,c.name catename,g.thumb,g.id,g.material,g.place,g.spec,g.stock,g.title,g.productprice,g.warehouse,g.sn from lm_goods g left join lm_goods_categories c on g.category_id=c.id where mer_id=" + params.get("merchid"));
+			sql.append("select g.state,g.auction_start_time,g.auction_end_time,c.name catename,g.thumb,g.id,g.material,g.place,g.spec,g.stock,g.title,g.productprice,g.warehouse,g.sn from lm_goods g left join lm_goods_categories c on g.category_id=c.id where g.isdelete = 0 and mer_id=" + params.get("merchid"));
 
 			if (!StringUtils.isEmpty(params.get("warehouse"))) {
 				sql.append(" and find_in_set(" + params.get("warehouse") + ",g.warehouse)");
@@ -146,7 +146,6 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 				} else if (params.get("status").equals("4")) {
 					sql.append(" and  auction_status=3 ");
 				}
-				sql.append(" order by  g.auction_start_time desc ");
 			}
 
 			if (!StringUtils.isEmpty(params.get("sort"))) {
@@ -156,6 +155,8 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 				if (params.get("sort").equals("2")) {
 					sql.append(" order by  g.create_at desc ");
 				}
+			}else {
+				sql.append(" order by g.update_at desc,g.id desc");
 			}
 			if (StringUtils.isEmpty(pageindex)) {
 				pageindex = "1";
@@ -178,11 +179,17 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 				String field = m.get("field");
 				String value = m.get("value");
 				if (i == params.size() - 1) {
-					builder.append("" + field + "='" + value + "'");
-
+					if(value.equals("null")) {
+						builder.append("" + field + "=" + value + "");
+					}else {
+						builder.append("" + field + "='" + value + "'");
+					}
 				} else {
-					builder.append("" + field + "='" + value + "',");
-
+					if(value.equals("null")) {
+						builder.append("" + field + "=" + value + ",");
+					}else {
+						builder.append("" + field + "='" + value + "',");
+					}
 				}
 
 			}

@@ -94,7 +94,7 @@ public class SmsUtils {
     public static void main(String[] args) {
         //SmsUtils.sendValidCodeMsg("13013171714","好东西","LTAI4FzzMoHCJ74T8wcU4W6E","oqaKUKVJEAw7iuJWVrgZSdWPRieKRQ","滴雨轩","SMS_205891325");
 
-        String sn="谢昕的是";
+       /* String sn="谢昕的是";
         String sn1="";
         String sn12="";
         for (int j = 0; j < 2; j++) {
@@ -113,6 +113,6 @@ public class SmsUtils {
 
         DateFormat format = new SimpleDateFormat("MMdd");//日期格式
         sn12=sn1+String.format("%04d", ids)+format.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
-        System.out.print(sn12);
+        System.out.print(sn12);*/
     }
 }

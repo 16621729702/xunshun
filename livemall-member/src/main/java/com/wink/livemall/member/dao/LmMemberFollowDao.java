@@ -37,10 +37,14 @@ public interface LmMemberFollowDao extends tk.mybatis.mapper.common.Mapper<LmMem
 	@Select("SELECT * FROM lm_member_follow WHERE member_id = #{userid} and follow_id = #{id} and state = 0 and follow_type = #{type} limit 0,1")
     LmMemberFollow findByMemberidAndTypeAndId(@Param("userid")int userid, @Param("type")int type, @Param("id")int id);
 
-	@Select("SELECT * FROM lm_member_follow WHERE follow_id = #{merchid} and state = 0 and follow_type = #{type}")
+	@Select("SELECT * FROM lm_member_follow WHERE follow_id = #{merchid} and state = 0 and follow_type = #{type} ")
 	List<LmMemberFollow> findByMerchidAndType(@Param("type")int type, @Param("merchid")int merchid);
 
-    class LmMemberFollowDaoprovider {
+
+	@Select("SELECT * FROM lm_member_follow WHERE follow_id = #{merchid} and state = 0 and follow_type = #{type} and member_id = #{userid}")
+	List<LmMemberFollow> findByMerchidCount(@Param("type")int type, @Param("merchid")int merchid, @Param("userid")int userid);
+
+	class LmMemberFollowDaoprovider {
 
     	public String countNumYed(String merchid) {
     		StringBuilder sql = new StringBuilder();

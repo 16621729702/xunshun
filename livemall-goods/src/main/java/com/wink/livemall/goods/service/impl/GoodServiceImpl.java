@@ -89,7 +89,7 @@ public class GoodServiceImpl implements GoodService {
     }
 
     @Override
-    public List<Map<String, String>> findByMerchIdAndTypeByApi(int merchid, int type) {
+    public List<Map<String, Object>> findByMerchIdAndTypeByApi(int merchid, int type) {
         return goodDao.findByMerchIdAndTypeByApi(merchid,type);
     }
 
