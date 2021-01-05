@@ -509,9 +509,14 @@ public class MerchGoodsController {
 					state4.put("field", "warehouse");
 					state4.put("value", "2");
 					field_.add(state4);
+
+					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					if(null!=list){
+						jsonResult.setMsg("该商品已有出价记录,不可修改成一口价商品");
+						jsonResult.setCode(JsonResult.ERROR);
+					}
 					//清空出价记录
-					/*List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
-					for (LmGoodAuction lm : list) {
+					/*for (LmGoodAuction lm : list) {
 						lmGoodAuctionService.deleteService(lm);
 					}*/
 				} else {
@@ -523,6 +528,12 @@ public class MerchGoodsController {
 					state4.put("field", "warehouse");
 					state4.put("value", "1");
 					field_.add(state4);
+
+					List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
+					if(null!=list){
+						jsonResult.setMsg("该商品已有出价记录,不可修改成一口价商品");
+						jsonResult.setCode(JsonResult.ERROR);
+					}
 					//清空出价记录
 					/*List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(request.getParameter("id"), 0);
 					for (LmGoodAuction lm : list) {

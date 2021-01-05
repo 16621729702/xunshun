@@ -32,6 +32,8 @@ public interface LmLiveGoodService {
 
 	List<Map<String, Object>> findLivegoodinfoById(String liveid, String type);
 
+	List<Map<String, Object>> findLivegoodtomemberid(String liveid, String type, String userid);
+
 	List<LmLiveGood> findlivegoodByGoodid(int id);
 }
 

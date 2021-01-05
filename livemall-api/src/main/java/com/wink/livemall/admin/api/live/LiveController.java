@@ -604,31 +604,112 @@ public class LiveController {
     }
 
     /**
+     * old
      * 获取直播拍卖商品
      * @return
      */
     @ApiOperation(value = "获取直播拍卖商品购物车里面")
     @PostMapping("livegoodlist")
-    public JsonResult livegoodlist(
+    public JsonResult livegoodlist(HttpServletRequest request,
+                                   @ApiParam(name = "liveid", value = "直播间id",defaultValue = "0",required=true) @RequestParam(value = "liveid") String liveid,
+                                   @ApiParam(name = "type", value = "类型0一口价1拍卖2私价",defaultValue = "0",required=true) @RequestParam(value = "type") String type
+    ){
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+
+                //店铺商品
+                List<Map<String,Object>> goodlist = lmLiveGoodService.findByLiveIdByApi(liveid,type);
+                for(Map<String,Object> map:goodlist){
+                    if("1".equals(type)){
+                        LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi((int)map.get("id"),0);
+                        if(lmGoodAuction!=null){
+                            map.put("nowprice",lmGoodAuction.getPrice());
+                        }else{
+                            map.put("nowprice",map.get("productprice"));
+                        }
+                    }
+                    map.put("producttype","0");
+                }
+                jsonResult.setData(goodlist);
+
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
+
+    /**
+     * NEW
+     * 获取直播拍卖商品
+     * @return
+     */
+    @ApiOperation(value = "获取直播拍卖商品购物车里面")
+    @PostMapping("newlivegoodlist")
+    public JsonResult newlivegoodlist(HttpServletRequest request,
             @ApiParam(name = "liveid", value = "直播间id",defaultValue = "0",required=true) @RequestParam(value = "liveid") String liveid,
             @ApiParam(name = "type", value = "类型0一口价1拍卖2私价",defaultValue = "0",required=true) @RequestParam(value = "type") String type
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
+            if("2".equals(type)){
+                String header = request.getHeader("Authorization");
+                String userid = "";
+                if (!StringUtils.isEmpty(header)) {
+                    if(!StringUtils.isEmpty(redisUtils.get(header))){
+                        userid = redisUtils.get(header)+"";
+                    }else{
+                        jsonResult.setCode(JsonResult.LOGIN);
+                        return jsonResult;
+                    }
+                }
+                List<Map<String,Object>> goodlist = lmLiveGoodService.findLivegoodtomemberid(liveid,type,userid);
+                jsonResult.setData(goodlist);
+            }else {
+                //店铺商品
             List<Map<String,Object>> goodlist = lmLiveGoodService.findByLiveIdByApi(liveid,type);
-            if("0".equals(type)){
                 for(Map<String,Object> map:goodlist){
+                    if("1".equals(type)){
                     LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi((int)map.get("id"),0);
                     if(lmGoodAuction!=null){
                         map.put("nowprice",lmGoodAuction.getPrice());
                     }else{
                         map.put("nowprice",map.get("productprice"));
                     }
+                    }
+                    map.put("producttype","0");
                 }
+
+                //直播商品
+                List<Map<String,Object>> goodlists = lmLiveGoodService.findLivegoodinfoById(liveid,type);
+                for(Map<String,Object> map:goodlist){
+                    if("1".equals(type)){
+                        LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi((int)map.get("id"),1);
+                        if(lmGoodAuction!=null){
+                            map.put("nowprice",lmGoodAuction.getPrice());
+                        }else{
+                            map.put("nowprice",map.get("price"));
+                        }
+                    }
+                    if(map.get("endtime")!=null){
+                        Date endtime = (Date)map.get("endtime");
+                        long resttime = endtime.getTime()-System.currentTimeMillis();
+                        if(resttime>0){
+                            map.put("resttime",resttime);
+                        }else{
+                            map.put("resttime",0);
+                        }
+                    }
+                    map.put("producttype","1");
+                }
+                goodlist.addAll(goodlists);
+                jsonResult.setData(goodlist);
             }
 
-            jsonResult.setData(goodlist);
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);

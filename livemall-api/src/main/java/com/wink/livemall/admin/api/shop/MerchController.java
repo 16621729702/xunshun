@@ -1043,7 +1043,7 @@ public class MerchController {
 				}
 			}
 			//查看是否已有竞拍一口价商品存在
-			List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(liveid);
+			/*List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(liveid);
 			if(oldgood!=null&&oldgood.size()>0){
 				if(type==1){
 					for(LivedGood good:oldgood){
@@ -1054,7 +1054,7 @@ public class MerchController {
 						}
 					}
 				}
-			}
+			}*/
 			LivedGood livedGood = new LivedGood();
 			livedGood.setLiveid(liveid);
 			livedGood.setType(type);
@@ -1119,7 +1119,33 @@ public class MerchController {
 		}
 		return jsonResult;
 	}
+	/**
+	 * @return
+	 *  下架直播商品
+	 */
+	@ApiOperation(value = "下架直播商品")
+	@PostMapping("pullgood")
+	public JsonResult pullgood(HttpServletRequest request,
+									  @RequestParam(value = "type",required = true) int type,
+									  @RequestParam(value = "liveid",required = true) int liveid){
+		JsonResult jsonResult=new JsonResult();
+		try {
+			LmLive lmLive = lmLiveService.findbyId(liveid+"");
+			HttpClient httpClient = new HttpClient();
+			if(type==0){
+				httpClient.sendgroup(lmLive.getLivegroupid(),"直播一口价商品下架",12);
+			}else if(type==1){
+				httpClient.sendgroup(lmLive.getLivegroupid(), "直播拍卖商品下架", 13);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
 
+	}
 
 	/**
 	 * @return

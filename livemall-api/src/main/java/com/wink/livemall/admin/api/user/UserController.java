@@ -594,11 +594,13 @@ public class UserController {
             List<Map<String,Object>> acutioninfolist=goodService.findAuctionlistByUseridAndType(userid,type);
             for(Map<String,Object> map:acutioninfolist){
                 map.put("createtime",DateUtils.sdf_yMdHms.format(map.get("createtime")));
+                map.put("goodtype","1");
             }
             //直播商品参拍记录
             List<Map<String,Object>> acutioninfolist2=goodService.findAuctionlistByUseridAndType2(userid,type);
             for(Map<String,Object> map:acutioninfolist2){
                 map.put("createtime",DateUtils.sdf_yMdHms.format(map.get("createtime")));
+                map.put("goodtype","2");
             }
             acutioninfolist.addAll(acutioninfolist2);
             Collections.sort(acutioninfolist, new Comparator<Map>() {

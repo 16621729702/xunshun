@@ -90,6 +90,11 @@ public class LmLiveGoodServiceImpl implements LmLiveGoodService {
 	}
 
 	@Override
+	public List<Map<String, Object>> findLivegoodtomemberid(String liveid, String type,String userid) {
+		return lmLiveGoodDao.findLivegoodtomemberid(Integer.parseInt(liveid),Integer.parseInt(type),Integer.parseInt(userid));
+	}
+
+	@Override
 	public List<LmLiveGood> findlivegoodByGoodid(int id) {
 		return lmLiveGoodDao.findlivegoodByGoodid(id);
 	}

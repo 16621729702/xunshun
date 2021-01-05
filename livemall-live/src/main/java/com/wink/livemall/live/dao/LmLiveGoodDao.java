@@ -56,8 +56,11 @@ public interface LmLiveGoodDao extends tk.mybatis.mapper.common.Mapper<LmLiveGoo
 	@Select("select lg.id,g.thumb,g.title,g.productprice,g.startprice from lm_live_good lg left join lm_goods g on lg.good_id=g.id  where lg.liveid = #{liveid} ")
 	List<Map<String, Object>> findLiveGoodByLiveid(@Param("liveid")int liveid);
 
-	@Select("select * from lm_livegood  where liveid = #{liveid} and type = #{type} and status = 0 order by  starttime desc ")
+	@Select("select * from lm_livegood  where liveid = #{liveid} and type = #{type} and 'status' = 0 order by  starttime desc ")
 	List<Map<String, Object>> findLivegoodinfoById(@Param("liveid")int liveid, @Param("type")int type);
+
+	@Select("select * from lm_livegood  where liveid = #{liveid} and type = #{type} and 'status' = 0 and tomemberid = #{userid} order by  starttime desc ")
+	List<Map<String, Object>> findLivegoodtomemberid(@Param("liveid")int liveid, @Param("type")int type, @Param("userid")int userid);
 
 	@Select("select * from lm_livegood  where good_id = #{good_id}  ")
 	List<LmLiveGood> findlivegoodByGoodid(@Param("good_id")int good_id);
