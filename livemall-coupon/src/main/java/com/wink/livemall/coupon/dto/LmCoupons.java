@@ -20,12 +20,12 @@ public class LmCoupons {
   private int left_num;
   private BigDecimal fill_price;
   private BigDecimal discount_price;
-  private java.util.Date start_date;
-  private java.util.Date end_date;
+  private Date start_date;
+  private Date end_date;
   private String description;
-  private java.util.Date updated_at;
-  private java.util.Date created_at;
-  private java.util.Date deleted_at;
+  private Date updated_at;
+  private Date created_at;
+  private Date deleted_at;
   private int use_num;
   private int merch_id;
   private BigDecimal useprice;

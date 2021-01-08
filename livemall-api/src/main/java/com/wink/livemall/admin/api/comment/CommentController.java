@@ -10,6 +10,8 @@ import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
+import com.wink.livemall.live.dto.LmLiveInfo;
+import com.wink.livemall.live.service.LmLiveInfoService;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.merch.dto.LmMerchConfigs;
 import com.wink.livemall.merch.dto.LmMerchInfo;
@@ -70,6 +72,9 @@ public class CommentController {
     private VersionService versionService;
     @Autowired
     private LmGoodAuctionService lmGoodAuctionService;
+    @Autowired
+    private LmLiveInfoService lmLiveInfoService;
+
 
     /**
      * 获取轮播图
@@ -400,6 +405,10 @@ public class CommentController {
                 //查询商品列表
                 Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
                 if(map!=null){
+                    int liveid=(int)map.get("id");
+                    LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                    LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                    map.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
                     map.put("showtype","live");
                     list.add(map);
                 }
@@ -432,10 +441,10 @@ public class CommentController {
                 List<Map<String,Object>> returnlist = new ArrayList<>();
                 for(Map<String,Object> map : merchlist){
                     //添加商品信息
-                    Integer merchid = (int)map.get("goodid");
+                    Integer merchid = (int)map.get("id");
                     List<Map<String,Object>> goodlist = goodService.findByMerchIdByApi(merchid);
                     for(Map goodlists:goodlist){
-                        int id =(int)goodlists.get("id");
+                        int id =(int)goodlists.get("goodid");
                         Integer goodtype =(int)goodlists.get("type");
                         int types =0;
                         if(1==goodtype) {

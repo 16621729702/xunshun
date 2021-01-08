@@ -149,6 +149,10 @@ public class IndexController {
         try {
         	 Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
              if(map!=null){
+                 int liveid=(int)map.get("id");
+                 LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                 LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                 map.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
              	 map.put("showtype","live");
              	 list.add(map);
              }

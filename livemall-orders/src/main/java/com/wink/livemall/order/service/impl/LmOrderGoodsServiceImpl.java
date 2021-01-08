@@ -15,7 +15,7 @@ public class LmOrderGoodsServiceImpl implements LmOrderGoodsService {
     private LmOrderGoodsDao lmOrderGoodsDao;
     @Override
     public void insertService(LmOrderGoods lmOrderGoods) {
-        lmOrderGoodsDao.insert(lmOrderGoods);
+        lmOrderGoodsDao.insertSelective(lmOrderGoods);
     }
 
     @Override
@@ -24,10 +24,16 @@ public class LmOrderGoodsServiceImpl implements LmOrderGoodsService {
     }
 
 	@Override
-	public LmOrderGoods findByGoodsid(int id) {
+	public LmOrderGoods findByGoodsid0(int id) {
 		// TODO Auto-generated method stub
-		return lmOrderGoodsDao.findByGoodsid(id);
+		return lmOrderGoodsDao.findByGoodsid0(id);
 	}
+
+    @Override
+    public LmOrderGoods findByGoodsid1(int id) {
+        // TODO Auto-generated method stub
+        return lmOrderGoodsDao.findByGoodsid1(id);
+    }
 
     @Override
     public List<LmOrderComment> findByMerchid(int merchid) {

@@ -108,11 +108,11 @@ public class VideoController {
         jsonResult.setCode(JsonResult.SUCCESS);
         List<Map> list = new ArrayList<>();
         try {
-        	 Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
+        	 /*Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
              if(map!=null){
              	 map.put("showtype","live");
              	 list.add(map);
-             }
+             }*/
             //如果为0则是获取最热的个视频
             if("0".equals(categoryid)){
                 List<Map<String,String>> videolist = lmVideoCoreService.findHotVideolist();

@@ -14,9 +14,19 @@ public class LmCouponLog {
 	private int id;
 	private int couponid;
 	private int memberid;
+	private int merchid;
 	private int orderid;
 	private Date createtime;
 	private BigDecimal price;
+
+	public int getMerchid() {
+		return merchid;
+	}
+
+	public void setMerchid(int merchid) {
+		this.merchid = merchid;
+	}
+
 	public int getId() {
 		return id;
 	}

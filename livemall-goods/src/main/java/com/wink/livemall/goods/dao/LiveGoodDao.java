@@ -16,5 +16,5 @@ public interface LiveGoodDao extends tk.mybatis.mapper.common.Mapper<LivedGood>{
     List<LivedGood> findLivedGoodByLiveid(@Param("liveid") int liveid);
 
     @Select("SELECT * FROM lm_livegood lg  where lg.status = 0  and lg.endtime < #{nowdate} ")
-    List<LivedGood> findShareGood(Date date);
+    List<LivedGood> findShareGood(@Param("nowdate")Date date);
 }

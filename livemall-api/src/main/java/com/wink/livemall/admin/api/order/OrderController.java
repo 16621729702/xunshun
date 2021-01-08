@@ -289,6 +289,7 @@ public class OrderController {
                         LmOrderGoods lmOrderGoods = new LmOrderGoods();
                         lmOrderGoods.setGoodid(goodid);
                         lmOrderGoods.setGoodnum(Integer.parseInt(num));
+                        lmOrderGoods.setGoodstype(0);
                         lmOrderGoods.setGoodprice(good.getProductprice());
                         lmOrderGoods.setOrderid(lmOrder.getId());
                         lmOrderGoodsService.insertService(lmOrderGoods);
@@ -296,6 +297,7 @@ public class OrderController {
                         LmCouponLog lmCouponLog = new LmCouponLog();
                         lmCouponLog.setCouponid(Integer.parseInt(couponid));
                         lmCouponLog.setCreatetime(new Date());
+                        lmCouponLog.setMerchid(lmOrder.getMerchid());
                         lmCouponLog.setMemberid(Integer.parseInt(userid));
                         lmCouponLog.setOrderid(lmOrder.getId());
                         lmCouponLog.setPrice(lmOrder.getTotalprice());
@@ -348,6 +350,7 @@ public class OrderController {
                 lmOrderService.insertService(lmOrder);
                 LmOrderGoods lmOrderGoods = new LmOrderGoods();
                 lmOrderGoods.setGoodid(goodid);
+                lmOrderGoods.setGoodstype(0);
                 lmOrderGoods.setGoodnum(Integer.parseInt(num));
                 lmOrderGoods.setGoodprice(good.getProductprice());
                 lmOrderGoods.setOrderid(lmOrder.getId());

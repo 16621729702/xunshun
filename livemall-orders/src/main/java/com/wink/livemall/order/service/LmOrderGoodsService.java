@@ -10,7 +10,9 @@ public interface LmOrderGoodsService {
 
     LmOrderGoods findByOrderid(int id);
     
-    LmOrderGoods findByGoodsid(int id);
+    LmOrderGoods findByGoodsid0(int id);
+
+    LmOrderGoods findByGoodsid1(int id);
 
     List<LmOrderComment> findByMerchid(int merchid);
 }

@@ -100,7 +100,7 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
                     " ll.img as img," +
                     " lm.store_name as store_name," +
                     " lm.avatar as avatar " +
-                    " FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.status = 0 and ll.isstart = 1 and lm.categoryid = 3 " ;
+                    " FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.status = 0 and ll.isstart = 1 " ;
             if(!StringUtils.isEmpty(name)){
                 sql += " and ll.name like '%"+name+"%'";
             }

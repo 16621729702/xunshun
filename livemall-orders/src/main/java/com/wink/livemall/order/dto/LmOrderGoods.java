@@ -17,7 +17,17 @@ public class LmOrderGoods {
   private int orderid;
   private int goodid;
   private int goodnum;
+  //0是普通商品1是直播商品 2合买
+  private int goodstype;
   private BigDecimal goodprice;
+
+  public int getGoodstype() {
+    return goodstype;
+  }
+
+  public void setGoodstype(int goodstype) {
+    this.goodstype = goodstype;
+  }
 
   public int getId() {
     return id;

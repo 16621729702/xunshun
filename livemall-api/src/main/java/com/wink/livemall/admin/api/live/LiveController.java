@@ -617,7 +617,6 @@ public class LiveController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
-
                 //店铺商品
                 List<Map<String,Object>> goodlist = lmLiveGoodService.findByLiveIdByApi(liveid,type);
                 for(Map<String,Object> map:goodlist){
@@ -686,7 +685,7 @@ public class LiveController {
 
                 //直播商品
                 List<Map<String,Object>> goodlists = lmLiveGoodService.findLivegoodinfoById(liveid,type);
-                for(Map<String,Object> map:goodlist){
+                for(Map<String,Object> map:goodlists){
                     if("1".equals(type)){
                         LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi((int)map.get("id"),1);
                         if(lmGoodAuction!=null){
@@ -770,17 +769,30 @@ public class LiveController {
     @ApiOperation(value = "获取最新价格")
     @PostMapping("nowgoodprice")
     public JsonResult nowgoodprice(
-            @ApiParam(name = "goodid", value = "商品id",defaultValue = "0",required=true) @RequestParam(value = "goodid") int goodid
+            @ApiParam(name = "goodid", value = "商品id",defaultValue = "0",required=true) @RequestParam(value = "goodid") int goodid,
+            @ApiParam(name = "type", value = "类别",defaultValue = "0",required=true) @RequestParam(value = "type") int type
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
+            if(1==type){
+             //直播商品的最新价格
             LivedGood good = goodService.findLivedGood(goodid);
             LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(goodid,1);
             if(lmGoodAuction!=null){
                 jsonResult.setData(lmGoodAuction.getPrice());
             }else{
                 jsonResult.setData(good.getPrice());
+            }
+            }else {
+                //店铺商品的最新价格
+                Good good=goodService.findById(goodid);
+                LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(goodid,0);
+                if(lmGoodAuction!=null){
+                    jsonResult.setData(lmGoodAuction.getPrice());
+                }else{
+                    jsonResult.setData(good.getProductprice());
+                }
             }
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
@@ -817,7 +829,7 @@ public class LiveController {
         try {
             //查看商品是否下架
             LivedGood good = goodService.findLivedGood(goodid);
-            if(good.getStatus()==0&&(good.getEndtime().getTime())<System.currentTimeMillis()){
+            if(good.getStatus()==1 || (good.getEndtime().getTime())<System.currentTimeMillis()){
                 jsonResult.setMsg("商品竞拍结束无法出价");
                 jsonResult.setCode(JsonResult.ERROR);
                 return jsonResult;
@@ -925,6 +937,8 @@ public class LiveController {
             LivedGood good = goodService.findLivedGood(goodid);
             //根据商品 查询商品出价最高的用户
             List<LmGoodAuction> lmGoodAuctionList =goodService.findAuctionlistByGoodid2(good.getId(),1);
+            LmOrderGoods aloneOrderGoods=lmOrderGoodsService.findByGoodsid1(goodid);
+            if(aloneOrderGoods==null){
             if(lmGoodAuctionList!=null&&lmGoodAuctionList.size()>0){
                 LmGoodAuction auction = lmGoodAuctionList.get(0);
                 auction.setStatus("2");
@@ -957,6 +971,7 @@ public class LiveController {
                     lmOrderGoods.setGoodnum(1);
                     lmOrderGoods.setGoodprice(auction.getPrice());
                     lmOrderGoods.setOrderid(lmOrder.getId());
+                     lmOrderGoods.setGoodstype(1);
                     lmOrderGoodsService.insertService(lmOrderGoods);
                     //发送通知 同时用户竞拍成功
                     String msg = "您拍卖的商品："+good.getName()+"已竞拍成功，请尽快支付订单";
@@ -983,13 +998,12 @@ public class LiveController {
                     msgmap.put("resttime",Integer.parseInt(paytime)*3600*1000);
                     msgmap.put("orderno",lmOrder.getOrderid());
                     msgmap.put("userid",lmMember.getId());
-
                         httpClient.sendgroup(live.getLivegroupid(), new Gson().toJson(msgmap), 10);
-
 
             }else{
                 //设置流拍
                 good.setStatus(1);
+            }
             }
             //商品设置下架
             good.setStatus(1);
@@ -1058,6 +1072,7 @@ public class LiveController {
                     LmOrderGoods lmOrderGoods = new LmOrderGoods();
                     lmOrderGoods.setGoodid(good.getId());
                     lmOrderGoods.setGoodnum(1);
+                    lmOrderGoods.setGoodstype(1);
                     lmOrderGoods.setGoodprice(good.getPrice());
                     lmOrderGoods.setOrderid(lmOrder.getId());
                     lmOrderGoodsService.insertService(lmOrderGoods);

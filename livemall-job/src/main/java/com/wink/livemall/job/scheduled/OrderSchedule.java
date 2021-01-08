@@ -98,115 +98,120 @@ public class OrderSchedule {
             if(System.currentTimeMillis()>good.getDelaytime()+good.getAuction_end_time().getTime()){
                 //根据商品 查询商品出价最高的用户
                 List<LmGoodAuction> lmGoodAuctionList =goodService.findAuctionlistByGoodid2(good.getId(),0);
-                if(lmGoodAuctionList!=null&&lmGoodAuctionList.size()>0){
-                    LmGoodAuction auction = lmGoodAuctionList.get(0);
-                    auction.setStatus("2");
-                    goodService.updateAuctionService(auction);
-                    int memberid = auction.getMemberid();
-                    List<LmMemberAddress> addresses = lmMemberAddressService.findByMemberid(memberid);
-                    if(addresses!=null&&addresses.size()>0){
-                        LmMemberAddress address = addresses.get(0);
-                        LmMember lmMember = lmMemberService.findById(memberid+"");
-                        good.setAuction_status(1);
-                        goodService.updateGoods(good);
-                        LmOrder lmOrder = new LmOrder();
-                        lmOrder.setOrderid(prfix+datetime+(int)(Math.random()*(9999-1000)+1000));
-                        lmOrder.setStatus("0");
-                        lmOrder.setType(2);
-                        lmOrder.setPaynickname(lmMember.getNickname());
-                        lmOrder.setCreatetime(new Date());
-                        lmOrder.setMerchid(good.getMer_id());
-                        lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-                        lmOrder.setChargename(address.getRealname());
-                        lmOrder.setChargephone(address.getMobile());
-                        lmOrder.setMemberid(memberid);
-                        lmOrder.setDeposit_type(0);
-                        lmOrder.setTotalprice(auction.getPrice());
-                        if(good.getFreeshipping()==1){
-                            lmOrder.setRealexpressprice(new BigDecimal(0));
-                            lmOrder.setRealpayprice(auction.getPrice());
-                        }else{
-                            lmOrder.setRealexpressprice(good.getExpressprice());
-                            lmOrder.setRealpayprice(auction.getPrice().add(good.getExpressprice()));
-                        }
-                        orderService.insertService(lmOrder);
-                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
-                        lmOrderGoods.setGoodid(good.getId());
-                        lmOrderGoods.setGoodnum(1);
-                        lmOrderGoods.setGoodprice(auction.getPrice());
-                        lmOrderGoods.setOrderid(lmOrder.getId());
-                        lmOrderGoodsService.insertService(lmOrderGoods);
+                LmOrderGoods aloneOrderGoods=lmOrderGoodsService.findByGoodsid0(good.getId());
+                if(aloneOrderGoods==null) {
+                    if (lmGoodAuctionList != null && lmGoodAuctionList.size() > 0) {
+                        LmGoodAuction auction = lmGoodAuctionList.get(0);
+                        auction.setStatus("2");
+                        goodService.updateAuctionService(auction);
+                        int memberid = auction.getMemberid();
+                        List<LmMemberAddress> addresses = lmMemberAddressService.findByMemberid(memberid);
+                        if (addresses != null && addresses.size() > 0) {
+                            LmMemberAddress address = addresses.get(0);
+                            LmMember lmMember = lmMemberService.findById(memberid + "");
+                            good.setAuction_status(1);
+                            goodService.updateGoods(good);
+                            LmOrder lmOrder = new LmOrder();
+                            lmOrder.setOrderid(prfix + datetime + (int) (Math.random() * (9999 - 1000) + 1000));
+                            lmOrder.setStatus("0");
+                            lmOrder.setType(2);
+                            lmOrder.setPaynickname(lmMember.getNickname());
+                            lmOrder.setCreatetime(new Date());
+                            lmOrder.setMerchid(good.getMer_id());
+                            lmOrder.setChargeaddress(address.getProvince() + address.getCity() + address.getDistrict() + address.getAddress_info());
+                            lmOrder.setChargename(address.getRealname());
+                            lmOrder.setChargephone(address.getMobile());
+                            lmOrder.setMemberid(memberid);
+                            lmOrder.setDeposit_type(0);
+                            lmOrder.setTotalprice(auction.getPrice());
+                            if (good.getFreeshipping() == 1) {
+                                lmOrder.setRealexpressprice(new BigDecimal(0));
+                                lmOrder.setRealpayprice(auction.getPrice());
+                            } else {
+                                lmOrder.setRealexpressprice(good.getExpressprice());
+                                lmOrder.setRealpayprice(auction.getPrice().add(good.getExpressprice()));
+                            }
+                            orderService.insertService(lmOrder);
+                            LmOrderGoods lmOrderGoods = new LmOrderGoods();
+                            lmOrderGoods.setGoodid(good.getId());
+                            lmOrderGoods.setGoodnum(1);
+                            lmOrderGoods.setGoodstype(0);
+                            lmOrderGoods.setGoodprice(auction.getPrice());
+                            lmOrderGoods.setOrderid(lmOrder.getId());
+                            lmOrderGoodsService.insertService(lmOrderGoods);
 
                        /* //发送通知 同时用户竞拍成功
                         String msg = "您拍卖的商品："+good.getTitle()+"已竞拍成功，请尽快支付订单";
 //                    pushmsgService.send(0,msg,"2",memberid,0);
                         HttpClient httpClient = new HttpClient();
                         httpClient.send("拍品消息",memberid+"",msg);*/
-                        LmMerchInfo  lmMerchInfo=lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
-                        Map<String,Object> memberinfo= new HashMap<>();
-                        memberinfo.put("levelname","");
-                        memberinfo.put("levelcode","");
-                        String msg = "您拍卖的商品：-"+good.getTitle()+"-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
+                            LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
+                            Map<String, Object> memberinfo = new HashMap<>();
+                            memberinfo.put("levelname", "");
+                            memberinfo.put("levelcode", "");
+                            String msg = "您拍卖的商品：-" + good.getTitle() + "-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
 //                    pushmsgService.send(0,msg,"2",memberid,0);
-                        HttpClient httpClient = new HttpClient();
-                        memberinfo.put("nickname",lmMerchInfo.getStore_name());
-                        httpClient.login(lmMerchInfo.getAvatar(),lmMerchInfo.getStore_name(),new Gson().toJson(memberinfo));
-                        httpClient.send(lmMerchInfo.getStore_name(),memberid+"",msg);
-                        LmOrderLog lmOrderLog = new LmOrderLog();
-                        lmOrderLog.setOrderid(lmOrder.getOrderid());
-                        lmOrderLog.setOperatedate(new Date());
-                        lmOrderLog.setOperate("订单生产");
-                        lmOrderLogService.insert(lmOrderLog);
-                    } else {
-                        LmMember lmMember = lmMemberService.findById(memberid+"");
-                        good.setAuction_status(1);
-                        goodService.updateGoods(good);
-                        LmOrder lmOrder = new LmOrder();
-                        lmOrder.setOrderid(prfix+datetime+(int)(Math.random()*(9999-1000)+1000));
-                        lmOrder.setStatus("0");
-                        lmOrder.setType(2);
-                        lmOrder.setPaynickname(lmMember.getNickname());
-                        lmOrder.setCreatetime(new Date());
-                        lmOrder.setMerchid(good.getMer_id());
-                        lmOrder.setMemberid(memberid);
-                        lmOrder.setDeposit_type(0);
-                        lmOrder.setTotalprice(auction.getPrice());
-                        if(good.getFreeshipping()==1){
-                            lmOrder.setRealexpressprice(new BigDecimal(0));
-                            lmOrder.setRealpayprice(auction.getPrice());
-                        }else{
-                            lmOrder.setRealexpressprice(good.getExpressprice());
-                            lmOrder.setRealpayprice(auction.getPrice().add(good.getExpressprice()));
+                            HttpClient httpClient = new HttpClient();
+                            memberinfo.put("nickname", lmMerchInfo.getStore_name());
+                            httpClient.login(lmMerchInfo.getAvatar(), lmMerchInfo.getStore_name(), new Gson().toJson(memberinfo));
+                            httpClient.send(lmMerchInfo.getStore_name(), memberid + "", msg);
+                            LmOrderLog lmOrderLog = new LmOrderLog();
+                            lmOrderLog.setOrderid(lmOrder.getOrderid());
+                            lmOrderLog.setOperatedate(new Date());
+                            lmOrderLog.setOperate("订单生产");
+                            lmOrderLogService.insert(lmOrderLog);
+                        } else {
+                            LmMember lmMember = lmMemberService.findById(memberid + "");
+                            good.setAuction_status(1);
+                            goodService.updateGoods(good);
+                            LmOrder lmOrder = new LmOrder();
+                            lmOrder.setOrderid(prfix + datetime + (int) (Math.random() * (9999 - 1000) + 1000));
+                            lmOrder.setStatus("0");
+                            lmOrder.setType(2);
+                            lmOrder.setPaynickname(lmMember.getNickname());
+                            lmOrder.setCreatetime(new Date());
+                            lmOrder.setMerchid(good.getMer_id());
+                            lmOrder.setMemberid(memberid);
+                            lmOrder.setDeposit_type(0);
+                            lmOrder.setTotalprice(auction.getPrice());
+                            if (good.getFreeshipping() == 1) {
+                                lmOrder.setRealexpressprice(new BigDecimal(0));
+                                lmOrder.setRealpayprice(auction.getPrice());
+                            } else {
+                                lmOrder.setRealexpressprice(good.getExpressprice());
+                                lmOrder.setRealpayprice(auction.getPrice().add(good.getExpressprice()));
+                            }
+                            orderService.insertService(lmOrder);
+                            LmOrderGoods lmOrderGoods = new LmOrderGoods();
+                            lmOrderGoods.setGoodid(good.getId());
+                            lmOrderGoods.setGoodnum(1);
+                            lmOrderGoods.setGoodprice(auction.getPrice());
+                            lmOrderGoods.setOrderid(lmOrder.getId());
+                            lmOrderGoods.setGoodstype(0);
+                            lmOrderGoodsService.insertService(lmOrderGoods);
+                            //发送通知 同时用户竞拍成功
+                            LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
+                            LmMember lmMembers = lmMemberService.findById(String.valueOf(lmMerchInfo.getMember_id()));
+                            Map<String, Object> memberinfo = new HashMap<>();
+                            memberinfo.put("levelname", "");
+                            memberinfo.put("levelcode", "");
+                            String msg = "您拍卖的商品：-" + good.getTitle() + "-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
+//                    pushmsgService.send(0,msg,"2",memberid,0);
+                            HttpClient httpClient = new HttpClient();
+                            memberinfo.put("nickname", lmMerchInfo.getStore_name());
+                            httpClient.login(lmMerchInfo.getAvatar(), lmMerchInfo.getStore_name(), new Gson().toJson(memberinfo));
+                            httpClient.send(lmMerchInfo.getStore_name(), memberid + "", msg);
+                            LmOrderLog lmOrderLog = new LmOrderLog();
+                            lmOrderLog.setOrderid(lmOrder.getOrderid());
+                            lmOrderLog.setOperatedate(new Date());
+                            lmOrderLog.setOperate("订单生产");
+                            lmOrderLogService.insert(lmOrderLog);
                         }
-                        orderService.insertService(lmOrder);
-                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
-                        lmOrderGoods.setGoodid(good.getId());
-                        lmOrderGoods.setGoodnum(1);
-                        lmOrderGoods.setGoodprice(auction.getPrice());
-                        lmOrderGoods.setOrderid(lmOrder.getId());
-                        lmOrderGoodsService.insertService(lmOrderGoods);
-                        //发送通知 同时用户竞拍成功
-                        LmMerchInfo  lmMerchInfo=lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
-                        LmMember lmMembers= lmMemberService.findById(String.valueOf(lmMerchInfo.getMember_id()));
-                        Map<String,Object> memberinfo= new HashMap<>();
-                        memberinfo.put("levelname","");
-                        memberinfo.put("levelcode","");
-                        String msg = "您拍卖的商品：-"+good.getTitle()+"-已竞拍成功,\n可以进入个人中心的待付款里进行付款操作,未支付会导致您产生违约记录";
-//                    pushmsgService.send(0,msg,"2",memberid,0);
-                        HttpClient httpClient = new HttpClient();
-                        memberinfo.put("nickname",lmMerchInfo.getStore_name());
-                        httpClient.login(lmMerchInfo.getAvatar(),lmMerchInfo.getStore_name(),new Gson().toJson(memberinfo));
-                        httpClient.send(lmMerchInfo.getStore_name(),memberid+"",msg);
-                        LmOrderLog lmOrderLog = new LmOrderLog();
-                        lmOrderLog.setOrderid(lmOrder.getOrderid());
-                        lmOrderLog.setOperatedate(new Date());
-                        lmOrderLog.setOperate("订单生产");
-                        lmOrderLogService.insert(lmOrderLog);
+                    } else {
+                        //设置流拍
+                        good.setAuction_status(2);
+                        goodService.updateGoods(good);
                     }
-                }else{
-                    //设置流拍
-                    good.setAuction_status(2);
-                    goodService.updateGoods(good);
                 }
                 //商品设置下架
                 good.setState(0);
@@ -401,7 +406,7 @@ public class OrderSchedule {
             }else if(order.getType()==2){
                 //订单创建时间
                 Date createtime = order.getCreatetime();
-                String paytime = "1";//1天
+                String paytime = "2";//1天
                 //当前时间
                 calendar.setTime(new Date());
                 calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) - Integer.parseInt(paytime));

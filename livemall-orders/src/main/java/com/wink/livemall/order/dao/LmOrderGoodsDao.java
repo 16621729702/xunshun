@@ -14,8 +14,11 @@ public interface LmOrderGoodsDao extends tk.mybatis.mapper.common.Mapper<LmOrder
     @Select("select * from lm_order_goods where orderid=#{id} limit 0,1 ")
     LmOrderGoods findByOrderid(@Param("id") int id);
     
-    @Select("select * from lm_order_goods where goodid=#{id} limit 1 ")
-    LmOrderGoods findByGoodsid(@Param("id") int id);
+    @Select("select * from lm_order_goods where goodid=#{id} goodstype =0  limit 1 ")
+    LmOrderGoods findByGoodsid0(@Param("id") int id);
+
+    @Select("select * from lm_order_goods where goodid=#{id} and goodstype =1 limit 1 ")
+    LmOrderGoods findByGoodsid1(@Param("id") int id);
 
     @Select("select log.* from lm_order_goods log left join lm_orders  lo on log.orderid = lo.id  where lo.merchid=#{merchid} ")
     List<LmOrderComment> findByMerchid(@Param("merchid")int merchid);

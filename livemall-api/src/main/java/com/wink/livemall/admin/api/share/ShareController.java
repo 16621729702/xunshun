@@ -348,6 +348,7 @@ public class ShareController {
                 }else{
                     lmOrderGoods.setGoodprice(lmShareGood.getPrice().multiply(new BigDecimal("1.05")));
                 }
+                lmOrderGoods.setGoodstype(2);
                 lmOrderGoods.setOrderid(toporder.getId());
                 lmOrderGoodsService.insertService(lmOrderGoods);
             }
@@ -409,6 +410,7 @@ public class ShareController {
                         lmOrderGoods.setGoodprice(lmShareGood.getChipped_price().multiply(new BigDecimal("1.05")));
                     }
                     lmOrderGoods.setOrderid(lmOrder.getId());
+                    lmOrderGoods.setGoodstype(2);
                     lmOrderGoodsService.insertService(lmOrderGoods);
             jsonResult.setData(lmOrder.getOrderid());
         } catch (Exception e) {

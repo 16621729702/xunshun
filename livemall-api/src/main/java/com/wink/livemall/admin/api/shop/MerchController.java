@@ -345,11 +345,11 @@ public class MerchController {
 		jsonResult.setCode(jsonResult.SUCCESS);
 		List<Map> goodlist = new ArrayList<>();
 		try {
-			Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
+			/*Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
             if(map!=null){
             	 map.put("showtype","live");
      			goodlist.add(map);
-            }
+            }*/
 			List<Map<String,Object>> goods = goodService.findByMerchIdAndTypeByApi(id,type);
 			for(Map<String,Object> mapinfo:goods){
 				Integer ids =(int)mapinfo.get("goodid");
