@@ -50,17 +50,14 @@ public class MarketController {
         for(LmCoupons lmCoupons:lmCouponsList){
             Map<String,String> map = new HashMap<>();
             map.put("id",lmCoupons.getId()+"");
-            map.put("state",lmCoupons.getState()+"");
-            map.put("name",lmCoupons.getName());
-            map.put("num",lmCoupons.getNum()+"");
-            map.put("left_num",lmCoupons.getLeft_num()+"");
-            map.put("start_date", DateUtils.sdf_yMdHms.format(lmCoupons.getStart_date()));
-            map.put("end_date",DateUtils.sdf_yMdHms.format(lmCoupons.getEnd_date()));
-            map.put("use_num",lmCoupons.getUse_num()+"");
-            LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(lmCoupons.getMerch_id()+"");
-            if(lmMerchInfo!=null){
-                map.put("merchname",lmMerchInfo.getStore_name());
-            }
+            map.put("state",lmCoupons.getStatus()+"");
+            map.put("name",lmCoupons.getCouponName());
+            map.put("num",lmCoupons.getTotalLimitNum()+"");
+            map.put("left_num",lmCoupons.getPersonLimitNum()+"");
+            map.put("type",lmCoupons.getType()+"");
+            map.put("start_date", DateUtils.sdf_yMdHms.format(lmCoupons.getSendStartTime()));
+            map.put("end_date",DateUtils.sdf_yMdHms.format(lmCoupons.getSendEndTime()));
+            map.put("merchname","滴雨轩");
             returninfo.add(map);
         }
         model.addAttribute("totalsize",lmCouponsList.size());
@@ -100,7 +97,6 @@ public class MarketController {
     }
 
 
-
     /**
      * 优惠券添加
      * @param request
@@ -111,33 +107,31 @@ public class MarketController {
     @ResponseBody
     public JsonResult couponsadd(HttpServletRequest request, Model model){
         String type = StringUtils.isEmpty(request.getParameter("type"))?"0":request.getParameter("type");
-        String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
-        String name = StringUtils.isEmpty(request.getParameter("name"))?"":request.getParameter("name");
-        String num = StringUtils.isEmpty(request.getParameter("num"))?"0":request.getParameter("num");
-        String left_num = StringUtils.isEmpty(request.getParameter("left_num"))?"0":request.getParameter("left_num");
-        String rate = StringUtils.isEmpty(request.getParameter("rate"))?"0":request.getParameter("rate");
-        String useprice = StringUtils.isEmpty(request.getParameter("useprice"))?"0":request.getParameter("useprice");
-        String start_date = StringUtils.isEmpty(request.getParameter("start_date"))?null:request.getParameter("start_date");
-        String end_date = StringUtils.isEmpty(request.getParameter("end_date"))?null:request.getParameter("end_date");
-        String description = StringUtils.isEmpty(request.getParameter("description"))?"":request.getParameter("description");
-        String use_num = StringUtils.isEmpty(request.getParameter("use_num"))?"0":request.getParameter("use_num");
-        String merch_id =  StringUtils.isEmpty(request.getParameter("merch_id"))?"0":request.getParameter("merch_id");
+        String status = StringUtils.isEmpty(request.getParameter("status"))?"0":request.getParameter("status");
+        String couponName = StringUtils.isEmpty(request.getParameter("couponName"))?"":request.getParameter("couponName");
+        String totalLimitNum = StringUtils.isEmpty(request.getParameter("totalLimitNum"))?"0":request.getParameter("totalLimitNum");
+        String couponValue = StringUtils.isEmpty(request.getParameter("couponValue"))?"0":request.getParameter("couponValue");
+        String minAmount = StringUtils.isEmpty(request.getParameter("minAmount"))?"0":request.getParameter("minAmount");
+        String personLimitNum = StringUtils.isEmpty(request.getParameter("personLimitNum"))?"0":request.getParameter("personLimitNum");
+        String sendStartTime = StringUtils.isEmpty(request.getParameter("sendStartTime"))?null:request.getParameter("sendStartTime");
+        String sendEndTime = StringUtils.isEmpty(request.getParameter("sendEndTime"))?null:request.getParameter("sendEndTime");
+        String remark = StringUtils.isEmpty(request.getParameter("remark"))?"":request.getParameter("remark");
+        String sellerId =  StringUtils.isEmpty(request.getParameter("sellerId"))?"0":request.getParameter("sellerId");
 
         try {
             LmCoupons lmCoupons =  new LmCoupons();
-            lmCoupons.setCreated_at(new Date());
-            lmCoupons.setDescription(description);
-            lmCoupons.setEnd_date(DateUtils.sdf_yMdHms.parse(end_date));
-            lmCoupons.setUseprice(new BigDecimal(useprice));
-            lmCoupons.setLeft_num(Integer.parseInt(left_num));
-            lmCoupons.setMerch_id(Integer.parseInt(merch_id));
-            lmCoupons.setName(name);
-            lmCoupons.setNum(Integer.parseInt(num));
-            lmCoupons.setStart_date(DateUtils.sdf_yMdHms.parse(start_date));
-            lmCoupons.setState(Integer.parseInt(state));
+            lmCoupons.setCreateTime(new Date());
+            lmCoupons.setRemark(remark);
+            lmCoupons.setSendEndTime(DateUtils.sdf_yMdHms.parse(sendEndTime));
+            lmCoupons.setCouponValue(new BigDecimal(couponValue));
+            lmCoupons.setMinAmount(new BigDecimal(minAmount));
+            lmCoupons.setSellerId(Integer.parseInt(sellerId));
+            lmCoupons.setCouponName(couponName);
+            lmCoupons.setTotalLimitNum(Integer.parseInt(totalLimitNum));
+            lmCoupons.setSendStartTime(DateUtils.sdf_yMdHms.parse(sendStartTime));
+            lmCoupons.setStatus(Integer.parseInt(status));
             lmCoupons.setType(Integer.parseInt(type));
-            lmCoupons.setRate(new BigDecimal(rate));
-            lmCoupons.setUse_num(Integer.parseInt(use_num));
+            lmCoupons.setPersonLimitNum(Integer.parseInt(personLimitNum));
             lmCouponsService.insertService(lmCoupons);
         } catch (Exception e) {
             e.printStackTrace();
@@ -159,32 +153,29 @@ public class MarketController {
     public JsonResult couponsedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
         String type = StringUtils.isEmpty(request.getParameter("type"))?"0":request.getParameter("type");
-        String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
-        String name = StringUtils.isEmpty(request.getParameter("name"))?"":request.getParameter("name");
-        String num = StringUtils.isEmpty(request.getParameter("num"))?"0":request.getParameter("num");
-        String left_num = StringUtils.isEmpty(request.getParameter("left_num"))?"0":request.getParameter("left_num");
-        String rate = StringUtils.isEmpty(request.getParameter("rate"))?"0":request.getParameter("rate");
-        String useprice = StringUtils.isEmpty(request.getParameter("useprice"))?"0":request.getParameter("useprice");
-        String start_date = StringUtils.isEmpty(request.getParameter("start_date"))?null:request.getParameter("start_date");
-        String end_date = StringUtils.isEmpty(request.getParameter("end_date"))?null:request.getParameter("end_date");
-        String description = StringUtils.isEmpty(request.getParameter("description"))?"":request.getParameter("description");
-        String use_num = StringUtils.isEmpty(request.getParameter("use_num"))?"0":request.getParameter("use_num");
-        String merch_id =  StringUtils.isEmpty(request.getParameter("merch_id"))?"0":request.getParameter("merch_id");
+        String status = StringUtils.isEmpty(request.getParameter("status"))?"0":request.getParameter("status");
+        String couponName = StringUtils.isEmpty(request.getParameter("couponName"))?"":request.getParameter("couponName");
+        String totalLimitNum = StringUtils.isEmpty(request.getParameter("totalLimitNum"))?"0":request.getParameter("totalLimitNum");
+        String couponValue = StringUtils.isEmpty(request.getParameter("couponValue"))?"0":request.getParameter("couponValue");
+        String minAmount = StringUtils.isEmpty(request.getParameter("minAmount"))?"0":request.getParameter("minAmount");
+        String personLimitNum = StringUtils.isEmpty(request.getParameter("personLimitNum"))?"0":request.getParameter("personLimitNum");
+        String sendStartTime = StringUtils.isEmpty(request.getParameter("sendStartTime"))?null:request.getParameter("sendStartTime");
+        String sendEndTime = StringUtils.isEmpty(request.getParameter("sendEndTime"))?null:request.getParameter("sendEndTime");
+        String remark = StringUtils.isEmpty(request.getParameter("remark"))?"":request.getParameter("remark");
 
         try {
             LmCoupons lmCoupons =  lmCouponsService.findById(id);
-            lmCoupons.setDescription(description);
-            lmCoupons.setEnd_date(DateUtils.sdf_yMdHms.parse(end_date));
-            lmCoupons.setRate(new BigDecimal(rate));
-            lmCoupons.setLeft_num(Integer.parseInt(left_num));
-            lmCoupons.setMerch_id(Integer.parseInt(merch_id));
-            lmCoupons.setName(name);
-            lmCoupons.setNum(Integer.parseInt(num));
-            lmCoupons.setStart_date(DateUtils.sdf_yMdHms.parse(start_date));
-            lmCoupons.setState(Integer.parseInt(state));
+            lmCoupons.setCreateTime(new Date());
+            lmCoupons.setRemark(remark);
+            lmCoupons.setSendEndTime(DateUtils.sdf_yMdHms.parse(sendEndTime));
+            lmCoupons.setCouponValue(new BigDecimal(couponValue));
+            lmCoupons.setMinAmount(new BigDecimal(minAmount));
+            lmCoupons.setCouponName(couponName);
+            lmCoupons.setTotalLimitNum(Integer.parseInt(totalLimitNum));
+            lmCoupons.setSendStartTime(DateUtils.sdf_yMdHms.parse(sendStartTime));
+            lmCoupons.setStatus(Integer.parseInt(status));
             lmCoupons.setType(Integer.parseInt(type));
-            lmCoupons.setUseprice(new BigDecimal(useprice));
-            lmCoupons.setUse_num(Integer.parseInt(use_num));
+            lmCoupons.setPersonLimitNum(Integer.parseInt(personLimitNum));
             lmCouponsService.updateService(lmCoupons);
         } catch (Exception e) {
             e.printStackTrace();

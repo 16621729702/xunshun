@@ -14,6 +14,9 @@ public interface LmCouponsService {
      */
     LmCoupons findById(String id);
 
+    List<LmCoupons> findMerchCouponByMId(Integer merchId);
+
+
     /**
      * 查询所有
      * @return

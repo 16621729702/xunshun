@@ -1,8 +1,7 @@
 package com.wink.livemall.goods.service;
 
 import com.wink.livemall.goods.dto.GoodCategory;
-import com.wink.livemall.goods.dto.User;
-import org.springframework.transaction.annotation.Transactional;
+import com.wink.livemall.goods.dto.Menu;
 
 import java.util.List;
 import java.util.Map;
@@ -63,6 +62,9 @@ public interface GoodCategoryService {
 	 */
     List<GoodCategory> findActiveList();
 
+    List<Menu> returnMenuTree(List<GoodCategory> list , List<Menu> menulist);
+
+	List<Menu> getChild(List<GoodCategory> list, int parentid);
 
 	List<GoodCategory> findByPid(String pid);
 

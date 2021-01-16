@@ -74,6 +74,7 @@
                                                 <option value="2" >店铺</option>
                                                 <option value="3" >商城</option>
                                                 <option value="4" >分类</option>
+                                                <option value="9" >直播</option>
                                             </select>
                                         </div>
                                     </div>

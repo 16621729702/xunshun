@@ -1,195 +1,211 @@
 package com.wink.livemall.admin.api.shop;
 
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 
+import com.alibaba.fastjson.JSONObject;
+import com.wink.livemall.admin.util.*;
+import com.wink.livemall.coupon.dto.LmConpouMember;
+import com.wink.livemall.coupon.service.LmCouponMemberService;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.omg.CORBA.INTERNAL;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.ReactiveSetCommands.SRemCommand;
-import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.wink.livemall.admin.api.good.GoodController;
-import com.wink.livemall.admin.util.JsonResult;
-import com.wink.livemall.admin.util.VerifyFields;
 import com.wink.livemall.coupon.dto.LmCoupons;
 import com.wink.livemall.coupon.service.LmCouponsService;
-import com.wink.livemall.coupon.service.LmMerchCouponsService;
-import com.wink.livemall.goods.service.GoodService;
-import com.wink.livemall.member.dto.LmMember;
-import com.wink.livemall.member.dto.LmMemberLog;
-import com.wink.livemall.member.service.LmMemberService;
-import com.wink.livemall.merch.dto.LmMerchInfo;
-import com.wink.livemall.merch.service.LmMerchInfoService;
-import com.wink.livemall.order.dto.LmExpress;
-import com.wink.livemall.order.dto.LmOrder;
-import com.wink.livemall.order.dto.LmOrderRefundLog;
-import com.wink.livemall.order.service.LmMerchOrderService;
-import com.wink.livemall.order.service.LmOrderExpressService;
-import com.wink.livemall.order.service.LmOrderService;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
-@RequestMapping("merchcoupon")
+
+@RestController
+@RequestMapping("/merchCoupon")
 public class MerchCouponController {
 
 	Logger logger = LogManager.getLogger(GoodController.class);
 
 	@Autowired
-	private LmMerchCouponsService lmMerchCouponsService;
+	private LmCouponsService lmCouponsService;
+	@Resource
+	private LmCouponMemberService lmCouponMemberService;
 
-	@Autowired
-	private LmMerchInfoService lmMerchInfoService;
 
-	/**
-	 * 获取所有有效的优惠券设置记录
-	 * 
-	 * @param request
-	 * @return
-	 */
-	@RequestMapping("get_coupon_list")
+
+	@RequestMapping("/merchCouponList")
 	@ResponseBody
-	public JsonResult findAll(HttpServletRequest request) {
-		JsonResult jsonResult = new JsonResult();
-		// 判断商户是否存在可用
-		String merchid = request.getParameter("merch_id");
-		
-		try {
-			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-			Date now = new Date();
-			Map<String, String> params = new HashMap<String, String>();
-			params.put("date", sf.format(now));
-			params.put("merch_id", merchid);
-			List<Map<String, Object>> list = lmMerchCouponsService.findEnabled(params);
-			if(list.size()>0) {
-				for (int i = 0; i < list.size(); i++) {
-					Map<String, Object> map=list.get(i);
-					Date start=(Date) map.get("start_date");
-					Date end=(Date) map.get("end_date");
-					map.put("start_date", sf.format(start));
-					map.put("end_date", sf.format(end));
-					
-				}
-			}
-			Map<String, Object> res = new HashMap<String, Object>();
-			res.put("list", list);
-			jsonResult.setData(res);
-			jsonResult.setCode(jsonResult.SUCCESS);
-		} catch (Exception e) {
-			jsonResult.setMsg(e.getMessage());
-			jsonResult.setCode(JsonResult.ERROR);
-			logger.error(e.getMessage());
-		}
+	@ApiOperation(value = "商家优惠券列表",notes = "商家优惠券列表接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "merchId", value = "商家Id", dataType = "Integer",paramType = "query")
+	})
+	private HttpJsonResult<List<LmCoupons>> merchCouponList(HttpServletRequest request,Integer merchId) throws Exception {
+		HttpJsonResult<List<LmCoupons> > jsonResult=new HttpJsonResult<>();
 
-		return jsonResult;
+		try {
+
+			List<LmCoupons> lmCouponsList = lmCouponsService.findMerchCouponByMId(merchId);
+
+			jsonResult.setData(lmCouponsList);
+			jsonResult.setCode(Errors.ok.getCode());
+			jsonResult.setMessage(Errors.ok.getMsg());
+			return jsonResult;
+
+		} catch (Exception e) {
+			throw e;
+		}
 	}
 
-	/**
-	 * 添加优惠券 每个店铺最多三种优惠券 分批次发放 发放后要等优惠券全部消耗完获取优惠券过期之后才能重新发放 每次添加 判断优惠券是否过期 是否领完
-	 * 
-	 * @param request
-	 * @return
-	 */
-	@RequestMapping("add_coupon")
-	@ResponseBody
-	public JsonResult addCoupon(HttpServletRequest request) {
-		JsonResult jsonResult = new JsonResult();
-		VerifyFields ver = new VerifyFields();
 
-		// 判断商户是否存在可用
-		String merchid = request.getParameter("merch_id");
-		if (merchid == null) {
-			jsonResult.setCode(jsonResult.ERROR);
-			jsonResult.setMsg("merch_id为空");
-			return jsonResult;
-		}
-		int fg = lmMerchInfoService.checkMerchEnable(merchid);
-		if (fg == 0) {
-			jsonResult.setCode(jsonResult.ERROR);
-			jsonResult.setMsg("商户不存在或者被禁用");
-			return jsonResult;
-		}
+
+	@RequestMapping("/memberGetCouponList")
+	@ResponseBody
+	@ApiOperation(value = "用户领取优惠券列表",notes = "用户领取优惠券列表接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "couponId", value = "优惠券Id", dataType = "Integer",paramType = "query"),
+			@ApiImplicitParam(name = "memberId", value = "用户Id", dataType = "Integer",paramType = "query")
+	})
+	private HttpJsonResult memberGetCouponList(HttpServletRequest request,Integer couponId, Integer memberId) throws Exception {
+		HttpJsonResult jsonResult=new HttpJsonResult<>();
+
 		try {
 
-			String[] fields = { "num", "rate", "useprice", "start_date", "end_date", "merch_id" };
-			Map<String, Object> res = ver.verifytoEntity(fields, request, "com.wink.livemall.coupon.dto.LmCoupons");
-			if ((int) res.get("error") == 0) {
-	
-				BigDecimal useprice=new BigDecimal(request.getParameter("useprice"));
-				if (useprice.compareTo(new BigDecimal(0))==-1||useprice.compareTo(new BigDecimal(0))==0) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("使用价格不能小于0");
-					return jsonResult;
-				}
-				BigDecimal rate=new BigDecimal(request.getParameter("rate"));
-			
-				if (rate.compareTo(new BigDecimal(0))==-1||rate.compareTo(new BigDecimal(0))==0) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("折扣不能小于0");
-					return jsonResult;
-				}
-				int num = Integer.parseInt(request.getParameter("num"));
-				if (num <= 0) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("折数量不能小于0");
-					return jsonResult;
-				}
-				String start_date = request.getParameter("start_date");
-				String end_date = request.getParameter("end_date");
-				SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				Date now = new Date();
-				Date start = sf.parse(start_date);
-				Date end = sf.parse(end_date);
-				if (start.after(end)) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("开始时间大于结束时间");
-					return jsonResult;
-				}
-				if (now.after(end)) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("结束时间小于当前时间");
-					return jsonResult;
-				}
-				Map<String, String> params = new HashMap<String, String>();
-				params.put("date", sf.format(now));
-				params.put("merch_id", merchid);
-				int coupon_num = lmMerchCouponsService.countEnabled(params);
-				if (coupon_num >= 3) {
-					jsonResult.setCode(jsonResult.ERROR);
-					jsonResult.setMsg("超过可添加数量");
-					return jsonResult;
-				}
-				LmCoupons coupons = (LmCoupons) res.get("entity");
+			insertLmCouponMember(couponId,memberId);
 
-				coupons.setLeft_num(num);
-				coupons.setCreated_at(new Date());
-				lmMerchCouponsService.insertService(coupons);
-				jsonResult.setCode(JsonResult.SUCCESS);
-			} else {
-				jsonResult.setMsg((String) res.get("msg"));
-				jsonResult.setCode(JsonResult.ERROR);
-				return jsonResult;
-			}
+			jsonResult.setCode(Errors.ok.getCode());
+			jsonResult.setMessage(Errors.ok.getMsg());
+			return jsonResult;
 
-			jsonResult.setCode(jsonResult.SUCCESS);
 		} catch (Exception e) {
-			jsonResult.setMsg(e.getMessage());
-			jsonResult.setCode(JsonResult.ERROR);
-			logger.error(e.getMessage());
+			throw e;
+		}
+	}
+
+
+	public void insertLmCouponMember(Integer couponId, Integer memberId){
+
+		LmCoupons lmCoupons = lmCouponsService.findById(couponId.toString());
+
+		LmConpouMember lmConpouMember = new LmConpouMember();
+		lmConpouMember.setMemberId(memberId);
+		lmConpouMember.setSellerId(lmCoupons.getSellerId());
+		lmConpouMember.setCouponId(lmCoupons.getId());
+		lmConpouMember.setCanUse(1);
+		lmConpouMember.setReceiveTime(new Date());
+		lmConpouMember.setOrderId(0);
+		lmConpouMember.setUseStartTime(null);
+		lmConpouMember.setUseEndTime(null);
+		lmConpouMember.setCreateTime(new Date());
+		lmConpouMember.setUpdateTime(new Date());
+		lmConpouMember.setProductIds(null);
+		lmCouponMemberService.insert(lmConpouMember);
+
+	}
+
+
+
+	@RequestMapping("/addCoupon")
+	@ResponseBody
+	@ApiOperation(value = "商家发布优惠券",notes = "商家发布优惠券接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "lmCouponsVO", value = "接收商家填写信息对象", dataType = "Object",paramType = "query")
+	})
+	private HttpJsonResult<JSONObject> addCoupon(HttpServletRequest request, LmCoupons lmCouponsVO) throws Exception {
+
+		HttpJsonResult<JSONObject> jsonResult=new HttpJsonResult<>();
+
+		try {
+			    insertOrUpdateLC(1,lmCouponsVO);
+				jsonResult.setCode(Errors.ok.getCode());
+				jsonResult.setMessage(Errors.ok.getMsg());
+				return jsonResult;
+
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+
+	@RequestMapping("/delectCoupon")
+	@ResponseBody
+	@ApiOperation(value = "删除优惠券",notes = "删除优惠券接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "couponId", value = "优惠券Id", dataType = "Integer",paramType = "query")
+	})
+	private HttpJsonResult delectCoupon(HttpServletRequest request,Integer couponId) throws Exception {
+		HttpJsonResult jsonResult=new HttpJsonResult<>();
+
+		try {
+
+			lmCouponsService.deleteService(couponId.toString());
+
+			jsonResult.setCode(Errors.ok.getCode());
+			jsonResult.setMessage(Errors.ok.getMsg());
+			return jsonResult;
+
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+
+	@RequestMapping("/updateCoupon")
+	@ResponseBody
+	@ApiOperation(value = "修改优惠券",notes = "修改优惠券接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "lmCouponsVO", value = "接收商家填写信息对象", dataType = "Object",paramType = "query")
+	})
+	private HttpJsonResult<JSONObject> updateCoupon(HttpServletRequest request, LmCoupons lmCouponsVO) throws Exception {
+
+		HttpJsonResult<JSONObject> jsonResult=new HttpJsonResult<>();
+
+		try {
+			insertOrUpdateLC(2,lmCouponsVO);
+			jsonResult.setCode(Errors.ok.getCode());
+			jsonResult.setMessage(Errors.ok.getMsg());
+			return jsonResult;
+
+		} catch (Exception e) {
+			throw e;
+		}
+	}
+
+
+	public void insertOrUpdateLC(Integer type,  LmCoupons lmCouponsVO){
+
+		LmCoupons lmCoupons=null;
+
+		if(type == 2){
+			lmCoupons = lmCouponsService.findById(String.valueOf(lmCouponsVO.getId()));
+		}else{
+			lmCoupons =  new LmCoupons();
 		}
 
-		return jsonResult;
+		lmCoupons.setCreateTime(new Date());
+		lmCoupons.setRemark(lmCouponsVO.getRemark());
+		lmCoupons.setSendEndTime(lmCouponsVO.getSendEndTime());
+		lmCoupons.setCouponValue(lmCouponsVO.getCouponValue());
+		lmCoupons.setMinAmount(lmCouponsVO.getMinAmount());
+		lmCoupons.setSellerId(lmCouponsVO.getSellerId());
+		lmCoupons.setCouponName(lmCouponsVO.getCouponName());
+		lmCoupons.setTotalLimitNum(lmCouponsVO.getTotalLimitNum());
+		lmCoupons.setSendStartTime(lmCouponsVO.getSendStartTime());
+		lmCoupons.setStatus(lmCouponsVO.getStatus());
+		lmCoupons.setPersonLimitNum(lmCouponsVO.getPersonLimitNum());
+		lmCoupons.setProductType(lmCouponsVO.getProductType());
+		lmCoupons.setChannel(1);
+
+		if(type == 1){
+			lmCouponsService.insertService(lmCoupons);
+		}else{
+			lmCouponsService.updateService(lmCoupons);
+		}
 	}
 
 }

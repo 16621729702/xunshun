@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="livemall-utils" />
+        <module name="livemall-help" />
+        <module name="livemall-goods" />
+        <module name="livemall-sys" />
+        <module name="livemall-member" />
+        <module name="livemall-video" />
+        <module name="livemall-live" />
+        <module name="livemall-coupon" />
+        <module name="livemall-web" />
+        <module name="livemall-job" />
+        <module name="livemall-merch" />
+        <module name="livemall-api" />
+        <module name="livemall-orders" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="livemall-api" target="1.8" />
+      <module name="livemall-coupon" target="1.8" />
+      <module name="livemall-goods" target="1.8" />
+      <module name="livemall-help" target="1.8" />
+      <module name="livemall-job" target="1.8" />
+      <module name="livemall-live" target="1.8" />
+      <module name="livemall-member" target="1.8" />
+      <module name="livemall-merch" target="1.8" />
+      <module name="livemall-orders" target="1.8" />
+      <module name="livemall-parent" target="1.8" />
+      <module name="livemall-sys" target="1.8" />
+      <module name="livemall-utils" target="1.8" />
+      <module name="livemall-video" target="1.8" />
+      <module name="livemall-web" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="livemall-api" options="-parameters" />
+      <module name="livemall-coupon" options="-parameters" />
+      <module name="livemall-goods" options="-parameters" />
+      <module name="livemall-help" options="-parameters" />
+      <module name="livemall-job" options="-parameters" />
+      <module name="livemall-live" options="-parameters" />
+      <module name="livemall-member" options="-parameters" />
+      <module name="livemall-merch" options="-parameters" />
+      <module name="livemall-orders" options="-parameters" />
+      <module name="livemall-sys" options="-parameters" />
+      <module name="livemall-utils" options="-parameters" />
+      <module name="livemall-video" options="-parameters" />
+      <module name="livemall-web" options="-parameters" />
+    </option>
+  </component>
+</project>

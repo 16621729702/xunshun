@@ -1,7 +1,5 @@
 package com.wink.livemall.admin.api.index;
 
-import com.sun.org.apache.xpath.internal.objects.XObject;
-import com.wink.livemall.admin.util.JedisUtil;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.PageUtil;
 import com.wink.livemall.goods.dto.LmGoodAuction;
@@ -14,23 +12,17 @@ import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.sys.setting.dto.Lideshow;
 import com.wink.livemall.sys.setting.service.LideshowService;
 import com.wink.livemall.utils.cache.redis.RedisUtil;
-import com.wink.livemall.video.dto.LmVideoCore;
-import com.wink.livemall.video.service.LmVideoCoreService;
 import io.swagger.annotations.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-import qiniu.happydns.local.SystemDnsServer;
-import redis.clients.jedis.Jedis;
 
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
 import java.util.*;
 
 import static org.springframework.util.StringUtils.isEmpty;

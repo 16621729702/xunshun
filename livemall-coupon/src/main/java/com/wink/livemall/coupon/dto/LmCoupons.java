@@ -13,41 +13,51 @@ public class LmCoupons {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY,generator = "JDBC")
   private int id;
-  private int type;
-  private int state;
-  private String name;
-  private int num;
-  private int left_num;
-  private BigDecimal fill_price;
-  private BigDecimal discount_price;
-  private Date start_date;
-  private Date end_date;
-  private String description;
-  private Date updated_at;
-  private Date created_at;
-  private Date deleted_at;
-  private int use_num;
-  private int merch_id;
-  private BigDecimal useprice;
-  private BigDecimal rate;
 
-  public BigDecimal getUseprice() {
-	return useprice;
-}
+  private Integer sellerId;
 
-public void setUseprice(BigDecimal useprice) {
-	this.useprice = useprice;
-}
+  private String couponName;
 
-public BigDecimal getRate() {
-	return rate;
-}
+  private BigDecimal couponValue;
 
-public void setRate(BigDecimal rate) {
-	this.rate = rate;
-}
+  private BigDecimal minAmount;
 
-public LmCoupons() {
+  private Date sendStartTime;
+
+  private Date sendEndTime;
+
+  private String useStartTime;
+
+  private String useEndTime;
+
+  private Integer personLimitNum;
+
+  private Integer totalLimitNum;
+
+  private Integer receivedNum;
+
+  private Integer type;
+
+  private Integer channel;
+
+  private Integer status;
+
+  private String remark;
+
+  private Date createTime;
+
+  private Date updateTime;
+
+  private String productIds;
+
+  private Integer productType;
+
+  public Integer getProductType() {
+    return productType;
+  }
+
+  public void setProductType(Integer productType) {
+    this.productType = productType;
   }
 
   public int getId() {
@@ -58,123 +68,147 @@ public LmCoupons() {
     this.id = id;
   }
 
-  public int getType() {
+  public Integer getSellerId() {
+    return sellerId;
+  }
+
+  public void setSellerId(Integer sellerId) {
+    this.sellerId = sellerId;
+  }
+
+  public String getCouponName() {
+    return couponName;
+  }
+
+  public void setCouponName(String couponName) {
+    this.couponName = couponName;
+  }
+
+  public BigDecimal getCouponValue() {
+    return couponValue;
+  }
+
+  public void setCouponValue(BigDecimal couponValue) {
+    this.couponValue = couponValue;
+  }
+
+  public BigDecimal getMinAmount() {
+    return minAmount;
+  }
+
+  public void setMinAmount(BigDecimal minAmount) {
+    this.minAmount = minAmount;
+  }
+
+  public Date getSendStartTime() {
+    return sendStartTime;
+  }
+
+  public void setSendStartTime(Date sendStartTime) {
+    this.sendStartTime = sendStartTime;
+  }
+
+  public Date getSendEndTime() {
+    return sendEndTime;
+  }
+
+  public void setSendEndTime(Date sendEndTime) {
+    this.sendEndTime = sendEndTime;
+  }
+
+  public String getUseStartTime() {
+    return useStartTime;
+  }
+
+  public void setUseStartTime(String useStartTime) {
+    this.useStartTime = useStartTime;
+  }
+
+  public String getUseEndTime() {
+    return useEndTime;
+  }
+
+  public void setUseEndTime(String useEndTime) {
+    this.useEndTime = useEndTime;
+  }
+
+  public Integer getPersonLimitNum() {
+    return personLimitNum;
+  }
+
+  public void setPersonLimitNum(Integer personLimitNum) {
+    this.personLimitNum = personLimitNum;
+  }
+
+  public Integer getTotalLimitNum() {
+    return totalLimitNum;
+  }
+
+  public void setTotalLimitNum(Integer totalLimitNum) {
+    this.totalLimitNum = totalLimitNum;
+  }
+
+  public Integer getReceivedNum() {
+    return receivedNum;
+  }
+
+  public void setReceivedNum(Integer receivedNum) {
+    this.receivedNum = receivedNum;
+  }
+
+  public Integer getType() {
     return type;
   }
 
-  public void setType(int type) {
+  public void setType(Integer type) {
     this.type = type;
   }
 
-  public int getState() {
-    return state;
+  public Integer getChannel() {
+    return channel;
   }
 
-  public void setState(int state) {
-    this.state = state;
+  public void setChannel(Integer channel) {
+    this.channel = channel;
   }
 
-  public String getName() {
-    return name;
+  public Integer getStatus() {
+    return status;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public void setStatus(Integer status) {
+    this.status = status;
   }
 
-  public int getNum() {
-    return num;
+  public String getRemark() {
+    return remark;
   }
 
-  public void setNum(int num) {
-    this.num = num;
+  public void setRemark(String remark) {
+    this.remark = remark;
   }
 
-  public int getLeft_num() {
-    return left_num;
+  public Date getCreateTime() {
+    return createTime;
   }
 
-  public void setLeft_num(int left_num) {
-    this.left_num = left_num;
+  public void setCreateTime(Date createTime) {
+    this.createTime = createTime;
   }
 
-  public BigDecimal getFill_price() {
-    return fill_price;
+  public Date getUpdateTime() {
+    return updateTime;
   }
 
-  public void setFill_price(BigDecimal fill_price) {
-    this.fill_price = fill_price;
+  public void setUpdateTime(Date updateTime) {
+    this.updateTime = updateTime;
   }
 
-  public BigDecimal getDiscount_price() {
-    return discount_price;
+  public String getProductIds() {
+    return productIds;
   }
 
-  public void setDiscount_price(BigDecimal discount_price) {
-    this.discount_price = discount_price;
-  }
-
-  public Date getStart_date() {
-    return start_date;
-  }
-
-  public void setStart_date(Date start_date) {
-    this.start_date = start_date;
-  }
-
-  public Date getEnd_date() {
-    return end_date;
-  }
-
-  public void setEnd_date(Date end_date) {
-    this.end_date = end_date;
-  }
-
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public Date getUpdated_at() {
-    return updated_at;
-  }
-
-  public void setUpdated_at(Date updated_at) {
-    this.updated_at = updated_at;
-  }
-
-  public Date getCreated_at() {
-    return created_at;
-  }
-
-  public void setCreated_at(Date created_at) {
-    this.created_at = created_at;
-  }
-
-  public Date getDeleted_at() {
-    return deleted_at;
-  }
-
-  public void setDeleted_at(Date deleted_at) {
-    this.deleted_at = deleted_at;
-  }
-
-  public int getUse_num() {
-    return use_num;
-  }
-
-  public void setUse_num(int use_num) {
-    this.use_num = use_num;
-  }
-
-  public int getMerch_id() {
-    return merch_id;
-  }
-
-  public void setMerch_id(int merch_id) {
-    this.merch_id = merch_id;
+  public void setProductIds(String productIds) {
+    this.productIds = productIds;
   }
 }

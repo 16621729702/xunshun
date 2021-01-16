@@ -95,9 +95,9 @@
                                             <th>ID</th>
                                             <th>所属商户</th>
                                             <th>状态</th>
-                                            <th>数量</th>
-                                            <th>剩余数量</th>
-                                            <th>使用数量</th>
+                                            <th>总数量</th>
+                                            <th>限制会员领取数量</th>
+                                            <th>优惠券类型</th>
                                             <th>开始时间</th>
                                             <th>结束时间</th>
                                             <th>操作</th>
@@ -116,7 +116,10 @@
                                                         </td>
                                                         <td>${list.num!}</td>
                                                         <td>${list.left_num!}</td>
-                                                        <td>${list.use_num!}</td>
+                                                        <td>
+                                                            <#if list.type="0">新人领取</#if>
+                                                            <#if list.type="1">分享APP</#if>
+                                                        </td>
                                                         <td>${list.start_date!}</td>
                                                         <td>${list.end_date!}</td>
                                                         <td>  

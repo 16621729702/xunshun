@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html>
+<html xmlns:th="http://www.w3.org/1999/xhtml">
 
     <head>
         <meta charset="utf-8">
@@ -62,81 +62,83 @@
                         <div class="ibox-content">
                             <form class="layui-form form-horizontal m-t" id="ajaxform" action="" method="post">
                                 <input type="hidden" name="id"  value="${lmCoupons.id!}" >
+<#--                                <div class="layui-form-item">-->
+<#--                                    <label class="layui-form-label">商户</label>-->
+<#--                                    <div class="layui-input-block">-->
+<#--                                        <select name="merch_id" lay-verify="required" lay-filter="parent_id">-->
+<#--                                            <#if (lmMerchInfoList)??>-->
+<#--                                                <#if (lmMerchInfoList?size > 0)>-->
+<#--                                                    <#list lmMerchInfoList as list>-->
+<#--                                                        <option value="${list.id}"  >${list.store_name}</option>-->
+<#--                                                    </#list>-->
+<#--                                                </#if>-->
+<#--                                            </#if>-->
+<#--                                        </select>-->
+<#--                                    </div>-->
+<#--                                </div>-->
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label">商户</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券名称</label>
                                     <div class="layui-input-block">
-                                        <select name="merch_id" lay-verify="required" lay-filter="parent_id">
-                                            <#if (lmMerchInfoList)??>
-                                                <#if (lmMerchInfoList?size > 0)>
-                                                    <#list lmMerchInfoList as list>
-                                                        <option value="${list.id}"  >${list.store_name}</option>
-                                                    </#list>
-                                                </#if>
-                                            </#if>
-                                        </select>
+                                        <input type="text" name="couponName" placeholder="请输入名称" value="${lmCoupons.couponName!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>名称</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券总数量</label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="name" placeholder="请输入名称" value="${lmCoupons.name!}" class="layui-input">
+                                        <input type="number" name="totalLimitNum" placeholder="" value="${lmCoupons.totalLimitNum!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>限制领取张数</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="num" placeholder="" value="${lmCoupons.num!}" class="layui-input">
+                                        <input type="number" name="personLimitNum" placeholder="" value="${lmCoupons.personLimitNum!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>剩余数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券金额</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="left_num" placeholder="" value="${lmCoupons.left_num!}" class="layui-input">
+                                        <input type="number" name="couponValue" placeholder="" value="${lmCoupons.couponValue!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>使用数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>最低使用金额</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="use_num" placeholder="" value="${lmCoupons.use_num!}" class="layui-input">
+                                        <input type="number" name="minAmount" placeholder="" value="${lmCoupons.minAmount!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>折扣比例</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券描述</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="rate" placeholder="" value="${lmCoupons.rate!}" class="layui-input">
-                                    </div>
-                                </div>
-                                <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>条件金额</label>
-                                    <div class="layui-input-block">
-                                        <input type="number" name="useprice" placeholder="" value="${lmCoupons.useprice!}" class="layui-input">
+                                        <input type="text" name="remark" placeholder="" value="${lmCoupons.remark!}" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label"><span style="color: red;"></span>开始时间</label>
                                     <div class="layui-input-block">
-                                        <input type="text" class="layui-input  start_time" value="${lmCoupons.start_date?string('yyyy-MM-dd HH:mm:ss')!}" name="start_date">
+                                        <input type="text" class="layui-input  start_time" value="${lmCoupons.sendStartTime?string('yyyy-MM-dd HH:mm:ss')!}" name="sendStartTime">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label"><span style="color: red;"></span>结束时间</label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="end_date" placeholder="" value="${lmCoupons.end_date?string('yyyy-MM-dd HH:mm:ss')!}" class="layui-input end_time">
+                                        <input type="text" name="sendEndTime" placeholder="" value="${lmCoupons.sendEndTime?string('yyyy-MM-dd HH:mm:ss')!}" class="layui-input end_time">
                                     </div>
                                 </div>
 
                                 <div class="layui-form-item">
                                     <label class="layui-form-label">状态</label>
                                     <div class="layui-input-block">
-                                        <input type="radio" name="state"  ${(lmCoupons.state==1)?string('checked','')} value="1" title="不可用" lay-filter="is_show">
-                                        <input type="radio" name="state"   ${(lmCoupons.state==0)?string('checked','')} value="0" title="可用"  lay-filter="is_show">
+                                        <input type="radio" name="status"  ${(lmCoupons.status==1)?string('checked','')} value="1" title="不可用" lay-filter="is_show">
+                                        <input type="radio" name="status"   ${(lmCoupons.status==0)?string('checked','')} value="0" title="可用"  lay-filter="is_show">
                                     </div>
                                 </div>
-
-                                <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>描述</label>
+                                <div class="form-group">
+                                    <label class="layui-form-label">优惠券类型</label>
                                     <div class="layui-input-block">
-                                        <textarea placeholder="" class="layui-textarea" name="description"   id="pattern" lay-verify="pattern" style="display:none">${lmCoupons.description!}</textarea>
+                                        <select id="type" name="type" class="form-control">
+                                            <input type="radio" name="type"  ${(lmCoupons.type==1)?string('checked','')} value="1" title="分享APP" lay-filter="is_show">
+                                            <input type="radio" name="type"   ${(lmCoupons.type==0)?string('checked','')} value="0" title="新人领取"  lay-filter="is_show">
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
