@@ -53,6 +53,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.alibaba.druid.util.Utils.md5;
@@ -696,7 +697,11 @@ public class LiveController {
                     }
                     if(map.get("endtime")!=null){
                         Date endtime = (Date)map.get("endtime");
+                        SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
                         long resttime = endtime.getTime()-System.currentTimeMillis();
+                        String endtimes=sf.format(endtime);
+                        map.put("endtime",endtimes);
                         if(resttime>0){
                             map.put("resttime",resttime);
                         }else{
@@ -754,6 +759,7 @@ public class LiveController {
                 }
             }
             jsonResult.setData(goodlist);
+
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);

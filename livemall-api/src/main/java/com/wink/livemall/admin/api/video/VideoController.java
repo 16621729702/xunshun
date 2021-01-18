@@ -219,6 +219,8 @@ public class VideoController {
         try {
             LmVideoCore lmVideoCore = lmVideoCoreService.findById(videoid+"");
             if(lmVideoCore!=null){
+                lmVideoCore.setPlaynum(lmVideoCore.getPlaynum()+1);
+                lmVideoCoreService.updateService(lmVideoCore);
                 map.put("id",lmVideoCore.getId());
                 map.put("video",lmVideoCore.getVideo());
                 map.put("name",lmVideoCore.getName());

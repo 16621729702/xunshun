@@ -17,10 +17,8 @@ import com.wink.livemall.live.dto.LmLiveGood;
 import com.wink.livemall.live.service.LmLiveGoodService;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.live.util.QiniuUtil;
-import com.wink.livemall.member.dto.LmMember;
-import com.wink.livemall.member.dto.LmMemberAddress;
-import com.wink.livemall.member.dto.LmMemberLevel;
-import com.wink.livemall.member.dto.LmMemberStart;
+import com.wink.livemall.member.dto.*;
+import com.wink.livemall.member.service.LmFalsifyService;
 import com.wink.livemall.member.service.LmMemberAddressService;
 import com.wink.livemall.member.service.LmMemberLevelService;
 import com.wink.livemall.member.service.LmMemberService;
@@ -70,16 +68,13 @@ public class OrderSchedule {
     @Autowired
     private LmMemberAddressService lmMemberAddressService;
     @Autowired
-    private PushmsgService pushmsgService;
-    @Autowired
     private LmOrderLogService lmOrderLogService;
     @Autowired
     private LmLiveService lmLiveService;
     @Autowired
     private LmPayLogService lmPayLogService;
     @Autowired
-    private LmMerchOrderService lmMerchOrderService;
-
+    private LmFalsifyService lmFalsifyService;
     /**
      * 开始寻找拍卖结束未生成订单的拍品,生产订单或者流拍
      */
@@ -139,12 +134,7 @@ public class OrderSchedule {
                             lmOrderGoods.setGoodprice(auction.getPrice());
                             lmOrderGoods.setOrderid(lmOrder.getId());
                             lmOrderGoodsService.insertService(lmOrderGoods);
-
-                       /* //发送通知 同时用户竞拍成功
-                        String msg = "您拍卖的商品："+good.getTitle()+"已竞拍成功，请尽快支付订单";
-//                    pushmsgService.send(0,msg,"2",memberid,0);
-                        HttpClient httpClient = new HttpClient();
-                        httpClient.send("拍品消息",memberid+"",msg);*/
+                          //发送通知 同时用户竞拍成功
                             LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
                             Map<String, Object> memberinfo = new HashMap<>();
                             memberinfo.put("levelname", "");
@@ -406,7 +396,7 @@ public class OrderSchedule {
             }else if(order.getType()==2){
                 //订单创建时间
                 Date createtime = order.getCreatetime();
-                String paytime = "2";//1天
+                String paytime = "2";//2天
                 //当前时间
                 calendar.setTime(new Date());
                 calendar.set(Calendar.DATE, calendar.get(Calendar.DATE) - Integer.parseInt(paytime));
@@ -417,12 +407,20 @@ public class OrderSchedule {
                         //订单失效
                         order.setStatus("-1");
                         orderService.updateService(order);
+                        //违约金变不可以退
+                        LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(order.getId());
+                        LmFalsify isfalsify = lmFalsifyService.isFalsify(String.valueOf(order.getMemberid()), String.valueOf(lmOrderGoods.getGoodid()), String.valueOf(order.getIslivegood()));
+                        if(null!=isfalsify){
+                            isfalsify.setType(1);
+                            isfalsify.setStatus(3);
+                            lmFalsifyService.updateService(isfalsify);
+                        }
                     }
                 }
             } else {
                 //订单创建时间
                 Date createtime = order.getCreatetime();
-                String paytime = "5";//1天
+                String paytime = "30";//30分钟
                 //当前时间
                 calendar.setTime(new Date());
                 calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) - Integer.parseInt(paytime));

@@ -38,6 +38,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lm.refund as refund ," +
             " lm.isoem as isoem ," +
             " lg.stepprice as stepprice ," +
+            " lg.type as type ," +
             " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.isrecommend = 1 and lg.state = 1 ")
     List<Map> findRecommendList();
 
@@ -53,7 +54,7 @@ public interface GoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
             " lg.stepprice as stepprice ," +
             " lg.marketprice as marketprice ," +
             " lg.type as type ," +
-            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.state = 1 ")
+            " lg.productprice as goodprice FROM lm_goods lg,lm_merch_info lm  where lg.mer_id = lm.id and lg.isrecommend = 0 and lg.state = 1 ")
     List<Map> findHotList();
 
 

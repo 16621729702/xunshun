@@ -293,8 +293,8 @@ public class GoodController {
                     Map<String,Object> condient = new HashMap<>();
                     condient.put("datetime",DateUtils.sdf_yMdHms.format(new Date()));
                     condient.put("merchid",lmMerchInfo.getId());
-                    List<Map<String, Object> > lmCouponsList = lmCouponsService.findByCondient(condient);
-                    map.put("lmCouponsList",new Gson().toJson(lmCouponsList));
+                    /*List<Map<String, Object> > lmCouponsList = lmCouponsService.findByCondient(condient);
+                    map.put("lmCouponsList", new Gson().toJson(lmCouponsList));*/
                     if(!StringUtils.isEmpty(userid)&&!"null".equals(userid)) {
                         //添加浏览记录
                         LmMemberTrace lmMemberTrace = lmMemberTraceService.findByMemberidAndGoodid(Integer.parseInt(userid),good.getId());

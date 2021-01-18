@@ -16,6 +16,7 @@ public class WeixinpayUtil {
     public Map<String,String> wxPayFunction(String price,String orderid,String body,String ip) throws Exception{
 
         String notifyUrl = "http://api.xunshun.net/api/pay/notifyWeiXinPay";
+        //String notifyUrl = "http://58.33.105.174:8989/api/pay/notifyWeiXinPay";
         OurWxPayConfig ourWxPayConfig = new OurWxPayConfig();
         WXPay wxPay = new WXPay(ourWxPayConfig);
         //根据微信支付api来设置

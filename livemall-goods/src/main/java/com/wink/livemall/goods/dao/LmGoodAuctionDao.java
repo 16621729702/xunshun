@@ -32,4 +32,11 @@ public interface LmGoodAuctionDao extends tk.mybatis.mapper.common.Mapper<LmGood
             " lg.name as goodname,lm.avatar as avatar,lm.store_name as store_name from lm_good_auction lga,lm_livegood lg,lm_merch_info lm,lm_lives ll  where  lg.liveid = ll.id and lga.goodid = lg.id and lm.id = ll.merch_id and lga.memberid = #{userid} and lga.status = #{type} order by lga.createtime desc")
     List<Map<String, Object>> findAuctionlistByUseridAndType2(@Param("userid")int userid, @Param("type")int type);
 
+    /**
+     * @param memberid
+     * @return
+     */
+    @Select("select * from lm_good_auction  where memberid = #{memberid}  order by price desc limit 0,1")
+    LmGoodAuction isHavingAuction(@Param("memberid")int memberid);
+
 }

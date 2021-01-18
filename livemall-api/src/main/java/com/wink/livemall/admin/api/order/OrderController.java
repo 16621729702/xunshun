@@ -126,6 +126,7 @@ public class OrderController {
                         if(map.get("islivegood")!=null&&(int)map.get("islivegood")==1){
                             //直播商品
                             LivedGood good = goodService.findLivedGood((int)map.get("goodid"));
+                            map.put("goodstype",good.getType());
                             map.put("goodname",good.getName());
                             map.put("thumb",good.getImg());
                             map.put("spec","");
@@ -133,6 +134,7 @@ public class OrderController {
                             //普通订单
                             Good good = goodService.findById((int)map.get("goodid"));
                             if(good!=null){
+                                map.put("goodstype",good.getType());
                                 map.put("goodname",good.getTitle());
                                 map.put("thumb",good.getThumb());
                                 map.put("spec",good.getSpec());

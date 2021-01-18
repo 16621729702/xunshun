@@ -227,7 +227,7 @@ public class MerchOrderController {
 			}else if (i == 3){
 				res.put("dispatched_size", list.size());
 			}else if (i == 4) {
-				res.put("post-sale_size", list.size());
+				res.put("post_sale_size", list.size());
 			}else {
 				res.put("total_size", list.size());
 			}

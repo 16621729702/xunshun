@@ -76,12 +76,11 @@ import java.util.*;
 @RequestMapping("/pay")
 public class PayController {
     private static final Logger logger = LogManager.getLogger(PayController.class);
+   // private static String NotifyUrl = "http://api.xunshun.net/api/pay/ordersuccess";
+   //private static String NotifyUrl = "http://58.33.105.174:8989/api/pay/ordersuccess";
 
-    //private static String NotifyUrl = "http://api.xunshun.net/api/pay/ordersuccess";
-   private static String NotifyUrl = "http://58.33.105.174:8989/api/pay/ordersuccess";
-
-    @Value("${server.servlet.context-path}")
-    private String path;
+   /* @Value("${server.servlet.context-path}")
+    private String path;*/
 
     @Autowired
     private ConfigsService configsService;
@@ -1082,14 +1081,14 @@ public class PayController {
 	              returnmap.put("returninfo",resultStr);
 	              return returnmap;
 			}
-			if(null==lmMerchInfo.getCredit() || (lmMerchInfo.getCredit().multiply(new BigDecimal(100))).compareTo(new BigDecimal(refundAmount))==-1) 
+			/*if(null==lmMerchInfo.getCredit() || (lmMerchInfo.getCredit().multiply(new BigDecimal(100))).compareTo(new BigDecimal(refundAmount))==-1)
 			{
 				_resultMap.put("errCode","FAIL");
 				_resultMap.put("msg","商戶额度不足！");
 	              String resultStr = JSONObject.fromObject(_resultMap).toString();
 	              returnmap.put("returninfo",resultStr);
 	              return returnmap;
-			}
+			}*/
     	}
 		
         // 支付宝 云闪付退款逻辑
@@ -1128,8 +1127,7 @@ public class PayController {
                 resultStr = JSONObject.fromObject(resultMap).toString();
                 returnmap.put("returninfo",resultStr);
             }
-            try {
-
+            try{
                 URL url = new URL(map.get("APIurl")+"");
                 httpURLConnection = (HttpURLConnection) url.openConnection();
                 httpURLConnection.setRequestMethod("POST");

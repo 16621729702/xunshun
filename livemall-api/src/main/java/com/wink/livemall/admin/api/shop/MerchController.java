@@ -1097,19 +1097,13 @@ public class MerchController {
 			//推送消息给app
 			HttpClient httpClient = new HttpClient();
 			if(type==0){
-
 				httpClient.sendgroup(lmLive.getLivegroupid(),"直播一口价商品发布",5);
-
 			}
 			if(type==1){
-
 					httpClient.sendgroup(lmLive.getLivegroupid(), "直播拍卖商品发布", 6);
-
 			}
 			if(type==2) {
-
 					httpClient.sendgroup(lmLive.getLivegroupid(), livedGood.getTomemberid() + "", 4);
-
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

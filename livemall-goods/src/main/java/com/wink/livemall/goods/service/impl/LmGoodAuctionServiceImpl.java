@@ -28,4 +28,9 @@ public class LmGoodAuctionServiceImpl implements LmGoodAuctionService {
     public void deleteService(LmGoodAuction lm) {
         lmGoodAuctionDao.delete(lm);
     }
+
+    @Override
+    public LmGoodAuction isHavingAuction(String memberid) {
+        return lmGoodAuctionDao.isHavingAuction(Integer.parseInt(memberid));
+    }
 }

@@ -17,6 +17,8 @@ import com.wink.livemall.member.service.*;
 import com.wink.livemall.merch.dto.LmMerchAdmin;
 import com.wink.livemall.merch.dto.LmMerchInfo;
 import com.wink.livemall.merch.service.LmMerchInfoService;
+import com.wink.livemall.order.dto.LmOrder;
+import com.wink.livemall.order.service.LmOrderService;
 import com.wink.livemall.sys.code.dto.LmSmsVcode;
 import com.wink.livemall.sys.consult.service.ConsultService;
 import com.wink.livemall.video.dto.LmVideoCategoary;
@@ -67,6 +69,9 @@ public class UserController {
 
     @Autowired
     private LmGoodAuctionService lmGoodAuctionService;
+    @Autowired
+    private LmOrderService lmOrderService;
+
     /**
      * 修改密码接口
      */
@@ -749,6 +754,70 @@ public class UserController {
         }
         return jsonResult;
     }
+
+    /**
+     * 申请关闭店铺
+     * @return
+     */
+    @ApiOperation(value = "申请关闭店铺")
+    @PostMapping("/closemerch")
+    public JsonResult closemerchinfo(HttpServletRequest request,
+                              @ApiParam(name = "merchid", value = "店铺id", required = true)@RequestParam(value = "merchid",defaultValue = "0") String merchid){
+        JsonResult jsonResult = new JsonResult();
+        try {
+
+            List<Map<String, String>> orders=lmOrderService.findListByMerchidByApi(Integer.parseInt(merchid));
+            for(Map<String, String> map:orders) {
+                String status=map.get("status");
+                String id=map.get("id");
+                if(("1").equals(status)){
+                    jsonResult.setMsg("还有未发货订单");
+                    jsonResult.setCode(JsonResult.ERROR);
+                }else if(("2").equals(status)){
+                    jsonResult.setMsg("还有未收货订单");
+                    jsonResult.setCode(JsonResult.ERROR);
+                }else if(("6").equals(status)){
+                    jsonResult.setMsg("还有未处理售后订单");
+                    jsonResult.setCode(JsonResult.ERROR);
+                } else if(("0").equals(status)){
+                    LmOrder lmOrder=lmOrderService.findById(id);
+                    lmOrder.setStatus("-1");
+                    lmOrderService.updateService(lmOrder);
+                }
+            }
+
+            LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(merchid);
+            lmMerchInfo.setState(3);
+            lmMerchInfoService.updateService(lmMerchInfo);
+            List<Map<String, Object>> goods=goodService.findByMerchIdByApi(Integer.parseInt(merchid));
+            for(Map<String, Object> map:goods){
+              int type= (int)map.get("type");
+              String goodid= (String)map.get("goodid");
+              if(1!=type){
+                  Good good=goodService.findById(Integer.parseInt(goodid));
+                  good.setState(0);
+                  goodService.updateGoods(good);
+              }else {
+                  List<LmGoodAuction> list = lmGoodAuctionService.findAllByGoodid(goodid, 0);
+                  if(null==list){
+                      Good good=goodService.findById(Integer.parseInt(goodid));
+                      good.setState(0);
+                      goodService.updateGoods(good);
+                  }else {
+                      jsonResult.setMsg("正在拍卖的商品已有人出价");
+                      jsonResult.setCode(JsonResult.ERROR);
+                  }
+              }
+            }
+            jsonResult.setCode(JsonResult.SUCCESS);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
 
 
 

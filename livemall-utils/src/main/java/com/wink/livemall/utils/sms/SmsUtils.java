@@ -11,7 +11,9 @@ import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
 import net.sourceforge.pinyin4j.PinyinHelper;
 
+import java.math.BigDecimal;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -93,8 +95,7 @@ public class SmsUtils {
 
     public static void main(String[] args) {
         //SmsUtils.sendValidCodeMsg("13013171714","好东西","LTAI4FzzMoHCJ74T8wcU4W6E","oqaKUKVJEAw7iuJWVrgZSdWPRieKRQ","滴雨轩","SMS_205891325");
-
-       /* String sn="谢昕的是";
+        /*String sn="谢昕的是";
         String sn1="";
         String sn12="";
         for (int j = 0; j < 2; j++) {
@@ -106,13 +107,15 @@ public class SmsUtils {
                 sn1 += word;
             }
         }
+        DecimalFormat df = new DecimalFormat("0.00");
+        int price = 44547;
+        String str = df.format(price);
+        System.out.println("str-->"+str ) ; // 结果为 str = 2.00
+        BigDecimal bds = new BigDecimal(30);
+        BigDecimal bd = new BigDecimal(str);;
+        BigDecimal bd3=(bd.multiply(bds)).divide(new BigDecimal(100),2,BigDecimal.ROUND_HALF_UP);
+        System.out.println(bd3);*/
 
-        String number = "18";
-        Integer ids =Integer.parseInt(number);
 
-
-        DateFormat format = new SimpleDateFormat("MMdd");//日期格式
-        sn12=sn1+String.format("%04d", ids)+format.format(new Date())+(int)(Math.random()*(9999-1000)+1000);
-        System.out.print(sn12);*/
     }
 }

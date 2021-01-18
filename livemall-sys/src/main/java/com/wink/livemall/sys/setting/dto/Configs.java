@@ -30,6 +30,10 @@ public class Configs {
     public static int type_sms15=10;
     //短信拍卖成功消息
     public static int type_smsz=11;
+    //违约金支付配置
+    public static int falsify_pay=12;
+    //微信支付配置
+    public static int vx_pay=13;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY,generator = "JDBC")
     private int id;
