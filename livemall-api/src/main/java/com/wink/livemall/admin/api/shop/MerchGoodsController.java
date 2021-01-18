@@ -22,15 +22,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.wink.livemall.admin.api.good.GoodController;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.VerifyFields;
 import com.wink.livemall.merch.dto.LmMerchInfo;
-import com.wink.livemall.merch.service.LmMerchFollowService;
 import com.wink.livemall.merch.service.LmMerchInfoService;
 import com.wink.livemall.order.service.LmMerchOrderService;
-
-import net.bytebuddy.build.Plugin.Engine.Source.Empty;
 
 @Controller
 @RequestMapping("merchgoods")
@@ -198,27 +194,12 @@ public class MerchGoodsController {
 
 		try {
 			List<GoodCategory> list = goodCategoryService.findActiveList();
-			List<Menu> menulist = new ArrayList<MerchGoodsController.Menu>();
-			if (list.size() > 0) {
-				int len = list.size();
-				for (int i = 0; i < len; i++) {
-					GoodCategory cate = list.get(i);
-					if (cate.getParent_id() == 0) {
-						List<Menu> child = getChild(list, cate.getId());
-						Menu menu = new Menu();
-						menu.setId(list.get(i).getId());
-						menu.setHome_pic(list.get(i).getHome_pic());
-						menu.setName(list.get(i).getName());
-						menu.setPic(list.get(i).getPic());
-						menu.setChildren(child);
-						menulist.add(menu);
-					}
-				}
+			List<Menu> menulist = new ArrayList<Menu>();
 
-			}
+			List<Menu> menus = goodCategoryService.returnMenuTree(list, menulist);
 
 			Map<String, Object> res = new HashMap<String, Object>();
-			res.put("list", menulist);
+			res.put("list", menus);
 			jsonResult.setData(res);
 			jsonResult.setMsg(jsonResult.SUCCESS);
 		} catch (Exception e) {
@@ -229,31 +210,6 @@ public class MerchGoodsController {
 
 		return jsonResult;
 
-	}
-
-	/**
-	 * 筛选子分类
-	 * 
-	 * @param list
-	 * @param parentid
-	 * @return
-	 */
-	private List<Menu> getChild(List<GoodCategory> list, int parentid) {
-		List<Menu> child = new ArrayList<MerchGoodsController.Menu>();
-		for (int i = 0; i < list.size(); i++) {
-
-			if (list.get(i).getParent_id() == parentid) {
-				Menu menu = new Menu();
-				menu.setId(list.get(i).getId());
-				menu.setHome_pic(list.get(i).getHome_pic());
-				menu.setName(list.get(i).getName());
-				menu.setPic(list.get(i).getPic());
-				menu.setParent_id(parentid);
-				child.add(menu);
-			}
-		}
-
-		return child;
 	}
 
 	/**
@@ -746,67 +702,6 @@ public class MerchGoodsController {
 		}
 
 		return jsonResult;
-	}
-
-	/**
-	 * @return 构造菜单返回对象
-	 */
-	class Menu {
-		private int id;
-		private int parent_id;
-		private String name;
-		private String pic;
-		private String home_pic;
-		private List<Menu> children;
-
-		public int getId() {
-			return id;
-		}
-
-		public void setId(int id) {
-			this.id = id;
-		}
-
-		public int getParent_id() {
-			return parent_id;
-		}
-
-		public void setParent_id(int parent_id) {
-			this.parent_id = parent_id;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public void setName(String name) {
-			this.name = name;
-		}
-
-		public String getPic() {
-			return pic;
-		}
-
-		public void setPic(String pic) {
-			this.pic = pic;
-		}
-
-		public String getHome_pic() {
-			return home_pic;
-		}
-
-		public void setHome_pic(String home_pic) {
-			this.home_pic = home_pic;
-		}
-
-		public List<Menu> getChildren() {
-			return children;
-		}
-
-		public void setChildren(List<Menu> children) {
-			this.children = children;
-		}
-
 	}
 
 }

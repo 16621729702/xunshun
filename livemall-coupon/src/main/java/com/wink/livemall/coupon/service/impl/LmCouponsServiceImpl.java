@@ -25,6 +25,11 @@ public class LmCouponsServiceImpl implements LmCouponsService {
     }
 
     @Override
+    public List<LmCoupons> findMerchCouponByMId(Integer merchId) {
+       return lmCouponsDao.findMerchCouponByMId(merchId);
+    }
+
+    @Override
     public List<LmCoupons> findAll() {
         return lmCouponsDao.selectAll();
     }

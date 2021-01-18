@@ -62,64 +62,68 @@
                         <div class="ibox-content">
                             <form class="layui-form form-horizontal m-t" id="ajaxform" action="" method="post">
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>名称</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券名称</label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="name" placeholder="请输入名称" value="" class="layui-input">
+                                        <input type="text" name="couponName" placeholder="请输入名称" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券总数量</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="num" placeholder="" value="" class="layui-input">
+                                        <input type="number" name="totalLimitNum" placeholder="" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>剩余数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>限制领取张数</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="left_num" placeholder="" value="" class="layui-input">
+                                        <input type="number" name="personLimitNum" placeholder="" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>使用数量</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券金额</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="use_num" placeholder="" value="" class="layui-input">
+                                        <input type="number" name="couponValue" placeholder="" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>折扣比例</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>最低使用金额</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="rate" placeholder="" value="" class="layui-input">
+                                        <input type="number" name="minAmount" placeholder="" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>条件金额</label>
+                                    <label class="layui-form-label"><span style="color: red;"></span>优惠券描述</label>
                                     <div class="layui-input-block">
-                                        <input type="number" name="useprice" placeholder="" value="" class="layui-input">
+                                        <input type="text" name="remark" placeholder="" value="" class="layui-input">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label"><span style="color: red;"></span>开始时间</label>
                                     <div class="layui-input-block">
-                                        <input type="text" class="layui-input  start_time" value="" name="start_date">
+                                        <input type="text" class="layui-input  start_time" value="" name="sendStartTime">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label"><span style="color: red;"></span>结束时间</label>
                                     <div class="layui-input-block">
-                                        <input type="text" name="end_date" placeholder="" value="" class="layui-input end_time">
+                                        <input type="text" name="sendEndTime" placeholder="" value="" class="layui-input end_time">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label">状态</label>
                                     <div class="layui-input-block">
-                                        <input type="radio" name="state" value="1" title="不可用" lay-filter="is_show">
-                                        <input type="radio" name="state" value="0" title="可用"  lay-filter="is_show">
+                                        <input type="radio" name="status" value="1" title="不可用" lay-filter="is_show">
+                                        <input type="radio" name="status" value="0" title="可用"  lay-filter="is_show">
                                     </div>
                                 </div>
-                                <div class="layui-form-item">
-                                    <label class="layui-form-label"><span style="color: red;"></span>描述</label>
+                                <div class="form-group">
+                                    <label class="layui-form-label">优惠券类型：</label>
                                     <div class="layui-input-block">
-                                        <textarea placeholder="" class="layui-textarea" name="description" id="pattern" lay-verify="pattern" style="display:none"></textarea>
+                                        <select id="type" name="type" class="form-control">
+                                            <option  value="">请选择优惠券类型</option>
+                                            <option value="0">新人领取</option>
+                                            <option value="1">分享APP</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="layui-form-item">

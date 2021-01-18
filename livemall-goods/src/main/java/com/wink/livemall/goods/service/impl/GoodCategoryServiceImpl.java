@@ -3,12 +3,15 @@ package com.wink.livemall.goods.service.impl;
 
 import com.wink.livemall.goods.dao.GoodCategoryDao;
 import com.wink.livemall.goods.dto.GoodCategory;
+import com.wink.livemall.goods.dto.Menu;
 import com.wink.livemall.goods.service.GoodCategoryService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 
 @Service
@@ -116,6 +119,49 @@ public class GoodCategoryServiceImpl implements GoodCategoryService {
 	public List<GoodCategory> findActiveList() {
 		return goodCategoryDao.findActiveList();
 	}
+
+	@Override
+	public List<Menu> returnMenuTree(List<GoodCategory> list, List<com.wink.livemall.goods.dto.Menu> menulist) {
+
+		if (list.size() > 0) {
+			int len = list.size();
+			for (int i = 0; i < len; i++) {
+				GoodCategory cate = list.get(i);
+				if (cate.getParent_id() == 0) {
+					List<Menu> child = getChild(list, cate.getId());
+					Menu menu = new Menu();
+					menu.setId(list.get(i).getId());
+					menu.setHome_pic(list.get(i).getHome_pic());
+					menu.setName(list.get(i).getName());
+					menu.setPic(list.get(i).getPic());
+					menu.setChildren(child);
+					menulist.add(menu);
+				}
+			}
+
+		}
+		return menulist;
+	}
+
+	@Override
+	public List<Menu> getChild(List<GoodCategory> list, int parentid) {
+		List<Menu> child = new ArrayList<Menu>();
+		for (int i = 0; i < list.size(); i++) {
+
+			if (list.get(i).getParent_id() == parentid) {
+				Menu menu = new Menu();
+				menu.setId(list.get(i).getId());
+				menu.setHome_pic(list.get(i).getHome_pic());
+				menu.setName(list.get(i).getName());
+				menu.setPic(list.get(i).getPic());
+				menu.setParent_id(parentid);
+				child.add(menu);
+			}
+		}
+
+		return child;
+	}
+
 
 	@Override
 	public List<GoodCategory> findByPid(String pid) {

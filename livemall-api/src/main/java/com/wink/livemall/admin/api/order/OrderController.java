@@ -205,187 +205,187 @@ public class OrderController {
         return jsonResult;
     }
 
-    /**
-     * 提交订单
-     * @return
-     */
-    @ApiOperation(value = "提交订单")
-    @PostMapping("/submit")
-    @Transactional
-    public JsonResult submit(HttpServletRequest request,
-                             @ApiParam(name = "merchid", value = "商户id", required = true)@RequestParam int merchid,
-                             @ApiParam(name = "goodid", value = "商品id", required = true)@RequestParam int goodid,
-                             @ApiParam(name = "price", value = "价格", required = true)@RequestParam String price,
-                             @ApiParam(name = "addressid", value = "地址id", required = true)@RequestParam int addressid,
-                             @ApiParam(name = "couponid", value = "优惠券id", required = false)@RequestParam(required = false) String couponid,
-                             @ApiParam(name = "num", value = "数量", required = true)@RequestParam String num){
-        JsonResult jsonResult = new JsonResult();
-        jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            String userid = "";
-            if (!StringUtils.isEmpty(header)) {
-                if(!StringUtils.isEmpty(redisUtils.get(header))){
-                    userid = redisUtils.get(header)+"";
-                }else{
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
-            LmMemberAddress address = lmMemberAddressService.findById(addressid+"");
-            Integer maxId = lmOrderService.findMaxId();
-            if(maxId==null){
-                maxId = 0;
-            }
-            String datetime = DateUtils.sdfyMdHm.format(new Date());
-            Configs configs =configsService.findByTypeId(Configs.type_pay);
-            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-            String prfix=map.get("msgSrcId")+"";
-            LmCoupons lmCoupons= null;
-            if(!StringUtils.isEmpty(couponid)){
-                lmCoupons = lmCouponsService.findById(couponid);
-            }
-            Good good = goodService.findById(goodid);
-            if(address==null){
-                return new JsonResult(JsonResult.ERROR,"参数错误");
-            }
-            LmMember lmMember = lmMemberService.findById(userid+"");
-            if(lmMember==null){
-                return new JsonResult(JsonResult.ERROR,"参数错误");
-            }
-            if(good==null){
-                return new JsonResult(JsonResult.ERROR,"参数错误");
-            }
-            if(good.getStock()<Integer.parseInt(num)){
-                return new JsonResult(JsonResult.ERROR,"库存不足");
-            }
-            if(lmCoupons!=null){
-                Date date = new Date();
-                if(date.getTime()>=lmCoupons.getStart_date().getTime()&&date.getTime()<=lmCoupons.getEnd_date().getTime()){
-                    if(lmCoupons.getLeft_num()>0){
-                        //扣除优惠券数量
-                        lmCoupons.setUse_num(lmCoupons.getUse_num()+1);
-                        lmCoupons.setLeft_num(lmCoupons.getLeft_num()-1);
-                        lmCouponsService.updateService(lmCoupons);
-                        LmOrder lmOrder = new LmOrder();
-                        lmOrder.setStatus("0");
-                        lmOrder.setOrderid(prfix+datetime+maxId);
-                        lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-                        lmOrder.setPayexpressprice(good.getExpressprice());
-                        lmOrder.setChargename(address.getRealname());
-                        lmOrder.setChargephone(address.getMobile());
-                        lmOrder.setType(1);
-                        lmOrder.setPaynickname(lmMember.getNickname());
-                        lmOrder.setCreatetime(new Date());
-                        lmOrder.setMerchid(merchid);
-                        lmOrder.setMemberid(Integer.parseInt(userid));
-                        if(good.getFreeshipping()==1){
-                            lmOrder.setRealexpressprice(new BigDecimal(0));
-                            lmOrder.setRealpayprice(new BigDecimal(price));
-                        }else{
-                            lmOrder.setRealexpressprice(good.getExpressprice());
-                            lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
-                        }
-                        lmOrder.setTotalprice(new BigDecimal(price));
-                        lmOrderService.insertService(lmOrder);
-                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
-                        lmOrderGoods.setGoodid(goodid);
-                        lmOrderGoods.setGoodnum(Integer.parseInt(num));
-                        lmOrderGoods.setGoodstype(0);
-                        lmOrderGoods.setGoodprice(good.getProductprice());
-                        lmOrderGoods.setOrderid(lmOrder.getId());
-                        lmOrderGoodsService.insertService(lmOrderGoods);
-
-                        LmCouponLog lmCouponLog = new LmCouponLog();
-                        lmCouponLog.setCouponid(Integer.parseInt(couponid));
-                        lmCouponLog.setCreatetime(new Date());
-                        lmCouponLog.setMerchid(lmOrder.getMerchid());
-                        lmCouponLog.setMemberid(Integer.parseInt(userid));
-                        lmCouponLog.setOrderid(lmOrder.getId());
-                        lmCouponLog.setPrice(lmOrder.getTotalprice());
-                        lmCouponsService.insertLogService(lmCouponLog);
-                        jsonResult.setData(lmOrder.getOrderid());
-
-                        LmOrderLog lmOrderLog = new LmOrderLog();
-                        lmOrderLog.setOrderid(lmOrder.getOrderid());
-                        lmOrderLog.setOperatedate(new Date());
-                        lmOrderLog.setOperate("订单创建");
-                        lmOrderLogService.insert(lmOrderLog);
-                        //设置库存
-                        if(good.getStock()>0){
-                            int newstock = good.getStock()-Integer.parseInt(num);
-                            good.setStock(newstock);
-                            if(newstock==0){
-                                good.setState(0);
-                            }
-                        }
-                        goodService.updateGoods(good);
-
-                    }else{
-                        jsonResult.setCode("401");
-                        jsonResult.setMsg("优惠券失效请重新下单");
-                    }
-                }else{
-                    jsonResult.setCode("401");
-                    jsonResult.setMsg("优惠券失效请重新下单");
-                }
-            }else{
-                LmOrder lmOrder = new LmOrder();
-                lmOrder.setOrderid(prfix+datetime+maxId);
-                lmOrder.setStatus("0");
-                lmOrder.setType(1);
-                lmOrder.setPaynickname(lmMember.getNickname());
-                lmOrder.setCreatetime(new Date());
-                lmOrder.setMerchid(merchid);
-                lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-                lmOrder.setChargename(address.getRealname());
-                lmOrder.setChargephone(address.getMobile());
-                lmOrder.setMemberid(Integer.parseInt(userid));
-                lmOrder.setTotalprice(new BigDecimal(price));
-                if(good.getFreeshipping()==1){
-                    lmOrder.setRealexpressprice(new BigDecimal(0));
-                    lmOrder.setRealpayprice(new BigDecimal(price));
-                }else{
-                    lmOrder.setRealexpressprice(good.getExpressprice());
-                    lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
-                }
-                lmOrderService.insertService(lmOrder);
-                LmOrderGoods lmOrderGoods = new LmOrderGoods();
-                lmOrderGoods.setGoodid(goodid);
-                lmOrderGoods.setGoodstype(0);
-                lmOrderGoods.setGoodnum(Integer.parseInt(num));
-                lmOrderGoods.setGoodprice(good.getProductprice());
-                lmOrderGoods.setOrderid(lmOrder.getId());
-                lmOrderGoodsService.insertService(lmOrderGoods);
-
-                LmOrderLog lmOrderLog = new LmOrderLog();
-                lmOrderLog.setOrderid(lmOrder.getOrderid());
-                lmOrderLog.setOperatedate(new Date());
-                lmOrderLog.setOperate("订单创建");
-                lmOrderLogService.insert(lmOrderLog);
-                jsonResult.setData(lmOrder.getOrderid());
-                //设置库存
-                if(good.getStock()>0){
-                    int newstock = good.getStock()-Integer.parseInt(num);
-                    good.setStock(newstock);
-                    if(newstock==0){
-                        good.setState(0);
-                    }
-
-                }
-                goodService.updateGoods(good);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            jsonResult.setMsg(e.getMessage());
-            jsonResult.setCode(JsonResult.ERROR);
-            logger.error(e.getMessage());
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-
-        }
-        return jsonResult;
-
-    }
+//    /**
+//     * 提交订单
+//     * @return
+//     */
+//    @ApiOperation(value = "提交订单")
+//    @PostMapping("/submit")
+//    @Transactional
+//    public JsonResult submit(HttpServletRequest request,
+//                             @ApiParam(name = "merchid", value = "商户id", required = true)@RequestParam int merchid,
+//                             @ApiParam(name = "goodid", value = "商品id", required = true)@RequestParam int goodid,
+//                             @ApiParam(name = "price", value = "价格", required = true)@RequestParam String price,
+//                             @ApiParam(name = "addressid", value = "地址id", required = true)@RequestParam int addressid,
+//                             @ApiParam(name = "couponid", value = "优惠券id", required = false)@RequestParam(required = false) String couponid,
+//                             @ApiParam(name = "num", value = "数量", required = true)@RequestParam String num){
+//        JsonResult jsonResult = new JsonResult();
+//        jsonResult.setCode(JsonResult.SUCCESS);
+//        try {
+//            String header = request.getHeader("Authorization");
+//            String userid = "";
+//            if (!StringUtils.isEmpty(header)) {
+//                if(!StringUtils.isEmpty(redisUtils.get(header))){
+//                    userid = redisUtils.get(header)+"";
+//                }else{
+//                    jsonResult.setCode(JsonResult.LOGIN);
+//                    return jsonResult;
+//                }
+//            }
+//            LmMemberAddress address = lmMemberAddressService.findById(addressid+"");
+//            Integer maxId = lmOrderService.findMaxId();
+//            if(maxId==null){
+//                maxId = 0;
+//            }
+//            String datetime = DateUtils.sdfyMdHm.format(new Date());
+//            Configs configs =configsService.findByTypeId(Configs.type_pay);
+//            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+//            String prfix=map.get("msgSrcId")+"";
+//            LmCoupons lmCoupons= null;
+//            if(!StringUtils.isEmpty(couponid)){
+//                lmCoupons = lmCouponsService.findById(couponid);
+//            }
+//            Good good = goodService.findById(goodid);
+//            if(address==null){
+//                return new JsonResult(JsonResult.ERROR,"参数错误");
+//            }
+//            LmMember lmMember = lmMemberService.findById(userid+"");
+//            if(lmMember==null){
+//                return new JsonResult(JsonResult.ERROR,"参数错误");
+//            }
+//            if(good==null){
+//                return new JsonResult(JsonResult.ERROR,"参数错误");
+//            }
+//            if(good.getStock()<Integer.parseInt(num)){
+//                return new JsonResult(JsonResult.ERROR,"库存不足");
+//            }
+//            if(lmCoupons!=null){
+//                Date date = new Date();
+//                if(date.getTime()>=lmCoupons.getStart_date().getTime()&&date.getTime()<=lmCoupons.getEnd_date().getTime()){
+//                    if(lmCoupons.getLeft_num()>0){
+//                        //扣除优惠券数量
+//                        lmCoupons.setUse_num(lmCoupons.getUse_num()+1);
+//                        lmCoupons.setLeft_num(lmCoupons.getLeft_num()-1);
+//                        lmCouponsService.updateService(lmCoupons);
+//                        LmOrder lmOrder = new LmOrder();
+//                        lmOrder.setStatus("0");
+//                        lmOrder.setOrderid(prfix+datetime+maxId);
+//                        lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
+//                        lmOrder.setPayexpressprice(good.getExpressprice());
+//                        lmOrder.setChargename(address.getRealname());
+//                        lmOrder.setChargephone(address.getMobile());
+//                        lmOrder.setType(1);
+//                        lmOrder.setPaynickname(lmMember.getNickname());
+//                        lmOrder.setCreatetime(new Date());
+//                        lmOrder.setMerchid(merchid);
+//                        lmOrder.setMemberid(Integer.parseInt(userid));
+//                        if(good.getFreeshipping()==1){
+//                            lmOrder.setRealexpressprice(new BigDecimal(0));
+//                            lmOrder.setRealpayprice(new BigDecimal(price));
+//                        }else{
+//                            lmOrder.setRealexpressprice(good.getExpressprice());
+//                            lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
+//                        }
+//                        lmOrder.setTotalprice(new BigDecimal(price));
+//                        lmOrderService.insertService(lmOrder);
+//                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
+//                        lmOrderGoods.setGoodid(goodid);
+//                        lmOrderGoods.setGoodnum(Integer.parseInt(num));
+//                        lmOrderGoods.setGoodstype(0);
+//                        lmOrderGoods.setGoodprice(good.getProductprice());
+//                        lmOrderGoods.setOrderid(lmOrder.getId());
+//                        lmOrderGoodsService.insertService(lmOrderGoods);
+//
+//                        LmCouponLog lmCouponLog = new LmCouponLog();
+//                        lmCouponLog.setCouponid(Integer.parseInt(couponid));
+//                        lmCouponLog.setCreatetime(new Date());
+//                        lmCouponLog.setMerchid(lmOrder.getMerchid());
+//                        lmCouponLog.setMemberid(Integer.parseInt(userid));
+//                        lmCouponLog.setOrderid(lmOrder.getId());
+//                        lmCouponLog.setPrice(lmOrder.getTotalprice());
+//                        lmCouponsService.insertLogService(lmCouponLog);
+//                        jsonResult.setData(lmOrder.getOrderid());
+//
+//                        LmOrderLog lmOrderLog = new LmOrderLog();
+//                        lmOrderLog.setOrderid(lmOrder.getOrderid());
+//                        lmOrderLog.setOperatedate(new Date());
+//                        lmOrderLog.setOperate("订单创建");
+//                        lmOrderLogService.insert(lmOrderLog);
+//                        //设置库存
+//                        if(good.getStock()>0){
+//                            int newstock = good.getStock()-Integer.parseInt(num);
+//                            good.setStock(newstock);
+//                            if(newstock==0){
+//                                good.setState(0);
+//                            }
+//                        }
+//                        goodService.updateGoods(good);
+//
+//                    }else{
+//                        jsonResult.setCode("401");
+//                        jsonResult.setMsg("优惠券失效请重新下单");
+//                    }
+//                }else{
+//                    jsonResult.setCode("401");
+//                    jsonResult.setMsg("优惠券失效请重新下单");
+//                }
+//            }else{
+//                LmOrder lmOrder = new LmOrder();
+//                lmOrder.setOrderid(prfix+datetime+maxId);
+//                lmOrder.setStatus("0");
+//                lmOrder.setType(1);
+//                lmOrder.setPaynickname(lmMember.getNickname());
+//                lmOrder.setCreatetime(new Date());
+//                lmOrder.setMerchid(merchid);
+//                lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
+//                lmOrder.setChargename(address.getRealname());
+//                lmOrder.setChargephone(address.getMobile());
+//                lmOrder.setMemberid(Integer.parseInt(userid));
+//                lmOrder.setTotalprice(new BigDecimal(price));
+//                if(good.getFreeshipping()==1){
+//                    lmOrder.setRealexpressprice(new BigDecimal(0));
+//                    lmOrder.setRealpayprice(new BigDecimal(price));
+//                }else{
+//                    lmOrder.setRealexpressprice(good.getExpressprice());
+//                    lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
+//                }
+//                lmOrderService.insertService(lmOrder);
+//                LmOrderGoods lmOrderGoods = new LmOrderGoods();
+//                lmOrderGoods.setGoodid(goodid);
+//                lmOrderGoods.setGoodstype(0);
+//                lmOrderGoods.setGoodnum(Integer.parseInt(num));
+//                lmOrderGoods.setGoodprice(good.getProductprice());
+//                lmOrderGoods.setOrderid(lmOrder.getId());
+//                lmOrderGoodsService.insertService(lmOrderGoods);
+//
+//                LmOrderLog lmOrderLog = new LmOrderLog();
+//                lmOrderLog.setOrderid(lmOrder.getOrderid());
+//                lmOrderLog.setOperatedate(new Date());
+//                lmOrderLog.setOperate("订单创建");
+//                lmOrderLogService.insert(lmOrderLog);
+//                jsonResult.setData(lmOrder.getOrderid());
+//                //设置库存
+//                if(good.getStock()>0){
+//                    int newstock = good.getStock()-Integer.parseInt(num);
+//                    good.setStock(newstock);
+//                    if(newstock==0){
+//                        good.setState(0);
+//                    }
+//
+//                }
+//                goodService.updateGoods(good);
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            jsonResult.setMsg(e.getMessage());
+//            jsonResult.setCode(JsonResult.ERROR);
+//            logger.error(e.getMessage());
+//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+//
+//        }
+//        return jsonResult;
+//
+//    }
     /**
      * 支付设置订单状态
      * 废弃

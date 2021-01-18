@@ -1,13 +1,8 @@
 package com.wink.livemall.coupon.service.impl;
 
-import com.wink.livemall.coupon.dao.LmCouponsDao;
 import com.wink.livemall.coupon.dao.LmMerchCouponsDao;
 import com.wink.livemall.coupon.dto.LmCoupons;
-import com.wink.livemall.coupon.service.LmCouponsService;
 import com.wink.livemall.coupon.service.LmMerchCouponsService;
-
-import tk.mybatis.mapper.entity.Example;
-import tk.mybatis.mapper.entity.Example.Criteria;
 
 import org.springframework.stereotype.Service;
 
