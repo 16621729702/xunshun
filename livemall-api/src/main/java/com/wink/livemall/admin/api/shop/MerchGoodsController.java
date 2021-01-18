@@ -48,13 +48,13 @@ public class MerchGoodsController {
 
 	@Autowired
 	private GoodService goodService;
-	
+
 	@Autowired
 	private LmMerchOrderService lmMerchOrderService;
 
 	@Autowired
 	private LmGoodAuctionService lmGoodAuctionService;
-	
+
 
 	/**
 	 * 获取商品详情
@@ -69,18 +69,18 @@ public class MerchGoodsController {
 			jsonResult.setCode(jsonResult.ERROR);
 			jsonResult.setMsg("id为空");
 			return jsonResult;
-		}	
+		}
 		try {
 			Map<String, Object> good=merchGoodService.findGoodByid((request.getParameter("id")));
-			
+
 			SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			String auction_start_time_str="";
 			String auction_end_time_str="";
 			if(!StringUtils.isEmpty(good.get("auction_start_time"))) {
-				 auction_start_time_str=sf.format((Date)good.get("auction_start_time"));
+				auction_start_time_str=sf.format((Date)good.get("auction_start_time"));
 			}
 			if(!StringUtils.isEmpty(good.get("auction_end_time"))) {
-				 auction_end_time_str=sf.format((Date)good.get("auction_end_time"));
+				auction_end_time_str=sf.format((Date)good.get("auction_end_time"));
 			}
 			good.put("auction_start_time", auction_start_time_str);
 			good.put("auction_end_time", auction_end_time_str);
@@ -90,16 +90,16 @@ public class MerchGoodsController {
 			jsonResult.setData(good);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());
-            jsonResult.setCode(JsonResult.ERROR);
-            logger.error(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
 		}
-		
+
 		return  jsonResult;
 	}
-	
+
 	/**
 	 * 搜索店铺商品
-	 * 
+	 *
 	 * @param request type 不传值所有商品 1一口价商品 2直播商品
 	 * @return
 	 */
@@ -348,7 +348,7 @@ public class MerchGoodsController {
 			VerifyFields ver = new VerifyFields();
 			String[] fields = { "weight",  "startprice", "stepprice","marketprice",
 					"delaytime", "mer_id", "type", "category_id", "place", "spec", "material", "title", "description",
-					 "stock", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
+					"stock", "productprice", "freeshipping", "thumbs","thumb","expressprice" };
 			List<Map<String, String>> field_ = ver.checkEmptyField(fields, request);
 			Date date = new Date();
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -560,7 +560,7 @@ public class MerchGoodsController {
 			Map<String, Object> res = new HashMap<String, Object>();
 			res.put("pageindex", request.getParameter("pageindex"));
 			res.put("pagesize", request.getParameter("pagesize"));
-			
+
 			if(list.size()>0) {
 				SimpleDateFormat sf=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				for (int i = 0; i < list.size(); i++) {
@@ -606,7 +606,7 @@ public class MerchGoodsController {
 
 	/**
 	 * 删除商品
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -620,10 +620,10 @@ public class MerchGoodsController {
 			return jsonResult;
 		}
 		try {
-			    Good good=goodService.findById(Integer.parseInt(request.getParameter("id")));
-				good.setState(0);
-				good.setAuction_status(2);
-			    good.setIsdelete(1);
+			Good good=goodService.findById(Integer.parseInt(request.getParameter("id")));
+			good.setState(0);
+			good.setAuction_status(2);
+			good.setIsdelete(1);
 			merchGoodService.updateEntity(good);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());
@@ -635,7 +635,7 @@ public class MerchGoodsController {
 
 	/**
 	 * 商品库信息
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -678,7 +678,7 @@ public class MerchGoodsController {
 
 	/**
 	 * 合买商品抽签
-	 * 
+	 *
 	 * @param request
 	 * @return
 	 */
@@ -693,7 +693,7 @@ public class MerchGoodsController {
 		}
 		try {
 			Good good=	goodService.findById(Integer.parseInt(request.getParameter("id")));
-			
+
 			jsonResult.setCode(jsonResult.SUCCESS);
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());

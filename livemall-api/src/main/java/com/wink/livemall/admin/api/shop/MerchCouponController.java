@@ -121,10 +121,10 @@ public class MerchCouponController {
 		HttpJsonResult<JSONObject> jsonResult=new HttpJsonResult<>();
 
 		try {
-			    insertOrUpdateLC(1,lmCouponsVO);
-				jsonResult.setCode(Errors.ok.getCode());
-				jsonResult.setMessage(Errors.ok.getMsg());
-				return jsonResult;
+			insertOrUpdateLC(1,lmCouponsVO);
+			jsonResult.setCode(Errors.ok.getCode());
+			jsonResult.setMessage(Errors.ok.getMsg());
+			return jsonResult;
 
 		} catch (Exception e) {
 			throw e;
