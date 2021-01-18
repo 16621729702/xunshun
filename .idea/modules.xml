@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/livemall-api/livemall-api.iml" filepath="$PROJECT_DIR$/livemall-api/livemall-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-coupon/livemall-coupon.iml" filepath="$PROJECT_DIR$/livemall-coupon/livemall-coupon.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-goods/livemall-goods.iml" filepath="$PROJECT_DIR$/livemall-goods/livemall-goods.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-help/livemall-help.iml" filepath="$PROJECT_DIR$/livemall-help/livemall-help.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-job/livemall-job.iml" filepath="$PROJECT_DIR$/livemall-job/livemall-job.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-live/livemall-live.iml" filepath="$PROJECT_DIR$/livemall-live/livemall-live.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-member/livemall-member.iml" filepath="$PROJECT_DIR$/livemall-member/livemall-member.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-merch/livemall-merch.iml" filepath="$PROJECT_DIR$/livemall-merch/livemall-merch.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-orders/livemall-orders.iml" filepath="$PROJECT_DIR$/livemall-orders/livemall-orders.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-parent.iml" filepath="$PROJECT_DIR$/livemall-parent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-sys/livemall-sys.iml" filepath="$PROJECT_DIR$/livemall-sys/livemall-sys.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-utils/livemall-utils.iml" filepath="$PROJECT_DIR$/livemall-utils/livemall-utils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-video/livemall-video.iml" filepath="$PROJECT_DIR$/livemall-video/livemall-video.iml" />
+      <module fileurl="file://$PROJECT_DIR$/livemall-web/livemall-web.iml" filepath="$PROJECT_DIR$/livemall-web/livemall-web.iml" />
+    </modules>
+  </component>
+</project>
