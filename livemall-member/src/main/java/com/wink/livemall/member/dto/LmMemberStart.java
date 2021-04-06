@@ -17,6 +17,15 @@ public class LmMemberStart {
     private String coupon_price;
     private int type;
     private int isstart;
+    private int businessid;
+
+    public int getBusinessid() {
+        return businessid;
+    }
+
+    public void setBusinessid(int businessid) {
+        this.businessid = businessid;
+    }
 
     public String getMargin() {
         return margin;

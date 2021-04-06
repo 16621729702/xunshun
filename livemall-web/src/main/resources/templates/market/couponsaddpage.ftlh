@@ -123,6 +123,7 @@
                                             <option  value="">请选择优惠券类型</option>
                                             <option value="0">新人领取</option>
                                             <option value="1">分享APP</option>
+                                            <option value="3">平台卷</option>
                                         </select>
                                     </div>
                                 </div>

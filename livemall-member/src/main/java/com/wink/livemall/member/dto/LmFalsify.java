@@ -1,6 +1,9 @@
 package com.wink.livemall.member.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -23,7 +26,18 @@ public class LmFalsify {
     private int merch_id;
     private int status;
     private int good_id;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date create_time;
+    private int  violate;
+
+    public int getViolate() {
+        return violate;
+    }
+
+    public void setViolate(int violate) {
+        this.violate = violate;
+    }
 
     public int getId() {
         return id;

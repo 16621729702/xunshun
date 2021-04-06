@@ -56,4 +56,14 @@ public interface LmMemberService {
     
     
     void addMemberLog(LmMemberLog entity);
+
+
+    /**
+     * 根据主键查询
+     * @param id
+     * @return
+     */
+    Map<String ,Object> findByIdList(int id);
+
+
 }

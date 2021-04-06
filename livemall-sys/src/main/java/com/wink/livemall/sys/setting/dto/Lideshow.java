@@ -28,10 +28,28 @@ public class Lideshow {
     private String link_data;
     private Date created_at;
     private Date updated_at;
+    private int mer_category;
+    private int live_category;
+
 
     public Lideshow() {
     }
 
+    public int getMer_category() {
+        return mer_category;
+    }
+
+    public void setMer_category(int mer_category) {
+        this.mer_category = mer_category;
+    }
+
+    public int getLive_category() {
+        return live_category;
+    }
+
+    public void setLive_category(int live_category) {
+        this.live_category = live_category;
+    }
 
     public int getId() {
         return id;

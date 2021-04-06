@@ -44,7 +44,7 @@ public interface LmMemberFavDao  extends tk.mybatis.mapper.common.Mapper<LmMembe
                         " lg.type as type," +
                         " lmt.id as favid," +
                         " lg.productprice as price" +
-                        " from lm_member_fav lmt , lm_goods lg  where lmt.goods_id = lg.id and lg.isdelete =0 " +
+                        " from lm_member_fav lmt , lm_goods lg  where lmt.goods_id = lg.id and lg.state =1 and lg.isdelete =0 " +
                         " and lmt.member_id = #{userid}";
                 sql+=" and lmt.state = 0 ";
                 sql+=" order by create_time desc ";

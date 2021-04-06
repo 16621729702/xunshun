@@ -18,7 +18,7 @@ public class PageUtil {
 
 		Integer count = list.size(); //记录总数
 		Integer stepnum = (pageNum-1)*pageSize;
-		if(stepnum>count){
+		if(stepnum>=count){
 			return new ArrayList();
 		}
 
@@ -32,8 +32,10 @@ public class PageUtil {
 		int fromIndex = 0; //开始索引
 		int toIndex = 0; //结束索引
 
-		if (pageNum > pageCount) {
-			pageNum = pageCount;
+		if(!count.equals(pageSize)){
+			if (pageNum > pageCount) {
+				pageNum = pageCount;
+			}
 		}
 		if (!pageNum.equals(pageCount)) {
 			fromIndex = (pageNum - 1) * pageSize;
@@ -42,9 +44,7 @@ public class PageUtil {
 			fromIndex = (pageNum - 1) * pageSize;
 			toIndex = count;
 		}
-
-		List pageList = list.subList(fromIndex, toIndex);
-
+			List pageList = list.subList(fromIndex, toIndex);
 		return pageList;
 	}
 }

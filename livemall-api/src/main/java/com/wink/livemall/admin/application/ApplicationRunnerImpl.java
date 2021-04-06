@@ -75,5 +75,6 @@ public class ApplicationRunnerImpl implements ApplicationRunner {
            httpClient.send("拍品消息",lmMember.getId()+"",msg);
        }*/
 
+
     }
 }

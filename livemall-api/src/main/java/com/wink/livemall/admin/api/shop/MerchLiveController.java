@@ -1,18 +1,25 @@
 package com.wink.livemall.admin.api.shop;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.wink.livemall.admin.api.help.CommentService;
 import com.wink.livemall.admin.util.*;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.LivedGood;
 import com.wink.livemall.live.dto.*;
 import com.wink.livemall.live.service.*;
+import com.wink.livemall.member.dto.LmMemberFollow;
+import com.wink.livemall.member.service.LmFalsifyService;
+import com.wink.livemall.member.service.LmMemberFollowService;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,12 +34,14 @@ import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.MerchGoodService;
 import com.wink.livemall.merch.dto.LmMerchInfo;
 import com.wink.livemall.merch.service.LmMerchInfoService;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@Api(tags = "商户直播间接口")
+@RestController
 @RequestMapping("merchlive")
 public class MerchLiveController {
 
-	Logger logger = LogManager.getLogger(GoodController.class);
+	Logger logger = LogManager.getLogger(MerchLiveController.class);
 
 	@Autowired
 	private MerchGoodService merchGoodService;
@@ -48,16 +57,18 @@ public class MerchLiveController {
 
 	@Autowired
 	private LmMerchInfoService lmMerchInfoService;
-
+	@Autowired
+	private LmMemberFollowService lmMemberFollowService;
 	@Autowired
 	private LmMerchLiveService LmMerchLiveService;
-	
 	@Autowired
 	private LmLiveLogService lmLiveLogService;
-
 	@Autowired
 	private LmLiveInfoService lmLiveInfoService;
-
+	@Autowired
+	private LmFalsifyService lmFalsifyService;
+	@Autowired
+	private CommentService commentService;
 	/**
 	 * 直播商品列表
 	 * 
@@ -156,7 +167,6 @@ public class MerchLiveController {
 		return jsonResult;
 	}
 
-	
 
 	/**
 	 * 开关直播间
@@ -165,7 +175,7 @@ public class MerchLiveController {
 	 */
 	@RequestMapping("upd_live_status")
 	@ResponseBody
-	public JsonResult updLiveStatus(HttpServletRequest request) {
+	public JsonResult updLiveStatus(HttpServletRequest request) throws Exception {
 		HttpClient client = new HttpClient();
 		JsonResult jsonResult = new JsonResult();
 		if (StringUtils.isEmpty(request.getParameter("id"))) {
@@ -184,41 +194,57 @@ public class MerchLiveController {
 			jsonResult.setMsg("没找到直播间");
 			return jsonResult;
 		}
-/*		if(live.getIsstart()==1){
-			jsonResult.setCode(jsonResult.ERROR);
-			jsonResult.setMsg("该直播间正在被使用");
-			return jsonResult;
-		}*/
+		//清除观看人数
+		LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(live.getId());
 		if (request.getParameter("type").equals("1")) {
 			//创建直播间群组
 			Map map = client.creatgroup(live.getId()+"");
 			live.setLivegroupid(map.get("GroupId")+"");
 			live.setIsstart(1);
+			live.setPreview_time(new Date());
 			LmMerchLiveService.updLive(live);
+			LmLiveLog liveLogOld=lmLiveLogService.findLastLog(request.getParameter("id"));
+			if(liveLogOld!=null) {
+				liveLogOld.setStatus(2);
+				lmLiveLogService.upd(liveLogOld);
+			}
 			LmLiveLog liveLog=new LmLiveLog();
 			liveLog.setMerchid(Integer.parseInt(request.getParameter("id")));
 			liveLog.setStarttime(new Date());
 			liveLog.setStatus(1);
+			liveLog.setConcurrent(lmLiveInfo.getAddnum()+live.getWatchnum());
 			liveLog.setLiveid(live.getId());
 			lmLiveLogService.addLog(liveLog);
 		} else {
-			//清除观看人数
-			LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(live.getId());
-			lmLiveInfo.setAddnum(0);
-			lmLiveInfoService.updateService(lmLiveInfo);
 			//清除直播间商品
 			List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(live.getId());
 			for(LivedGood good:oldgood){
+				//给其他人退款
+				List<Map<String, Object>> autoRefundFalsify = lmFalsifyService.autoRefundFalsify(good.getId(),1);
+				if(autoRefundFalsify!=null&&autoRefundFalsify.size()>0){
+					for(Map<String,Object> falsifyLists:autoRefundFalsify){
+						int memberId=(int) falsifyLists.get("member_id");
+						String falsifyId=(String) falsifyLists.get("falsify_id");
+						BigDecimal falsify=(BigDecimal)falsifyLists.get("falsify");
+						falsify=falsify.multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_HALF_UP);
+						String falsifyP=String.valueOf(falsify);
+						commentService.autoRefundFalsify(falsifyId,falsifyP);
+						String msg = "您缴纳该:"+good.getName()+"\n商品的违约金已自动退回";
+						HttpClient httpClient = new HttpClient();
+						httpClient.send("拍品消息",memberId+"",msg);
+					}
+				}
 					good.setStatus(-1);
 					goodService.updateLivedGood(good);
 			}
 			//注销群组
+			LmLiveLog liveLog=lmLiveLogService.findLastLog(request.getParameter("id"));
+			liveLog.setConcurrent(lmLiveInfo.getAddnum()+live.getWatchnum());
 			client.deleteGroup(live.getLivegroupid());
 			live.setIsstart(0);
 			live.setWatchnum(0);
 			live.setLivegroupid("");
 			LmMerchLiveService.updLive(live);
-			LmLiveLog liveLog=lmLiveLogService.findLastLog(request.getParameter("id"));
 			if(liveLog!=null) {
 				int diff=0;
 				Date end=new Date();
@@ -227,20 +253,19 @@ public class MerchLiveController {
 				liveLog.setEndtime(end);
 				liveLog.setDiff(diff);
 				liveLog.setStatus(2);
+
 				lmLiveLogService.upd(liveLog);
 			}
 		}
+		lmLiveInfo.setAddnum(0);
+		lmLiveInfoService.updateService(lmLiveInfo);
 		return jsonResult;
 	}
 
-	
-	public static void main(String[] args) {
-		Date d=new Date();
-		System.out.println(d.getTime());
-	}
+
 	
 	/**
-	 * 检查商户直播间状态 status 1未申请 2待审核 3正常 4禁用
+	 * 检查商户直播间状态 status 1未申请 2待审核 3正常 4禁用 5 过期
 	 * 
 	 * @param request
 	 * @return
@@ -283,7 +308,12 @@ public class MerchLiveController {
 				jsonResult.setCode(JsonResult.SUCCESS);
 				res.put("status", 4);
 
-			}
+			} else if (live.getStatus() == 2) {
+			jsonResult.setCode(JsonResult.SUCCESS);
+			res.put("status", 5);
+
+		   }
+
 			jsonResult.setData(res);
 		}
 
@@ -385,11 +415,17 @@ public class MerchLiveController {
 					return jsonResult;
 				}
 				LmLive entity = (LmLive) res.get("entity");
-				entity.setStatus(-1);
+				entity.setStatus(0);
 				if(info.getIschipped()==1){
 					entity.setType(1);
 				}else{
 					entity.setType(0);
+				}
+				Calendar calendar = new GregorianCalendar();
+				if(info.getType()==1){
+					calendar.setTime(new Date());
+					calendar.add(Calendar.YEAR, +1);
+					entity.setEnd_time(calendar.getTime());
 				}
 				LmMerchLiveService.addLiveApply(entity);
 				LmLive lives = LmMerchLiveService.findLiveByMerchid(Integer.parseInt(request.getParameter("merch_id")));
@@ -404,6 +440,150 @@ public class MerchLiveController {
 				return jsonResult;
 			}
 
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+	/**
+	 * 修改预展时间 和展示
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("upd_live_preview")
+	@ResponseBody
+	@ApiOperation(value = "修改预展时间",notes = "修改预展时间接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "previewTime", value = "预展时间",required =false,  dataType = "String",paramType = "query"),
+			@ApiImplicitParam(name = "id", value = "直播间id",required =true,  dataType = "Integer",paramType = "query"),
+			@ApiImplicitParam(name = "type", value = "0是查看 1是修改 2 是取消预展",required =true,  dataType = "Integer",paramType = "query"),
+			@ApiImplicitParam(name = "liveTheme", value = "直播主题",required =false,  dataType = "String",paramType = "query"),
+			@ApiImplicitParam(name = "liveImg", value = "直播背景图",required =false,  dataType = "String",paramType = "query")
+	})
+	public JsonResult updLivePreview(HttpServletRequest request,Integer id,String previewTime,Integer type,String liveTheme,String liveImg ) {
+		JsonResult jsonResult = new JsonResult();
+		String header = request.getHeader("Authorization");
+		String userid = "";
+		if (!StringUtils.isEmpty(header)) {
+			if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+				userid = TokenUtil.getUserId(header);
+			}else{
+				jsonResult.setCode(JsonResult.LOGIN);
+				return jsonResult;
+			}
+		}else{
+			jsonResult.setCode(JsonResult.LOGIN);
+			return jsonResult;
+		}
+		try {
+			isLivePreview(jsonResult,id, previewTime, type,liveTheme,liveImg,userid);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return jsonResult;
+	}
+
+
+	public void  isLivePreview(JsonResult jsonResult ,Integer id,String previewTime,Integer type,String liveTheme,String liveImg,String userid) throws Exception {
+		SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		jsonResult.setCode(JsonResult.SUCCESS);
+		Map<String, Object> map=new HashMap();
+		LmLive live = LmMerchLiveService.findLive(id);
+		if(0==type) {
+			LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(live.getMerch_id()));
+			map.put("liveImg",live.getImg());
+			map.put("liveName",live.getName());
+			map.put("liveTheme",live.getLiveTheme());
+			map.put("merId",lmMerchInfo.getId());
+			map.put("merName",lmMerchInfo.getStore_name());
+			map.put("merImg",lmMerchInfo.getAvatar());
+			if(!StringUtils.isEmpty(live.getPreview_time())){
+				map.put("previewTime",dateFormat.format(live.getPreview_time()));
+				LmMemberFollow lmMemberFollow = lmMemberFollowService.findByMemberidAndTypeAndId(Integer.parseInt(userid), 0, live.getId());
+				if(lmMemberFollow!=null){
+					if(lmMemberFollow.getState()==0){
+						map.put("followStatus",lmMemberFollow.getState());
+					}
+					map.put("followStatus",lmMemberFollow.getState());
+				}else {
+					map.put("followStatus",1);
+				}
+				LmMemberFollow lmMemberFollows = lmMemberFollowService.findByMemberidAndTypeAndId(Integer.parseInt(userid), 1, lmMerchInfo.getId());
+				if(lmMemberFollows!=null){
+					map.put("followMerStatus",lmMemberFollows.getState());
+				}else {
+					map.put("followMerStatus",1);
+				}
+				LmLiveInfo liveInfo = lmLiveInfoService.findLiveInfo(live.getId());
+				int  addnum= liveInfo.getAddnum();
+				liveInfo.setAddnum(addnum+1);
+				map.put("views",addnum+1);
+				lmLiveInfoService.updateService(liveInfo);
+				List<LmMemberFollow> byMerchidAndType = lmMemberFollowService.findByMerchidAndType(0, live.getId());
+				if(byMerchidAndType!=null&&byMerchidAndType.size()>0){
+					int size = byMerchidAndType.size();
+					map.put("focus",size+liveInfo.getFocusnum());
+				}else {
+					map.put("focus",0+liveInfo.getFocusnum());
+				}
+			}else {
+				map.put("previewTime",null);
+			}
+			map.put("isStart",live.getIsstart());
+			jsonResult.setData(map);
+		}else if(type==1){
+			Date parse = dateFormat.parse(previewTime);
+			live.setIsstart(2);
+			live.setPreview_time(parse);
+			live.setLiveTheme(liveTheme);
+			live.setImg(liveImg);
+			LmMerchLiveService.updLive(live);
+			jsonResult.setMsg("直播时间预设成功，请及时开启直播");
+		}else if(type==2){
+			if(live.getIsstart()==2){
+			live.setIsstart(0);
+			live.setPreview_time(null);
+			live.setLiveTheme("");
+			live.setLivegroupid("");
+			LmMerchLiveService.updLive(live);
+			LmLiveInfo liveInfo = lmLiveInfoService.findLiveInfo(live.getId());
+			liveInfo.setAddnum(0);
+			lmLiveInfoService.updateService(liveInfo);
+			jsonResult.setMsg("直播时间预设成功，请及时开启直播");
+			}else {
+				jsonResult.setCode(JsonResult.ERROR);
+				jsonResult.setMsg("未预设直播，无需取消");
+			}
+		}
+	}
+
+
+	/**
+	 * 修改直播间背景图
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("upd_live_img")
+	@ResponseBody
+	@ApiOperation(value = "修改直播间背景图",notes = "修改直播间背景图接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "id", value = "直播间id",required =true,  dataType = "Integer",paramType = "query"),
+			@ApiImplicitParam(name = "img", value = "图片",required =false,  dataType = "String",paramType = "query")
+	})
+	public JsonResult updLiveImg(HttpServletRequest request,Integer id,String img ) {
+		JsonResult jsonResult = new JsonResult();
+		try {
+			LmLive live = LmMerchLiveService.findLive(id);
+			live.setImg(img);
+			LmMerchLiveService.updLive(live);
+			jsonResult.setData(null);
+			jsonResult.setCode(JsonResult.SUCCESS);
+			jsonResult.setMsg("背景图修改成功");
 		} catch (Exception e) {
 			jsonResult.setMsg(e.getMessage());
 			jsonResult.setCode(JsonResult.ERROR);

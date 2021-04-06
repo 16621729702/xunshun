@@ -13,13 +13,13 @@ import java.util.Map;
 @Mapper
 public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
 
-    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.categoryid = #{pid} and ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
+    @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where ll.categoryid = #{pid} and ll.status = 0  and ll.type = 0 order by ll.isstart desc,ll.watchnum desc")
     List<Map<String,Object>> findListByCategoryIdByApi(@Param("pid") int pid);
 
 
 
     @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id " +
-            " left join lm_member_follow lmf on ll.id = lmf.follow_id where ll.status = 0 and lmf.follow_type = 0 and ll.isstart = 1 and lmf.member_id =#{memberid} ")
+            " left join lm_member_follow lmf on ll.id = lmf.follow_id where ll.status = 0 and lmf.follow_type = 0 and ll.isstart = 1 and lmf.member_id =#{memberid} order by ll.isstart desc,ll.watchnum desc")
     List<Map<String,Object>> findfollewLiveByApi(@Param("memberid")int memberid);
 
 
@@ -46,7 +46,7 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
     @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.type = 0  order by ll.isrecommend,ll.watchnum desc limit 0,1")
     Map<String, String> findRecommendLiveByapi();
 
-    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0  and ll.type = 0 order by ll.watchnum desc")
+    @Select("SELECT ll.*, lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0  and ll.type = 0 order by ll.isstart desc,ll.watchnum desc")
     List<Map<String,Object>> findHotLiveByApi();
 
     @Select("SELECT ll.* , lm.store_name as store_name,lm.avatar as avatar FROM lm_lives ll left join lm_merch_info lm on ll.merch_id = lm.id where  ll.status = 0 and ll.isstart = 1 and ll.type = 1  order by ll.isrecommend,ll.watchnum desc limit 0,1")
@@ -62,9 +62,17 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
     @SelectProvider(type = sqlprovider.class, method = "findListByNameByApi")
     List<Map<String, String>> findListByNameByApi(String name);
 
-    @Select("select * from lm_lives where isstart = 1")
+    @Select("select * from lm_lives where isstart = 1 ")
     List<LmLive> findLiveedLive();
 
+    @Select("select * from lm_lives where status = 0 order by id desc")
+    List<LmLive> findLiveList();
+
+    @Select("select * from lm_lives where isstart = 2 and status = 0 ")
+    List<LmLive> findLivePreview();
+
+    @Select("select * from lm_lives order by isstart desc,isrecommend desc LIMIT 0,5")
+    List<LmLive> findHotLive();
 
     class sqlprovider {
 
@@ -96,6 +104,7 @@ public interface LmLiveDao extends tk.mybatis.mapper.common.Mapper<LmLive>{
                     " ll.name as name," +
                     " ll.readurl as readurl," +
                     " ll.pushurl as pushurl," +
+                    " ll.isstart as isstart," +
                     " ll.watchnum as watchnum," +
                     " ll.img as img," +
                     " lm.store_name as store_name," +

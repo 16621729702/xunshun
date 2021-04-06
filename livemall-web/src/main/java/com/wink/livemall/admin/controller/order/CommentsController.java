@@ -78,6 +78,7 @@ public class CommentsController {
     @ResponseBody
     public JsonResult replaysave(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String adminreplay = StringUtils.isEmpty(request.getParameter("adminreplay"))?"":request.getParameter("adminreplay");
         try {
             LmGoodComment lmGoodComment = lmGoodCommentService.findById(id);

@@ -3,8 +3,16 @@ package com.wink.livemall.admin.util;
 public enum Errors {
     wx_system_busy(-1,"系统繁忙，请稍后再试"),
 
-    ok(200,"OK")
+    SUCCESS(200,"成功"),
 
+    ERROR(500,"发生错误信息"),
+
+    LOGIN(302,"登录失效"),
+    coupon_error(500,"优惠券结束时间未到，不能删除"),
+    get_coupon_error(501,"您已达到优惠券领取次数，不能再领取"),
+    is_can_use(501,"优惠劵已领取还未使用，不能再次领取"),
+    // token异常
+    TOKEN_PAST(301, "您的登录信息可能发生了更改，请重新登录"), TOKEN_ERROR(302, "您的网络延迟过长，请切换新的网络重新尝试")
     ;
 
 

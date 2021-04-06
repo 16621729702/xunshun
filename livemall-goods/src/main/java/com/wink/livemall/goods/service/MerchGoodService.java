@@ -3,6 +3,7 @@ package com.wink.livemall.goods.service;
 import com.wink.livemall.goods.dto.Good;
 import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.dto.User;
+import com.wink.livemall.goods.utils.HttpJsonResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
@@ -22,6 +23,13 @@ public interface MerchGoodService {
 	 * @param good
 	 */
 	void addGoods(Good good);
+
+	/**
+	 * 添加商品
+	 *
+	 * @param good
+	 */
+	HttpJsonResult changeGood(Good good,Integer type);
 
 	/**
 	 * 修改
@@ -60,6 +68,15 @@ public interface MerchGoodService {
 	 * @return
 	 */
 	int countGoodsNum(int merchid);
+
+	/**
+	 * 统计商品数量
+	 * @param merchid
+	 * @param type
+	 * @param state
+	 * @return
+	 */
+	int newCountGoodsNum(int merchid,int type,int state);
 
 	/**
 	 * 统计订单数量

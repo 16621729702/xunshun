@@ -112,18 +112,19 @@
                                     <table class="layui-table">
                                         <thead>
                                         <tr>
-                                            <th width="10%">ID</th>
+                                            <th width="5%">ID</th>
                                             <th width="10%">头像</th>
                                             <th width="10%">名称</th>
-                                            <th width="10%">商户号</th>
-
+                                            <th width="5%">商户号</th>
 <#--
                                             <th width="20%">介绍</th>
 -->
-                                            <th width="10%">微信号</th>
+                                            <th width="5%">微信号</th>
                                             <th width="10%">手机号</th>
                                             <th width="10%">背景图</th>
-                                            <th width="10%">状态</th>
+                                            <th width="10%">直播间权限</th>
+                                            <th width="7%">状态</th>
+                                            <th width="8%">资产状态</th>
                                             <th width="20%">操作</th>
                                         </tr>
                                         </thead>
@@ -145,9 +146,17 @@
                                                         <td>${list.mobile!}</td>
                                                         <td><img class="rounded img-md img_pop_show" src="${list.bg_image!}" height="50px" width="50px" ></td>
                                                         <td>
+                                                            <#if list.islive==0>待开启</#if>
+                                                            <#if list.islive==1>正常</#if>
+                                                        </td>
+                                                        <td>
                                                            <#if list.state==0>待认证</#if>
                                                             <#if list.state==1>正常</#if>
                                                             <#if list.state==2>封号</#if>
+                                                        </td>
+                                                        <td>
+                                                            <#if list.freeze==0>正常</#if>
+                                                            <#if list.freeze==1>冻结</#if>
                                                         </td>
                                                         <td>
                                                             <div class="btn-group">

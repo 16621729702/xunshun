@@ -72,12 +72,15 @@ public class PushmsgController {
                 return new JsonResult(JsonResult.ERROR,"商户信息或订单商品信息异常");
             }
             String msg = "";
+            if(order.getRemind()>=3){
+                return new JsonResult(JsonResult.ERROR,"提醒次数已超过三次，请耐心等待");
+            }
             if(order.getType()==3){
             	LmShareGood good = goodService.findshareById(lmOrderGoods.getGoodid());
             	if(good==null){
                     return new JsonResult(JsonResult.ERROR,"商品信息异常");
                 }
-                 msg = "提醒发货:订单号"+order.getOrderid()+"-商品："+good.getName()+"----------买家提醒发货啦！";
+                 msg = "提醒发货:您的店铺"+lmMerchInfo.getStore_name()+"\n订单号"+order.getOrderid()+"-商品："+good.getName()+"----------买家提醒发货啦！";
 
             }else{
                 if(order.getIslivegood()==1){
@@ -85,16 +88,18 @@ public class PushmsgController {
                     if (good == null) {
                         return new JsonResult(JsonResult.ERROR, "商品信息异常");
                     }
-                    msg = "提醒发货:订单号" + order.getOrderid() + "-商品：" + good.getName()+ "----------买家提醒发货啦！";
+                    msg = "提醒发货:您的店铺"+lmMerchInfo.getStore_name()+"\n订单号"+order.getOrderid()+"-商品："+good.getName()+"----------买家提醒发货啦！";
 
                 }else {
                     Good good = goodService.findById(lmOrderGoods.getGoodid());
                     if (good == null) {
                         return new JsonResult(JsonResult.ERROR, "商品信息异常");
                     }
-                    msg = "提醒发货:订单号" + order.getOrderid() + "-商品：" + good.getTitle() + "----------买家提醒发货啦！";
+                    msg = "提醒发货:您的店铺"+lmMerchInfo.getStore_name()+"\n订单号" + order.getOrderid() + "-商品：" + good.getTitle() + "----------买家提醒发货啦！";
                 }
             }
+            order.setRemind(order.getRemind()+1);
+            lmOrderService.updateService(order);
             HttpClient httpClient = new HttpClient();
             httpClient.send("交易消息",lmMerchInfo.getMember_id()+"",msg);
         } catch (Exception e) {

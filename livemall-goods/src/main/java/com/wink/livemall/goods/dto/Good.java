@@ -1,5 +1,8 @@
 package com.wink.livemall.goods.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -47,12 +50,22 @@ public class Good   {
     private String thumbs;//详情图4:3
     private int hasoption;
     private int is_free_freight;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date create_at;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date update_at;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date delete_at;
     private BigDecimal startprice;//起始价格
     private BigDecimal stepprice;//加价价格
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date auction_start_time;//拍卖开始时间
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private Date auction_end_time;//结束时间
     private String label;//商品标签
     private int bidsnum;//出价次数
@@ -70,6 +83,42 @@ public class Good   {
     private int chipped_num;//合买份数0否1是
     private BigDecimal chipped_price;//合买单价0否1是
     private int isdelete; //是否删除 1删除
+    private String auther; //作者
+    private String certificate; //获奖证书
+    private String model;//造型
+    private BigDecimal commission;
+
+    public BigDecimal getCommission() {
+        return commission;
+    }
+
+    public void setCommission(BigDecimal commission) {
+        this.commission = commission;
+    }
+
+    public String getAuther() {
+        return auther;
+    }
+
+    public void setAuther(String auther) {
+        this.auther = auther;
+    }
+
+    public String getCertificate() {
+        return certificate;
+    }
+
+    public void setCertificate(String certificate) {
+        this.certificate = certificate;
+    }
+
+    public String getModel() {
+        return model;
+    }
+
+    public void setModel(String model) {
+        this.model = model;
+    }
 
     public int getIsdelete() {
         return isdelete;

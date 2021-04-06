@@ -41,5 +41,5 @@ public interface LmMemberCouponService {
 
     List<LmMemberCoupon> findByMemberid(int userid);
 
-    List<Map<String, String>> findByMemberidByApi(int userid);
+
 }

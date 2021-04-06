@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="Maven: com.github.liyiorg:weixin-popular:2.8.5">
     <CLASSES>
-      <root url="jar://C:/java/repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://C:/java/repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://C:/java/repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../../repository/com/github/liyiorg/weixin-popular/2.8.5/weixin-popular-2.8.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -171,6 +171,13 @@
                         </a>
                     </li>
                     </@shiro.hasPermission>
+                    <@shiro.hasPermission name="discount">
+                        <li class="">
+                            <a href="${request.contextPath}/discount/discountquery">
+                              开店优惠
+                            </a>
+                        </li>
+                    </@shiro.hasPermission>
                 </ul>
             </li>
             </@shiro.hasPermission>

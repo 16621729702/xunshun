@@ -71,26 +71,91 @@
                                             <select name="type" lay-verify="required" lay-search="" lay-filter="type">
                                                 <option value="0" selected >请选择</option>
                                                 <option value="1" >首页</option>
-                                                <option value="2" >店铺</option>
+                                                <option value="2" >直播</option>
                                                 <option value="3" >商城</option>
                                                 <option value="4" >分类</option>
-                                                <option value="9" >直播</option>
                                             </select>
                                         </div>
                                     </div>
-
                                     <div class="layui-form-item">
-                                        <label class="layui-form-label">关联商户</label>
+                                        <label class="layui-form-label">商城展示类型</label>
                                         <div class="layui-input-block">
-                                            <select name="merchid" lay-verify="required" lay-filter="parent_id">
-                                                <#if (merchlist)??>
-                                                    <#if (merchlist?size > 0)>
-                                                        <#list merchlist as list>
-                                                            <option value="${list.id}" >${list.store_name}</option>
+                                            <select name="mer_category" lay-verify="required" lay-search="" lay-filter="type">
+                                                <option value="" selected >请选择</option>
+                                                <option value="0" >关注店铺</option>
+                                                <option value="1" >普通店铺</option>
+                                                <option value="2" >优选店铺</option>
+                                                <option value="3" >直播店铺</option>
+                                                <option value="4" >大师定制</option>
+                                                <option value="9" >热门店铺</option>
+                                            </select>
+                                        </div>
+                                        显示位置是商城需要选择这个
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">直播展示类型</label>
+                                        <div class="layui-input-block">
+                                            <select name="live_category" lay-verify="required" lay-search="" lay-filter="type">
+                                                <option value="" selected >请选择</option>
+                                                <option value="0" >关注直播</option>
+                                                <option value="1" >玉翠珠宝</option>
+                                                <option value="2" >紫砂陶瓷</option>
+                                                <option value="3" >书画篆刻</option>
+                                                <option value="4" >工艺作品</option>
+                                                <option value="5" >文玩杂项</option>
+                                                <option value="9" >热门直播</option>
+                                            </select>
+                                        </div>
+                                        显示位置是直播需要选择这个
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">跳转类型</label>
+                                        <div class="layui-input-block">
+                                            <select id="link_type" name="link_type" lay-verify="required" lay-search="" lay-filter="type">
+                                                <option value="-1" selected >请选择</option>
+                                                <option value="0">商户</option>
+                                                <option value="1">商品</option>
+                                                <option value="2">直播</option>
+                                                <option value="3">URL</option>
+                                            </select>
+                                            下面是查看你要填写的ID
+                                            <select lay-verify="required" lay-filter="parent_id">
+                                                <option value="-1" selected >查看店铺id</option>
+                                                <#if (merchList)??>
+                                                    <#if (merchList?size > 0)>
+                                                        <#list merchList as list>
+                                                            <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
                                                         </#list>
                                                     </#if>
                                                 </#if>
                                             </select>
+                                            <select  lay-verify="required" lay-filter="parent_id">
+                                                <option value="-1" selected >查看商品id</option>
+                                                <#if (goodList)??>
+                                                    <#if (goodList?size > 0)>
+                                                        <#list goodList as list>
+                                                            <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
+                                                        </#list>
+                                                    </#if>
+                                                </#if>
+                                            </select>
+                                            <select lay-verify="required" lay-filter="parent_id">
+                                                <option value="-1" selected >查看直播间id</option>
+                                                <#if (liveList)??>
+                                                    <#if (liveList?size > 0)>
+                                                        <#list liveList as list>
+                                                            <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
+                                                        </#list>
+                                                    </#if>
+                                                </#if>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="layui-form-item">
+                                        <label class="layui-form-label">关联ID</label>
+                                        <div class="layui-input-block">
+                                            <input type="text" name="merchid" class="layui-input" value=""/>
+                                            根据上面选择的类型自己查看相对应的ID输入ID  选择URL后关联ID随便填写 关联URL必须填写
                                         </div>
                                     </div>
                                     <div class="layui-form-item">
@@ -146,6 +211,7 @@
                     url:"${request.contextPath}/lideshow/insert",
                     data:$("#ajaxform").serialize(),
                     dataType:"json",
+                    type: 'POST',
                     success:function(result){
                         if(result.code == 200){
                             var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引

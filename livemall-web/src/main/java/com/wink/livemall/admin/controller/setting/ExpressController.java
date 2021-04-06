@@ -77,6 +77,7 @@ public class ExpressController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmExpress express = lmExpressDao.selectByPrimaryKey(Integer.parseInt(id));
         model.addAttribute("express",express);
         return new ModelAndView("setting/expresseditpage");
@@ -92,6 +93,7 @@ public class ExpressController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmExpressDao.deleteByPrimaryKey(Integer.parseInt(id));
         } catch (Exception e) {
@@ -141,6 +143,7 @@ public class ExpressController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String express = StringUtils.isEmpty(request.getParameter("express"))?null:request.getParameter("express");
         String status = StringUtils.isEmpty(request.getParameter("status"))?"1":request.getParameter("status");
@@ -168,6 +171,7 @@ public class ExpressController {
     @ResponseBody
     public JsonResult changestatus(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             LmExpress express = lmExpressDao.selectByPrimaryKey(Integer.parseInt(id));
             if(Express.active==express.getStatus()){

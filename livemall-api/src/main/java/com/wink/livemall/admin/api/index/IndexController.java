@@ -56,7 +56,7 @@ public class IndexController {
      */
     @ApiOperation(value = "获取轮播图")
     @PostMapping("lideshow")
-    public JsonResult getlideshowlist(HttpServletRequest request, @ApiParam(name = "type", value = "类型1首页顶部，2店铺顶部", required = true)@RequestParam(required = true) String type){
+    public JsonResult getlideshowlist(HttpServletRequest request, @ApiParam(name = "type", value = "类型1首页顶部2店铺顶部3商铺顶部4分类顶部9直播", required = true)@RequestParam(required = true) String type){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
@@ -67,12 +67,72 @@ public class IndexController {
                     Map map = new HashMap();
                     map.put("name",lideshow.getName());
                     map.put("pic",lideshow.getPic());
-                    map.put("url",lideshow.getWxappurl());
-                    map.put("merchid",lideshow.getMerchid());
+                    map.put("type",lideshow.getLink_type());
+                    if(0==lideshow.getLink_type()){
+                        map.put("merchid",lideshow.getMerchid());
+                        map.put("id",lideshow.getMerchid());
+                    }else if(1==lideshow.getLink_type()){
+                        map.put("id",lideshow.getMerchid());
+                    }else if(2==lideshow.getLink_type()){
+                        map.put("id",lideshow.getMerchid());
+                        LmLive lmLive = lmLiveService.findbyId(String.valueOf(lideshow.getMerchid()));
+                        if(lmLive!=null){
+                            map.put("isstart",lmLive.getIsstart());
+                            map.put("livetype",lmLive.getType());
+                        }
+                    }else if(3==lideshow.getLink_type()){
+                        map.put("url",lideshow.getWxappurl());
+                    }
                     returnlist.add(map);
                 }
             }
             jsonResult.setData(returnlist);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
+
+    @RequestMapping("/getShowList")
+    @ResponseBody
+    @ApiOperation(value = "NEW获取轮播图",notes = "获取轮播图接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "type", value = "类型1首页顶部2直播3商铺顶部4分类顶部", dataType = "Integer",paramType = "query"),
+            @ApiImplicitParam(name = "category", value = "分类id", dataType = "Integer",paramType = "query")
+    })
+    public JsonResult getShowList(HttpServletRequest request, Integer type, Integer category) throws Exception {
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+            List<Lideshow> showList = lideshowService.findListByTypeAndCategory(type,category);
+            List<Map> returnList = new ArrayList<>();
+            if(showList.size()>0){
+                for(Lideshow lideshow:showList){
+                    Map map = new HashMap();
+                    map.put("name",lideshow.getName());
+                    map.put("pic",lideshow.getPic());
+                    map.put("type",lideshow.getLink_type());
+                    if(0==lideshow.getLink_type()){
+                        map.put("id",lideshow.getMerchid());
+                    }else if(1==lideshow.getLink_type()){
+                        map.put("id",lideshow.getMerchid());
+                    }else if(2==lideshow.getLink_type()){
+                        map.put("id",lideshow.getMerchid());
+                        LmLive lmLive = lmLiveService.findbyId(String.valueOf(lideshow.getMerchid()));
+                        if(lmLive!=null){
+                            map.put("isstart",lmLive.getIsstart());
+                            map.put("livetype",lmLive.getType());
+                        }
+                    }else if(3==lideshow.getLink_type()){
+                        map.put("url",lideshow.getWxappurl());
+                    }
+                    returnList.add(map);
+                }
+            }
+            jsonResult.setData(returnList);
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);
@@ -139,15 +199,17 @@ public class IndexController {
         List<Map> list = new ArrayList<>();
 
         try {
-        	 Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
-             if(map!=null){
-                 int liveid=(int)map.get("id");
-                 LmLive lmLive = lmLiveService.findbyId(liveid+"");
-                 LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
-                 map.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
-             	 map.put("showtype","live");
-             	 list.add(map);
-             }
+            if(page.equals("1")){
+                Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
+                if(map!=null){
+                    int liveid=(int)map.get("id");
+                    LmLive lmLive = lmLiveService.findbyId(liveid+"");
+                    LmLiveInfo lmLiveInfo =lmLiveInfoService.findLiveInfo(liveid);
+                    map.put("watchnum",lmLive.getWatchnum()+lmLiveInfo.getWatchnum()+lmLiveInfo.getAddnum());
+                    map.put("showtype","live");
+                    list.add(map);
+                }
+            }
             //查询推荐商品列表
             List<Map> recommendList = goodService.findRecommendList();
             for(Map mapinfo:recommendList){
@@ -155,7 +217,7 @@ public class IndexController {
             }
             //查询销售最多的10个商品
             List<Map> returnlist=null;
-            List<Object> hotList1=null;
+            List<Map> hotList1=null;
             if(Integer.parseInt(page)==1){
                 redisUtils.delete("hotList"+mobileid);
                 List<Map> hotList = goodService.findHotList();
@@ -202,5 +264,27 @@ public class IndexController {
         return jsonResult;
     }
 
+
+    /**
+     * 商品上架下架 new
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "首页热门资讯",notes = "首页热门资讯接口")
+    @RequestMapping("hot_live")
+    @ResponseBody
+    public JsonResult hotLive(HttpServletRequest request){
+        JsonResult jsonResult = new JsonResult();
+        List<LmLive> hotLive = lmLiveService.findHotLive();
+        try {
+            jsonResult.setData(hotLive);
+            jsonResult.setCode(JsonResult.SUCCESS);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
 
 }

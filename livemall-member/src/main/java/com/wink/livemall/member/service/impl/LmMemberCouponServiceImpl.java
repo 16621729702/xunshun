@@ -32,7 +32,7 @@ public class LmMemberCouponServiceImpl implements LmMemberCouponService {
 
     @Override
     public void updateService(LmMemberCoupon lmMemberCoupon) {
-        lmMemberCouponDao.updateByPrimaryKey(lmMemberCoupon);
+        lmMemberCouponDao.updateByPrimaryKeySelective(lmMemberCoupon);
     }
 
     @Override
@@ -45,8 +45,4 @@ public class LmMemberCouponServiceImpl implements LmMemberCouponService {
         return lmMemberCouponDao.findByMemberid(parseInt);
     }
 
-    @Override
-    public List<Map<String, String>> findByMemberidByApi(int userid) {
-        return lmMemberCouponDao.findByMemberidByApi(userid);
-    }
 }

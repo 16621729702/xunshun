@@ -40,5 +40,13 @@ public interface LideshowService {
      */
     List<Lideshow> findListBytype(int index);
 
+
+    /**
+     * 获取首页轮播图NEW
+     * @param type
+     * @return
+     */
+    List<Lideshow> findListByTypeAndCategory(int type,int category);
+
     void deleteService(String id);
 }

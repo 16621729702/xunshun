@@ -43,5 +43,14 @@ public interface LmLiveService {
 
     List<LmLive> findLiveedLive();
 
+    //查找所有正常直播间
+    List<LmLive> findLiveList();
+
+    //查找所有预播的直播间
+    List<LmLive> findLivePreview();
+
+    //查找热门资讯的直播间
+    List<LmLive> findHotLive();
+
     LmLive findByMerchid(int merchid);
 }

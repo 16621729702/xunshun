@@ -4,6 +4,7 @@ import com.wink.livemall.admin.api.good.GoodController;
 import com.wink.livemall.admin.util.DateUtils;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.PageUtil;
+import com.wink.livemall.admin.util.TokenUtil;
 import com.wink.livemall.goods.dto.Good;
 import com.wink.livemall.goods.dto.GoodCategory;
 import com.wink.livemall.live.service.LmLiveService;
@@ -208,11 +209,13 @@ public class VideoController {
         JsonResult jsonResult = new JsonResult();
         String header = request.getHeader("Authorization");
         String userid = "";
-        if (StringUtils.isEmpty(header)) {
-            jsonResult.setCode(JsonResult.LOGIN);
-            return jsonResult;
-        }else{
-            userid = redisUtils.get(header)+"";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
         }
         jsonResult.setCode(JsonResult.SUCCESS);
         Map<String,Object> map = new HashMap<>();

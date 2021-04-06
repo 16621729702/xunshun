@@ -28,8 +28,7 @@ public class Md5Util {
 	}
 	
 	public static void main(String[] args) {
-	    System.out.println("----------------------");
-	    System.out.println(MD5("15762234"+"78397036f19f479da4a1cc29d18fb5a4"+System.currentTimeMillis()));
+
 	}
 
 }

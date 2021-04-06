@@ -106,7 +106,9 @@ public class OrderController {
             map.put("status",LmOrder.statuschangetochinese(map.get("status")));
         }
         Map<String, List<Map<String,Object>>> returninfo = change(returnlist,"merchid");
+        List<LmMerchInfo> activeMerch = lmMerchInfoService.findActiveMerch();
         model.addAttribute("returninfo",returninfo);
+        model.addAttribute("activeMerch",activeMerch);
         model.addAttribute("totalpage",lmordersList.size()/Integer.parseInt(pagesize)+1);
         model.addAttribute("totalsize",lmordersList.size());
         model.addAttribute("thissize",returnlist.size());
@@ -478,6 +480,7 @@ public class OrderController {
     @RequestMapping("comment")
     public ModelAndView comment(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String content = StringUtils.isEmpty(request.getParameter("content"))?null:request.getParameter("content");
         model.addAttribute("content",content);
         model.addAttribute("id",id);
@@ -507,6 +510,7 @@ public class OrderController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmOrder order = lmorderService.findById(id);
         model.addAttribute("order",order);
         return new ModelAndView("order/ordereditpage");
@@ -521,6 +525,7 @@ public class OrderController {
     @RequestMapping("detail")
     public ModelAndView detail(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         Map<String,Object> orderinfo =lmorderService.findInfoById(id);
         orderinfo.put("paystatus",LmOrder.paystatuschangetochinese(orderinfo.get("paystatus")));
         orderinfo.put("status",LmOrder.statuschangetochinese(orderinfo.get("status")));
@@ -533,6 +538,7 @@ public class OrderController {
     @ResponseBody
     public JsonResult saveedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String totalprice = StringUtils.isEmpty(request.getParameter("totalprice"))?null:request.getParameter("totalprice");
         String payexpressprice = StringUtils.isEmpty(request.getParameter("payexpressprice"))?null:request.getParameter("payexpressprice");
         String realpayprice = StringUtils.isEmpty(request.getParameter("realpayprice"))?null:request.getParameter("realpayprice");
@@ -558,6 +564,7 @@ public class OrderController {
     @ResponseBody
     public JsonResult commentsave(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String comment = StringUtils.isEmpty(request.getParameter("comment"))?"":request.getParameter("comment");
         try {
             LmOrder lmOrder = lmorderService.findById(id);
@@ -660,6 +667,7 @@ public class OrderController {
     @ResponseBody
     public JsonResult expressedit(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String deliverytype = StringUtils.isEmpty(request.getParameter("deliverytype"))?"0":request.getParameter("deliverytype");
         String sendphone = StringUtils.isEmpty(request.getParameter("sendphone"))?null:request.getParameter("sendphone");
         String sendname = StringUtils.isEmpty(request.getParameter("sendname"))?null:request.getParameter("sendname");
@@ -741,6 +749,7 @@ public class OrderController {
     @Transactional
     public JsonResult takegood(HttpServletRequest request ){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             LmOrder lmOrder = lmorderService.findById(id);
             if(lmOrder!=null){
@@ -803,6 +812,7 @@ public class OrderController {
     @RequestMapping("refund")
     public ModelAndView refund(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmOrder lmOrder = lmorderService.findById(id);
         model.addAttribute("lmOrder",lmOrder);
         return new ModelAndView("order/refund");
@@ -820,6 +830,7 @@ public class OrderController {
     @Transactional
     public JsonResult refundsave(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String backprice = StringUtils.isEmpty(request.getParameter("backprice"))?null:request.getParameter("backprice");
 
         try {
@@ -853,7 +864,7 @@ public class OrderController {
     @ResponseBody
     public JsonResult refundsuccess(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
-
+        id = id.replaceAll(",","");
         try {
             LmOrder lmOrder = lmorderService.findById(id);
             //设置退款中

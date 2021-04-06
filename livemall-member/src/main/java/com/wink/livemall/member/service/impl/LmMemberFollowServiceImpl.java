@@ -6,6 +6,8 @@ import com.wink.livemall.member.service.LmMemberFollowService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +49,17 @@ public class LmMemberFollowServiceImpl implements LmMemberFollowService {
 
     @Override
     public List<Map<String, Object>> findByMemberidAndType(int userid, String type) {
+        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if("0".equals(type)){
-            return lmMemberFollowDao.findLiveinfofoByUserid(userid);
+            List<Map<String, Object>> byUserid = lmMemberFollowDao.findLiveinfofoByUserid(userid);
+            if(byUserid!=null&&byUserid.size()>0){
+                for(Map<String, Object> map :byUserid){
+                    if(map.get("preview_time")!=null){
+                        map.put("preview_time",dateFormat.format((Date)map.get("preview_time")));
+                    }
+                }
+            }
+            return byUserid;
         }
         if("1".equals(type)){
             return lmMemberFollowDao.findMerchInfoByUserid(userid);

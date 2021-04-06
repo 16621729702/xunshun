@@ -59,6 +59,7 @@ public class SellController {
     @RequestMapping("editpage")
     public ModelAndView categoryeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"0":request.getParameter("id");
+        id = id.replaceAll(",","");
         LmSellCate sellCate = lmSellCateService.findById(Integer.parseInt(id));
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("merch/cateeditpage");
@@ -93,6 +94,7 @@ public class SellController {
     @ResponseBody
     public JsonResult deletegoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             try {
                 lmSellCateService.deletethis(Integer.parseInt(id));
@@ -110,6 +112,7 @@ public class SellController {
     @ResponseBody
     public JsonResult editgoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         try {
             if(id==null){

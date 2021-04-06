@@ -34,6 +34,11 @@ public interface GoodService {
     List<Good> findAll();
 
     /**
+     * 获取状态为开启
+     * @return
+     */
+    List<Good> findGoodList();
+    /**
      * 获取推荐商品列表
      * @return
      */
@@ -121,4 +126,7 @@ public interface GoodService {
     List<LivedGood> findLiveGood(Date date);
 
 	List<LmShareGood> findshareGoodByLiveid(String liveid);
+
+    List<LivedGood> movementImLive(int liveid);
+
 }

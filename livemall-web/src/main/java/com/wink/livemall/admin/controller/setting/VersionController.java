@@ -96,6 +96,7 @@ public class VersionController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String url = StringUtils.isEmpty(request.getParameter("url"))?null:request.getParameter("url");
         String versionname = StringUtils.isEmpty(request.getParameter("version"))?null:request.getParameter("version");
         String status = StringUtils.isEmpty(request.getParameter("status"))?null:request.getParameter("status");
@@ -125,6 +126,7 @@ public class VersionController {
     @ResponseBody
     public JsonResult changestatus(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             List<Version> versionList = versionService.findByList();
             Version version = versionService.findById(Integer.parseInt(id));
@@ -151,6 +153,7 @@ public class VersionController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             versionService.deleteService(Integer.parseInt(id));
         } catch (Exception e) {
@@ -175,6 +178,7 @@ public class VersionController {
     public Map<String,String> uploadfile(@RequestParam("file") MultipartFile file, HttpServletRequest request)
             throws IllegalStateException, IOException {
         String id = StringUtils.isEmpty(request.getParameter("id"))?"-1":request.getParameter("id");
+        id = id.replaceAll(",","");
         Map<String,String> map=new HashMap<String,String>();
         map.put("code", "0");
         map.put("msg","上传成功");

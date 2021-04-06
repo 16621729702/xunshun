@@ -52,6 +52,7 @@ public class RoleController {
     @RequestMapping("editpage")
     public ModelAndView editview(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(!StringUtils.isEmpty(id)){
             //拉去权限列表
             List<Permission> permissionList = permissionService.findListByRoleid(Integer.parseInt(id));
@@ -159,6 +160,7 @@ public class RoleController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String code = StringUtils.isEmpty(request.getParameter("code"))?null:request.getParameter("code");
         String status = StringUtils.isEmpty(request.getParameter("status"))?null:request.getParameter("status");
@@ -180,6 +182,7 @@ public class RoleController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             roleService.deleteRole(id);
         } catch (Exception e) {

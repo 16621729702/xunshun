@@ -11,18 +11,26 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.wink.livemall.admin.api.help.CommentService;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.admin.util.payUtil.PayUtil;
 import com.wink.livemall.goods.dto.Good;
 import com.wink.livemall.goods.dto.LivedGood;
 import com.wink.livemall.goods.dto.LmShareGood;
+import com.wink.livemall.member.dto.*;
+import com.wink.livemall.member.service.AgencyInfoService;
+import com.wink.livemall.member.service.ForwardUserService;
+import com.wink.livemall.member.service.LmFalsifyService;
 import com.wink.livemall.merch.service.LmMerchInfoService;
-import com.wink.livemall.order.dto.LmOrderLog;
-import com.wink.livemall.order.service.LmOrderLogService;
+import com.wink.livemall.order.dto.*;
+import com.wink.livemall.order.service.*;
 import com.wink.livemall.sys.msg.service.PushmsgService;
 import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.service.ConfigsService;
 
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.time.DateFormatUtils;
@@ -47,18 +55,10 @@ import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.VerifyFields;
 import com.wink.livemall.admin.util.WeixinpayUtil;
 import com.wink.livemall.goods.service.GoodService;
-import com.wink.livemall.member.dto.LmMember;
-import com.wink.livemall.member.dto.LmMemberLog;
 import com.wink.livemall.member.service.LmMemberService;
 import com.wink.livemall.merch.dto.LmMerchInfo;
-import com.wink.livemall.order.dto.LmExpress;
-import com.wink.livemall.order.dto.LmOrder;
-import com.wink.livemall.order.dto.LmOrderRefundLog;
-import com.wink.livemall.order.dto.LmPayLog;
-import com.wink.livemall.order.service.LmMerchOrderService;
-import com.wink.livemall.order.service.LmOrderExpressService;
-import com.wink.livemall.order.service.LmOrderService;
-import com.wink.livemall.order.service.LmPayLogService;
+
+import static org.springframework.util.StringUtils.isEmpty;
 
 @Controller
 @RequestMapping("merchorder")
@@ -68,31 +68,30 @@ public class MerchOrderController {
 
 	@Autowired
 	private LmMerchOrderService LmMerchOrderService;
-
 	@Autowired
 	private LmOrderService lmOrderService;
-
 	@Autowired
 	private LmOrderExpressService lmOrderExpressService;
-	
 	@Autowired
 	private LmMemberService lmMemberService;
 	@Autowired
 	private GoodService goodService;
 	@Autowired
 	private LmMerchInfoService lmMerchInfoService;
-
+	@Autowired
+	private LmOrderGoodsService lmOrderGoodsService;
 	@Autowired
 	private LmOrderLogService lmOrderLogService;
-	
-	
-    @Autowired
-    private LmPayLogService lmPayLogService;
-    
-    @Autowired
-    private ConfigsService configsService;
-    
-    
+	@Autowired
+	private LmFalsifyService lmFalsifyService;
+	@Autowired
+	private CommentService commentService;
+	@Autowired
+	private AgencyInfoService agencyInfoService;
+	@Autowired
+	private ForwardUserService forwardUserService;
+
+
 	/**
 	 * 订单列表
 	 * 
@@ -119,10 +118,12 @@ public class MerchOrderController {
 		params.put("pageindex", pageindex);
 		params.put("merchid", merchid);
 		params.put("type", request.getParameter("type"));
+		LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(merchid);
 		try {
 			List<Map<String, Object>> list = LmMerchOrderService.findPage(params);
 			if(list!=null&&list.size()>0){
 				for(Map<String,Object> map:list){
+					map.put("freeze",lmMerchInfo.getFreeze());
 					System.out.println(map.toString());
 					if(map.get("type")!=null){
 						if((int)map.get("type")==3){
@@ -140,12 +141,13 @@ public class MerchOrderController {
 								map.put("spec","");
 							}else{
 								//普通订单
-								Good good = goodService.findById((int)map.get("goodid"));
-								if(good!=null){
+								Good good=null;
+								if(map.get("goodid")!=null){
+									good = goodService.findById((int)map.get("goodid"));
+								}
 									map.put("goodname",good.getTitle());
 									map.put("thumb",good.getThumb());
 									map.put("spec",good.getSpec());
-								}
 							}
 						}
 					}
@@ -214,7 +216,7 @@ public class MerchOrderController {
 		params.put("merchid", merchid);
 		try {
 			Map<String,Object> res = new LinkedHashMap<>();
-		for(int i=0;i<5;i++) {
+		for(int i=0;i<7;i++) {
 			String type = String.valueOf(i);
 			if(i==0){}else {
 			params.put("type", type);
@@ -228,6 +230,10 @@ public class MerchOrderController {
 				res.put("dispatched_size", list.size());
 			}else if (i == 4) {
 				res.put("post_sale_size", list.size());
+			}else if (i == 5) {
+				res.put("failed_size", list.size());
+			}else if (i == 6) {
+				res.put("finished_size", list.size());
 			}else {
 				res.put("total_size", list.size());
 			}
@@ -332,6 +338,10 @@ public class MerchOrderController {
 			status.put("field", "status");
 			status.put("value", "2");
 			fields_list.add(status);
+			Map<String, String> send_type = new HashMap<String, String>();
+			send_type.put("field", "send_type");
+			send_type.put("value", "2");
+			fields_list.add(send_type);
 			LmMerchOrderService.updateByFields(fields_list, request.getParameter("id"));
 			jsonResult.setCode(jsonResult.SUCCESS);
 			//pushmsgService.send(0,"商户已发货","2",order.getMemberid(),0);
@@ -461,12 +471,7 @@ public class MerchOrderController {
 			jsonResult.setMsg("商户不存在");
 			return jsonResult;
 		}
-		if (lmMerchInfo.getRefund_address() == null) {
-			jsonResult.setCode(JsonResult.ERROR);
-			jsonResult.setMsg("没有添退货地址,请去设置,退货地址中添加");
-			return jsonResult;
-		}
-		
+
 		if (Integer.parseInt(order.getStatus()) == 0||Integer.parseInt(order.getStatus())==-1) {
 			jsonResult.setCode(JsonResult.ERROR);
 			jsonResult.setMsg("订单状态错误");
@@ -489,16 +494,22 @@ public class MerchOrderController {
 				List<Map<String, String>> fields_list =new ArrayList<Map<String,String>>();
 				Map<String, String> backstatus = new HashMap<String, String>();
 				backstatus.put("field", "backstatus");
-				backstatus.put("value", "0");
+				backstatus.put("value", "3");
 				fields_list.add(backstatus);
 				LmMerchOrderService.updateByFields(fields_list,refund.getOrderid()+"");
-				refund.setStatus(-1);
+				if(!StringUtils.isEmpty(request.getParameter("refusal_instructions"))){
+					refund.setRefusal_instructions(request.getParameter("refusal_instructions"));
+				}
+				refund.setStatus(3);
 				refund.setChecktime(new Date());
 				LmMerchOrderService.updRefundLog(refund);
 				jsonResult.setCode(jsonResult.SUCCESS);
-				
 			}else if (request.getParameter("opt").equals("2")) {//确定
-				
+				if (lmMerchInfo.getRefund_address() == null) {
+					jsonResult.setCode(JsonResult.ERROR);
+					jsonResult.setMsg("没有添退货地址,请去设置,退货地址中添加");
+					return jsonResult;
+				}
 				LmOrder lmOrder = lmOrderService.findById(refund.getOrderid()+"");
 				if(lmOrder.getStatus().equals("4")) {
 					if(null==lmMerchInfo.getCredit() || lmMerchInfo.getCredit().compareTo(refund.getRefundmoney())==-1) 
@@ -512,70 +523,63 @@ public class MerchOrderController {
 				LmMerchOrderService.updRefundLog(refund);
 				jsonResult.setCode(jsonResult.SUCCESS);
 				//商户发送信息给用户提示退款确认
-
 				LmOrderLog lmOrderLog = new LmOrderLog();
 				lmOrderLog.setOperate("退款确认");
 				lmOrderLog.setOperatedate(new Date());
 				lmOrderLog.setOrderid(refund.getOrderid()+"");
 				lmOrderLogService.insert(lmOrderLog);
-				
-				
 				//退回账户
 			//	LmMerchInfo _lmMerchInfo = lmMerchInfoService.findById(refund.getMerchid()+"");
 			//	_lmMerchInfo.setCredit(lmMerchInfo.getCredit().subtract(refund.getRefundmoney()));
 			//	lmMerchInfoService.updateService(_lmMerchInfo);
-				
 //				pushmsgService.send(lmMerchInfo.getMember_id(),"退货退款请求已确认，请尽快填写物流信息","2",order.getMemberid(),1);
 				HttpClient httpClient = new HttpClient();
 				httpClient.send("交易消息",order.getMemberid()+"","退货退款请求已确认，请尽快填写物流信息");
 			}else if(request.getParameter("opt").equals("3")){//完成
-				
 				LmOrder lmOrder = lmOrderService.findById(refund.getOrderid()+"");
+				BigDecimal realPrice = lmOrder.getRealpayprice();
+				if(lmOrder.getPaystatus().equals("3")){
+					realPrice = realPrice.multiply(new BigDecimal(94.4)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+				}else {
+					realPrice = realPrice.multiply(new BigDecimal(94.7)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+				}
 				if(lmOrder.getStatus().equals("4")) {
-					if(null==lmMerchInfo.getCredit() || lmMerchInfo.getCredit().compareTo(refund.getRefundmoney())==-1) 
+					if(null==lmMerchInfo.getCredit() || lmMerchInfo.getCredit().compareTo(realPrice)==-1)
 					{
 						jsonResult.setCode(JsonResult.ERROR);
 						jsonResult.setMsg("账户余额不足，无法退款！");
 					}
 				}
-//				List<Map<String, String>> fields_list =new ArrayList<Map<String,String>>();
-//				Map<String, String> backstatus = new HashMap<String, String>();
-//				backstatus.put("field", "backstatus");
-//				backstatus.put("value", "2");
-//				fields_list.add(backstatus);
-//				Map<String, String> status = new HashMap<String, String>();
-//				status.put("field", "status");
-//				status.put("value", "-1");
-//				fields_list.add(status);
-//				LmMerchOrderService.updateByFields(fields_list, refund.getOrderid()+"");
-				
 				if(lmOrder.getStatus().equals("4")) {
 					//退回账户
 					LmMerchInfo _lmMerchInfo = lmMerchInfoService.findById(refund.getMerchid()+"");
-					_lmMerchInfo.setCredit(lmMerchInfo.getCredit().subtract(refund.getRefundmoney()));
+					_lmMerchInfo.setCredit(lmMerchInfo.getCredit().subtract(realPrice));
 					lmMerchInfoService.updateService(_lmMerchInfo);
 				}
-				
+				LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
+				if(lmOrderGoods.getGoodstype()==0) {
+					ForwardUser forwardUser = forwardUserService.findListByUserId(lmOrder.getMemberid());
+					if (forwardUser != null) {
+						AgencyInfo agencyInfo = agencyInfoService.findListByUserId(forwardUser.getForward_id());
+						if (agencyInfo != null) {
+							Good byId = goodService.findById(lmOrderGoods.getGoodid());
+							BigDecimal min = new BigDecimal(0);
+							if (byId.getCommission().compareTo(min) > 0) {
+								LmMember Forward = lmMemberService.findById(String.valueOf(lmOrder.getForward()));
+								Forward.setBlance(Forward.getBlance().subtract(byId.getCommission()));
+								lmMemberService.updateService(Forward);
+							}
+						}
+					}
+				}
 				lmOrder.setStatus("-1");//交易失败
 				lmOrder.setBackstatus(2);//已退款
+				lmOrder.setSend_type(3);
 				lmOrderService.updateService(lmOrder);
 				refund.setStatus(2);
 				refund.setFinishtime(new Date());
 				LmMerchOrderService.updRefundLog(refund);
-				
-			
-				
 				BigDecimal money=order.getRealpayprice();
-				//返余额给客户
-//				LmMember member=lmMemberService.findById(order.getMemberid()+"");
-//				BigDecimal before_credit2=member.getCredit2();
-//				BigDecimal after_credit2=before_credit2.add(money);
-//				member.setCredit2(after_credit2);
-//				lmMemberService.updateService(member);
-				
-			//	Map<String,Object> result=this.refund(refund.getOrderid()+"", money.toString());
-				
-				//插入积分余额记录
 				LmMemberLog log2=new LmMemberLog();
 				log2.setCreatetime(new Date());
 				log2.setNum(money);
@@ -588,15 +592,22 @@ public class MerchOrderController {
 				lmOrderLog.setOperatedate(new Date());
 				lmOrderLog.setOrderid(refund.getOrderid()+"");
 				lmOrderLogService.insert(lmOrderLog);
+				//给他退款
+				LmFalsify lmFalsify = lmFalsifyService.isFalsify(String.valueOf(lmOrder.getMemberid()), String.valueOf(lmOrderGoods.getGoodid()), String.valueOf(lmOrderGoods.getGoodstype()));
+				if(!isEmpty(lmFalsify)){
+					String falsifyId=lmFalsify.getFalsify_id();
+					BigDecimal falsify =lmFalsify.getFalsify();
+					falsify=falsify.multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_HALF_UP);
+					String falsifyP=String.valueOf(falsify);
+					commentService.autoRefundFalsify(falsifyId,falsifyP);
+				}
 				HttpClient httpClient = new HttpClient();
-				httpClient.send("交易消息",order.getMemberid()+"","退款请求已完成，请确认是否收到退款");
-//				pushmsgService.send(lmMerchInfo.getMember_id(),"退款请求已完成，请确认是否收到退款","2",order.getMemberid(),1);
+				httpClient.send("交易消息",order.getMemberid()+"","编号为"+order.getOrderid()+"订单退款成功");
 			}else {
 				jsonResult.setCode(JsonResult.ERROR);
 				jsonResult.setMsg("type错误");
 				return jsonResult;
 			}
-
 			jsonResult.setCode(jsonResult.SUCCESS);
 		} catch (Exception e) {
 			TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
@@ -644,7 +655,119 @@ public class MerchOrderController {
 		
 		return  jsonResult;
 	}
-	
-	
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("merOrderDelay")
+	@ResponseBody
+	@ApiOperation(value = "商家设置付款延迟3天",notes = "商家设置付款延迟3天接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "Id", value = "订单Id",required =true,  dataType = "Integer",paramType = "query")
+	})
+	public JsonResult merOrderDelay(HttpServletRequest request,Integer Id) {
+		JsonResult jsonResult = new JsonResult();
+		jsonResult.setCode(jsonResult.SUCCESS);
+		LmOrder lmOrder = lmOrderService.findById(Id.toString());
+			if(lmOrder==null){
+				jsonResult.setMsg("订单不存在");
+				jsonResult.setCode(JsonResult.ERROR);
+				return  jsonResult;
+			}
+		try{
+			if(lmOrder.getDelay()==1){
+				jsonResult.setMsg("已为该订单延长三天时间，无需重复点击");
+				jsonResult.setCode(JsonResult.ERROR);
+				return  jsonResult;
+			}
+			lmOrder.setDelay(1);
+			lmOrderService.updateService(lmOrder);
+			jsonResult.setData(null);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return  jsonResult;
+	}
+
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("merOrderViolate")
+	@ResponseBody
+	@ApiOperation(value = "商家设置发货延迟7天",notes = "商家设置发货延迟7天接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "Id", value = "订单Id",required =true,  dataType = "Integer",paramType = "query")
+	})
+	public JsonResult merOrderViolate(HttpServletRequest request,Integer Id) {
+		JsonResult jsonResult = new JsonResult();
+		jsonResult.setCode(jsonResult.SUCCESS);
+		LmOrder lmOrder = lmOrderService.findById(Id.toString());
+		if(lmOrder==null){
+			jsonResult.setMsg("订单不存在");
+			jsonResult.setCode(JsonResult.ERROR);
+			return  jsonResult;
+		}
+		try{
+			if(lmOrder.getViolate()==2){
+				jsonResult.setMsg("已为该订单延长七天时间，无需重复点击");
+				jsonResult.setCode(JsonResult.ERROR);
+				return  jsonResult;
+			}
+			lmOrder.setViolate(2);
+			lmOrderService.updateService(lmOrder);
+			jsonResult.setData(null);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return  jsonResult;
+	}
+
+	/**
+	 *
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping("userOrderDelay")
+	@ResponseBody
+	@ApiOperation(value = "用户确认收货延迟7天",notes = "用户确认收货延迟7天接口")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "Id", value = "订单Id",required =true,  dataType = "Integer",paramType = "query")
+	})
+	public JsonResult userOrderDelay(HttpServletRequest request,Integer Id) {
+		JsonResult jsonResult = new JsonResult();
+		jsonResult.setCode(jsonResult.SUCCESS);
+		LmOrder lmOrder = lmOrderService.findById(Id.toString());
+		if(lmOrder==null){
+			jsonResult.setMsg("订单不存在");
+			jsonResult.setCode(JsonResult.ERROR);
+			return  jsonResult;
+		}
+		try{
+			if(lmOrder.getDelay()==2){
+				jsonResult.setMsg("已为该订单收货延长七天时间，无需重复点击");
+				jsonResult.setCode(JsonResult.ERROR);
+				return  jsonResult;
+			}
+			lmOrder.setDelay(2);
+			lmOrderService.updateService(lmOrder);
+			jsonResult.setData(null);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+			logger.error(e.getMessage());
+		}
+		return  jsonResult;
+	}
+
+
 
 }

@@ -3,6 +3,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.util.Date;
 
 @Table(name="lm_lives")
 public class LmLive {
@@ -21,7 +22,42 @@ public class LmLive {
     private int isstart;
     private String livegroupid;//直播间群组id
     private int type;
+    private Date preview_time;
+    private String liveTheme;
+    private Date end_time;
+    private int violate;
 
+    public int getViolate() {
+        return violate;
+    }
+
+    public void setViolate(int violate) {
+        this.violate = violate;
+    }
+
+    public Date getEnd_time() {
+        return end_time;
+    }
+
+    public void setEnd_time(Date end_time) {
+        this.end_time = end_time;
+    }
+
+    public String getLiveTheme() {
+        return liveTheme;
+    }
+
+    public void setLiveTheme(String liveTheme) {
+        this.liveTheme = liveTheme;
+    }
+
+    public Date getPreview_time() {
+        return preview_time;
+    }
+
+    public void setPreview_time(Date preview_time) {
+        this.preview_time = preview_time;
+    }
 
     public int getIsstart() {
 		return isstart;

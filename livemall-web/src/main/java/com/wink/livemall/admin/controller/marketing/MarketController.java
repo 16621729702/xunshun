@@ -23,6 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -55,8 +56,12 @@ public class MarketController {
             map.put("num",lmCoupons.getTotalLimitNum()+"");
             map.put("left_num",lmCoupons.getPersonLimitNum()+"");
             map.put("type",lmCoupons.getType()+"");
-            map.put("start_date", DateUtils.sdf_yMdHms.format(lmCoupons.getSendStartTime()));
-            map.put("end_date",DateUtils.sdf_yMdHms.format(lmCoupons.getSendEndTime()));
+            map.put("couponName",lmCoupons.getCouponName());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            String start_date=sdf.format(lmCoupons.getSendStartTime());
+            String end_date=sdf.format(lmCoupons.getSendEndTime());
+            map.put("start_date", start_date);
+            map.put("end_date",end_date);
             map.put("merchname","滴雨轩");
             returninfo.add(map);
         }
@@ -89,6 +94,7 @@ public class MarketController {
     @RequestMapping("couponseditpage")
     public ModelAndView couponseditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         LmCoupons lmCoupons = lmCouponsService.findById(id);
         List<LmMerchInfo> lmMerchInfoList = lmMerchInfoService.findAll();
         model.addAttribute("lmMerchInfoList",lmMerchInfoList);
@@ -122,16 +128,22 @@ public class MarketController {
             LmCoupons lmCoupons =  new LmCoupons();
             lmCoupons.setCreateTime(new Date());
             lmCoupons.setRemark(remark);
+            lmCoupons.setUseEndTime(DateUtils.sdf_yMdHms.parse(sendEndTime));
             lmCoupons.setSendEndTime(DateUtils.sdf_yMdHms.parse(sendEndTime));
             lmCoupons.setCouponValue(new BigDecimal(couponValue));
             lmCoupons.setMinAmount(new BigDecimal(minAmount));
             lmCoupons.setSellerId(Integer.parseInt(sellerId));
             lmCoupons.setCouponName(couponName);
             lmCoupons.setTotalLimitNum(Integer.parseInt(totalLimitNum));
+            lmCoupons.setUseStartTime(DateUtils.sdf_yMdHms.parse(sendStartTime));
             lmCoupons.setSendStartTime(DateUtils.sdf_yMdHms.parse(sendStartTime));
             lmCoupons.setStatus(Integer.parseInt(status));
             lmCoupons.setType(Integer.parseInt(type));
             lmCoupons.setPersonLimitNum(Integer.parseInt(personLimitNum));
+            lmCoupons.setReceivedNum(0);
+            lmCoupons.setProductType(3);
+            lmCoupons.setGoodsType(2);
+            lmCoupons.setCouponType(0);
             lmCouponsService.insertService(lmCoupons);
         } catch (Exception e) {
             e.printStackTrace();
@@ -143,7 +155,7 @@ public class MarketController {
 
 
     /**
-     * 优惠券添加
+     * 优惠券修改
      * @param request
      * @param model
      * @return
@@ -152,6 +164,7 @@ public class MarketController {
     @ResponseBody
     public JsonResult couponsedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String type = StringUtils.isEmpty(request.getParameter("type"))?"0":request.getParameter("type");
         String status = StringUtils.isEmpty(request.getParameter("status"))?"0":request.getParameter("status");
         String couponName = StringUtils.isEmpty(request.getParameter("couponName"))?"":request.getParameter("couponName");
@@ -195,15 +208,29 @@ public class MarketController {
     @RequestMapping("couponsdelete")
     @ResponseBody
     public JsonResult couponsdelete(HttpServletRequest request, Model model){
+        JsonResult jsonResult = new JsonResult();
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
-            lmCouponsService.deleteService(id);
+
+            LmCoupons lmCoupons = lmCouponsService.findById(id);
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+            Date useEndTime = lmCoupons.getUseEndTime();
+            long userEndTtime = useEndTime.getTime();
+
+            Date nowDate=new Date();
+            nowDate.setTime(nowDate.getTime()+60*60l*1000);
+            long nowTime = nowDate.getTime();
+                //优惠券已过期
+                lmCouponsService.deleteService(id);
+
         } catch (Exception e) {
             LOG.error(e.getMessage());
             e.printStackTrace();
             return new JsonResult(e);
         }
-        return new JsonResult();
+        return jsonResult;
     }
 
 

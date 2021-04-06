@@ -41,6 +41,7 @@ public class GoodCategoryController {
     public ModelAndView goodcategory(HttpServletRequest request, Model model){
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String pid = StringUtils.isEmpty(request.getParameter("pid"))?"0":request.getParameter("pid");
+        pid = pid.replaceAll(",","");
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"20":request.getParameter("pagesize");
         ModelAndView modelAndView = new ModelAndView();
@@ -83,6 +84,7 @@ public class GoodCategoryController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         GoodCategory goodCategory = goodCategoryService.findgoodscategoryById(id);
         List<GoodCategory> list = goodCategoryService.findtopgoodscategory();
         List<Map> returnlist = new ArrayList<>();
@@ -123,6 +125,7 @@ public class GoodCategoryController {
     @ResponseBody
     public JsonResult addgoodcategory(HttpServletRequest request){
         String pid = StringUtils.isEmpty(request.getParameter("pid"))?"0":request.getParameter("pid");
+        pid = pid.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String pic = StringUtils.isEmpty(request.getParameter("pic"))?"":request.getParameter("pic");
         String home_pic = StringUtils.isEmpty(request.getParameter("home_pic"))?"":request.getParameter("home_pic");
@@ -163,6 +166,7 @@ public class GoodCategoryController {
     @ResponseBody
     public JsonResult deletegoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             try {
                 goodCategoryService.deleteService(Integer.parseInt(id));

@@ -11,8 +11,8 @@ import java.util.List;
 @Mapper
 public interface LmMemberStartDao extends tk.mybatis.mapper.common.Mapper<LmMemberStart>{
 
-    @Select("SELECT * FROM lm_member_start WHERE mobile = #{mobile} and type = #{type} and isstart = 1")
-    List<LmMemberStart>  findByMobile(@Param("mobile")String mobile,@Param("type")int type);
+    @Select("SELECT * FROM lm_member_start WHERE mobile = #{mobile} and type = #{type} and isstart = 1 and businessid =#{businessid}  limit 1")
+    List<LmMemberStart>  findByMobile(@Param("mobile")String mobile,@Param("type")int type,@Param("businessid")int businessid);
 
 
 }

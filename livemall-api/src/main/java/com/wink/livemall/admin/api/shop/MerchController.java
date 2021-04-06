@@ -1,12 +1,9 @@
 package com.wink.livemall.admin.api.shop;
 
 import com.google.gson.Gson;
-import com.wink.livemall.admin.api.good.GoodController;
-import com.wink.livemall.admin.api.index.IndexController;
-import com.wink.livemall.admin.util.DateUtils;
-import com.wink.livemall.admin.util.JsonResult;
-import com.wink.livemall.admin.util.PageUtil;
-import com.wink.livemall.admin.util.VerifyFields;
+import com.wink.livemall.admin.util.*;
+import com.wink.livemall.admin.util.filterUtils.CheckTextAPI;
+import com.wink.livemall.admin.util.filterUtils.GetAuthService;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.LivedGood;
 import com.wink.livemall.goods.dto.LmGoodAuction;
@@ -15,11 +12,14 @@ import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.goods.service.LotsService;
 import com.wink.livemall.goods.service.MerchGoodService;
+import com.wink.livemall.goods.utils.HttpJsonResult;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveService;
+import com.wink.livemall.live.service.LmMerchLiveService;
 import com.wink.livemall.member.dto.LmMember;
 import com.wink.livemall.member.dto.LmMemberFollow;
 import com.wink.livemall.member.dto.LmMemberLevel;
+import com.wink.livemall.member.service.LmFalsifyService;
 import com.wink.livemall.member.service.LmMemberFollowService;
 import com.wink.livemall.member.service.LmMemberLevelService;
 import com.wink.livemall.member.service.LmMemberService;
@@ -34,6 +34,7 @@ import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.dto.Lideshow;
 import com.wink.livemall.sys.setting.service.ConfigsService;
 import com.wink.livemall.sys.setting.service.LideshowService;
+import com.wink.livemall.sys.withdraw.service.WithdrawLogService;
 import com.wink.livemall.utils.cache.redis.RedisUtil;
 import io.swagger.annotations.*;
 import org.springframework.web.bind.annotation.*;
@@ -99,11 +100,15 @@ public class MerchController {
 	private LmWithdrawalService lmWithdrawalService;
 	@Autowired
 	private LmGoodAuctionService lmGoodAuctionService;
-	
-	
-	
-	   
-	   
+	@Autowired
+	private LmMerchLiveService lmMerchLiveService;
+	@Autowired
+	private LmMerchMarginLogService lmMerchMarginLogService;
+	@Autowired
+	private LmFalsifyService lmFalsifyService;
+	@Autowired
+	private WithdrawLogService withdrawLogService;
+
 	/**
 	 * 获取所有顶级分类
 	 * @return
@@ -164,10 +169,16 @@ public class MerchController {
 						}
 					}
 				}
+				LmLive lmLive = lmLiveService.findByMerchid(merchid);
+				if(lmLive!=null){
+					map.put("live",lmLive);
+				}else {
+					map.put("live",null);
+				}
 				if(goodlist!=null&&goodlist.size()>0){
 					map.put("goodlist",new Gson().toJson(goodlist));
+					returnlist.add(map);
 				}
-				returnlist.add(map);
 			}
 			returnlist = PageUtil.startPage(returnlist, page, pagesize);
 			jsonResult.setData(returnlist);
@@ -182,7 +193,87 @@ public class MerchController {
 		return jsonResult;
 	}
 
+	/**
+	 * 总资产数值接口
+	 * @return
+	 */
+	@ApiOperation(value = "总资产数值接口")
+	@RequestMapping(value = "/merSumTake", method = RequestMethod.POST)
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "merId", value = "店铺Id", dataType = "Integer",paramType = "query",required =false)
+	})
+	public JsonResult merSumTake(HttpServletRequest request, Integer merId){
+		JsonResult jsonResult = new JsonResult();
+		jsonResult.setCode(JsonResult.SUCCESS);
+		Map<String,Object> map=new HashMap<>();
+		try {
+			LmMerchInfo byId = lmMerchInfoService.findById(String.valueOf(merId));
+			BigDecimal merMarginSum = lmMerchMarginLogService.merMarginSum(merId);
+			/*BigDecimal merOrderPriceSum = lmOrderService.merOrderPriceSum(merId);*/
+			BigDecimal falsifySum = lmFalsifyService.falsifySum(merId);
+			map.put("merMarginSum",merMarginSum);
+			map.put("merPriceSum",byId.getCredit());
+			map.put("falsifySum",falsifySum);
+			map.put("freeze",byId.getFreeze());
+			jsonResult.setData(map);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+		}
+		return jsonResult;
+	}
 
+
+	/**
+	 * 货款数值接口
+	 * @return
+	 */
+	@ApiOperation(value = "货款列表接口")
+	@RequestMapping(value = "/merSumList", method = RequestMethod.POST)
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "merId", value = "店铺Id", dataType = "Integer",paramType = "query",required =false)
+	})
+	public JsonResult merSumList(HttpServletRequest request, Integer merId){
+		JsonResult jsonResult = new JsonResult();
+		jsonResult.setCode(JsonResult.SUCCESS);
+		try {
+			List<Map<String, Object>> listByLogId = withdrawLogService.findListByLogId(merId);
+			List<Map<String, Object>> maps = lmFalsifyService.merFalsifyList(merId);
+			List<Map<String, Object>> maps1 = lmOrderService.merOrderList(merId);
+			listByLogId.addAll(maps);
+			listByLogId.addAll(maps1);
+			ListSort(listByLogId);
+			jsonResult.setData(listByLogId);
+		} catch (Exception e) {
+			jsonResult.setMsg(e.getMessage());
+			jsonResult.setCode(JsonResult.ERROR);
+		}
+		return jsonResult;
+	}
+
+	private static void ListSort(List<Map<String, Object>> List) {
+		//用Collections这个工具类传list进来排序
+		Collections.sort(List, new Comparator<Map<String, Object>>() {
+			@Override
+			public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				try {
+					String timeOne = (String)o1.get("time");
+					String timeTwo = (String)o2.get("time");
+					Date dt1 = format.parse(timeOne);
+					Date dt2 = format.parse(timeTwo);
+					if (dt1.getTime() > dt2.getTime()) {
+						return -1;//大的放前面
+					}else {
+						return 1;
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return 0;
+			}
+		});
+	}
 
 	/**
 	 * 获取经营主体
@@ -250,11 +341,13 @@ public class MerchController {
 		jsonResult.setCode(jsonResult.SUCCESS);
 		String header = request.getHeader("Authorization");
 		String userid = "";
-		if (StringUtils.isEmpty(header)) {
-			jsonResult.setCode(JsonResult.LOGIN);
-			return jsonResult;
-		}else{
-			userid = redisUtils.get(header)+"";
+		if (!StringUtils.isEmpty(header)) {
+			if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+				userid = TokenUtil.getUserId(header);
+			}else{
+				jsonResult.setCode(JsonResult.LOGIN);
+				return jsonResult;
+			}
 		}
 
 		List<Map> goodlist = new ArrayList<>();
@@ -262,6 +355,13 @@ public class MerchController {
 
 		try {
 			returnmap =lmMerchInfoService.findInfoByIdByApd(id);
+			int categoryid = (int)returnmap.get("categoryid");
+			List<LmMerchCategory> acticeListByApi = lmMerchCategoryService.findActiceListByApi();
+			for(LmMerchCategory lmMerchCategory :acticeListByApi){
+				if(lmMerchCategory.getId()==categoryid){
+					returnmap.put("categoryname",lmMerchCategory.getName());
+				}
+			}
 			if(returnmap!=null){
 				if(!StringUtils.isEmpty(userid)&&!"null".equals(userid)){
 					LmMemberFollow lmMemberFollow = lmMemberFollowService.findByMemberidAndMerchId(userid,id);
@@ -314,8 +414,12 @@ public class MerchController {
 				returnmap.put("successper",100.0);//成交率
 				returnmap.put("backper",lmMerchInfo.getBackper());//退货率
 				returnmap.put("credit",lmMerchInfo.getCredit());//余额
-
-
+				LmLive lmLive = lmLiveService.findByMerchid(id);
+				if(lmLive!=null){
+					returnmap.put("live",lmLive);
+				}else {
+					returnmap.put("live",null);
+				}
 			}else{
 				returnmap = new HashMap<>();
 			}
@@ -399,7 +503,7 @@ public class MerchController {
 			Map<String, Object> res=new HashMap<String, Object>();
 			VerifyFields ver=new VerifyFields();
 			String[] fields= {"link","mobile","deposit","defaults_open","defaults_num","refund_open","refund_num","level_open","isstep","autodeduct","store_name"
-					,"description","avatar","refund_address","refund_mobile","refund_link"};
+					,"bg_image","description","avatar","refund_address","refund_mobile","refund_link"};
 		
 			List<Map<String, String>> field_ = ver.checkEmptyField(fields, request);
 			lmMerchInfoService.updateByFields(field_, request.getParameter("id"));
@@ -430,7 +534,7 @@ public class MerchController {
 		pagesize=StringUtils.isEmpty(pagesize)?"0":pagesize;
 		pageindex=StringUtils.isEmpty(pageindex)?"0":pageindex;
 		merchid=StringUtils.isEmpty(merchid)?"0":merchid;
-
+		LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(merchid);
 		params.put("pagesize",pagesize);
 		params.put("pageindex",pageindex);
 		params.put("merchid",merchid);
@@ -439,6 +543,27 @@ public class MerchController {
 		try {
 			//获取粉丝列表
 			List<Map<String, Object>> list=lmMemberFollowService.findlist(params);
+			int num = Integer.parseInt(pagesize) * Integer.parseInt(pageindex);
+			int cha =num-10+list.size();
+			if(cha<lmMerchInfo.getFocusnum()){
+				if(num>lmMerchInfo.getFocusnum()){
+					for(int i=cha;i<lmMerchInfo.getFocusnum();i++){
+						Map<String, Object> map=new HashMap<String, Object>();
+						map.put("avatar", "http://oss.xunshun.net/LOGO.jpg");
+						map.put("nickname", (int) (Math.random() * (9999999 - 1000000) + 1000000));
+						list.add(map);
+					}
+				}else {
+					if(list.size()<10){
+						for(int i=cha;i<num;i++){
+							Map<String, Object> map=new HashMap<String, Object>();
+							map.put("avatar", "http://oss.xunshun.net/LOGO.jpg");
+							map.put("nickname", (int) (Math.random() * (9999999 - 1000000) + 1000000));
+							list.add(map);
+						}
+					}
+				}
+			}
 			Map<String, Object> res=new HashMap<String, Object>();
 			res.put("pageindex", pageindex);
 			res.put("pagesize", pagesize);
@@ -458,6 +583,9 @@ public class MerchController {
 		return jsonResult;
 	}
 
+	public static void main(String[] args) {
+
+	}
 
 	/**
 	 * 获取黑名单列表
@@ -674,17 +802,16 @@ public class MerchController {
 				int goodsnum=merchGoodService.countByStatus(params);
 				Map<String, Object> res=new HashMap<String, Object>();
 				//商户是否关注
-				List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(1,lmMerchInfo.getId());
+				/*List<LmMemberFollow> merchfollowlist = lmMemberFollowService.findByMerchidAndType(1,lmMerchInfo.getId());
 				if(merchfollowlist!=null&&merchfollowlist.size()>0){
 					lmMerchInfo.setFocusnum(merchfollowlist.size());
-				}
+				}*/
 				if(lmMerchInfo.getScore()==null){
 					lmMerchInfo.setScore(0.0);
 				}
 				//合买订单数量
 				List<LmOrder> orderlist = lmOrderService.findShareOrderListByMerchid(Integer.parseInt(request.getParameter("id")));
 				res.put("shareorders", orderlist!=null?orderlist.size():0);
-
 				res.put("merchinfo", lmMerchInfo);
 				res.put("goodsnum", goodsnum);
 				String createtime=sf.format(lmMerchInfo.getCreate_at());
@@ -693,6 +820,13 @@ public class MerchController {
 				res.put("limittime", limittime);
 				LmMember member=lmMemberService.findById(lmMerchInfo.getMember_id()+"");
 				res.put("credit", lmMerchInfo.getCredit());
+				LmLive lmLive = lmMerchLiveService.findLiveByMerchid(Integer.parseInt(request.getParameter("id")));
+				if(lmLive!=null){
+					res.put("lmLiveImg", lmLive.getImg());
+				}else {
+					res.put("lmLiveImg", null);
+				}
+				res.put("merBgImg", lmMerchInfo.getBg_image());
 				jsonResult.setData(res);
 				jsonResult.setCode(jsonResult.SUCCESS);
 			}
@@ -845,8 +979,6 @@ public class MerchController {
 				//扣除余额
 				LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(merchid);
 				lmMerchInfo.setCredit(lmMerchInfo.getCredit().subtract(new BigDecimal(money)));
-				
-				
 				lmMerchInfoService.updateService(lmMerchInfo);
 			}else{
 				jsonResult.setCode(JsonResult.ERROR);
@@ -960,6 +1092,8 @@ public class MerchController {
 								  @RequestParam(value = "auction_end_time",required = true) String auction_end_time,
 								  @RequestParam(value = "img",required = true) String img) {
 		JsonResult jsonResult=new JsonResult();
+		CheckTextAPI checkTextAPI =new CheckTextAPI();
+		String access_token = GetAuthService.getAuth(CheckTextAPI.apiKey,CheckTextAPI.secretKey);
 		try {
 			LmLive lmLive = lmLiveService.findbyId(liveid);
 			if(lmLive==null){
@@ -978,6 +1112,12 @@ public class MerchController {
 			if(oldgood!=null&&oldgood.size()>0){
 				jsonResult.setCode(JsonResult.ERROR);
 				jsonResult.setMsg("当前已存在正在销售的合买商品");
+				return jsonResult;
+			}
+			HttpJsonResult check =checkTextAPI.check(name,access_token);
+			if(check.getCode()!=200){
+				jsonResult.setCode(JsonResult.ERROR);
+				jsonResult.setMsg(check.getMsg());
 				return jsonResult;
 			}
 			LmShareGood lmShareGood = new LmShareGood();
@@ -1027,8 +1167,11 @@ public class MerchController {
 								  @RequestParam(value = "starttime",required = false) String starttime,
 								  @RequestParam(value = "endtime",required = false) String endtime,
 									  @RequestParam(value = "delaytime",required = false) String delaytime,
+									  @RequestParam(value = "buyway",required = false) String buyway,
 									  @RequestParam(value = "img",required = true) String img) {
 		JsonResult jsonResult=new JsonResult();
+		CheckTextAPI checkTextAPI =new CheckTextAPI();
+		String access_token = GetAuthService.getAuth(CheckTextAPI.apiKey,CheckTextAPI.secretKey);
 		try {
 			LmLive lmLive = lmLiveService.findbyId(liveid+"");
 			if(lmLive==null){
@@ -1042,19 +1185,13 @@ public class MerchController {
 					return jsonResult;
 				}
 			}
-			//查看是否已有竞拍一口价商品存在
-			/*List<LivedGood> oldgood = goodService.findLivedGoodByLiveid(liveid);
-			if(oldgood!=null&&oldgood.size()>0){
-				if(type==1){
-					for(LivedGood good:oldgood){
-						if(good.getType()==1){
-							jsonResult.setCode(JsonResult.ERROR);
-							jsonResult.setMsg("当前已存在正在销售的直播商品");
-							return jsonResult;
-						}
-					}
-				}
-			}*/
+			HttpJsonResult check =checkTextAPI.check(name,access_token);
+			if(check.getCode()!=200){
+				jsonResult.setCode(JsonResult.ERROR);
+				jsonResult.setMsg(check.getMsg());
+				return jsonResult;
+			}
+			SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			LivedGood livedGood = new LivedGood();
 			livedGood.setLiveid(liveid);
 			livedGood.setType(type);
@@ -1065,16 +1202,21 @@ public class MerchController {
 			if(!StringUtils.isEmpty(stepprice)){
 				livedGood.setStepprice(new BigDecimal(stepprice));
 			}
+			if(!StringUtils.isEmpty(buyway)){
+				livedGood.setBuyway(Integer.parseInt(buyway));
+			}
 			if(!StringUtils.isEmpty(starttime)){
 				System.out.println(starttime);
-				livedGood.setStarttime(DateUtils.sdf_yMdHms.parse(starttime));
+				Date parse = dateFormat.parse(starttime);
+				livedGood.setStarttime(parse);
 			}
 			if(!StringUtils.isEmpty(delaytime)){
 				livedGood.setDelaytime(Integer.parseInt(delaytime));
 			}
 			if(!StringUtils.isEmpty(endtime)){
 				System.out.println(endtime);
-				livedGood.setEndtime(DateUtils.sdf_yMdHms.parse(endtime));
+				Date parse = dateFormat.parse(endtime);
+				livedGood.setEndtime(parse);
 			}
 			if(!StringUtils.isEmpty(tomemberid)){
 				livedGood.setTomemberid(Integer.parseInt(tomemberid));
@@ -1266,4 +1408,8 @@ public class MerchController {
         }
         return jsonResult;
     }
+
+
+
+
 }

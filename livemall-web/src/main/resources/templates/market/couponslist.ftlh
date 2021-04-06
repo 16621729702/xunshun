@@ -95,6 +95,7 @@
                                             <th>ID</th>
                                             <th>所属商户</th>
                                             <th>状态</th>
+                                            <th>优惠券名称</th>
                                             <th>总数量</th>
                                             <th>限制会员领取数量</th>
                                             <th>优惠券类型</th>
@@ -114,6 +115,7 @@
                                                             <#if list.state="0">正常可用</#if>
                                                             <#if list.state="1">禁用</#if>
                                                         </td>
+                                                        <td>${list.couponName!}</td>
                                                         <td>${list.num!}</td>
                                                         <td>${list.left_num!}</td>
                                                         <td>

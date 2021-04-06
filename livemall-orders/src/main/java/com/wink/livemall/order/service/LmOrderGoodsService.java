@@ -15,4 +15,6 @@ public interface LmOrderGoodsService {
     LmOrderGoods findByGoodsid1(int id);
 
     List<LmOrderComment> findByMerchid(int merchid);
+
+    List<LmOrderGoods> findByGoodRepeat(int goodid);
 }

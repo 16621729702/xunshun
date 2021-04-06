@@ -6,9 +6,14 @@ import com.qiniu.util.Auth;
 import com.wink.livemall.admin.api.good.GoodController;
 import com.wink.livemall.admin.exception.CustomException;
 import com.wink.livemall.admin.util.*;
+import com.wink.livemall.admin.util.filterUtils.CheckPicAPI;
+import com.wink.livemall.admin.util.filterUtils.CheckTextAPI;
+import com.wink.livemall.admin.util.filterUtils.FileAddUtil;
+import com.wink.livemall.admin.util.filterUtils.GetAuthService;
 import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
+import com.wink.livemall.goods.utils.HttpJsonResult;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.dto.LmLiveInfo;
 import com.wink.livemall.live.service.LmLiveInfoService;
@@ -27,6 +32,7 @@ import com.wink.livemall.sys.image.service.LmImageCoreService;
 import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.dto.Lideshow;
 import com.wink.livemall.sys.setting.dto.Version;
+import com.wink.livemall.sys.setting.dto.VersionIOS;
 import com.wink.livemall.sys.setting.service.ConfigsService;
 import com.wink.livemall.sys.setting.service.LideshowService;
 import com.wink.livemall.sys.setting.service.VersionService;
@@ -42,7 +48,10 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URL;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.springframework.util.StringUtils.isEmpty;
 
@@ -141,8 +150,11 @@ public class CommentController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setMsg("上传成功");
         jsonResult.setCode(JsonResult.SUCCESS);
+        CheckPicAPI checkPicAPI=new  CheckPicAPI();
+        String access_token = GetAuthService.getAuth(checkPicAPI.apiKey,checkPicAPI.secretKey);
         if(file!=null){
             try {
+
                 Configs configs = configsService.findByTypeId(Configs.type_upload);
                 if(configs!=null){
                     String config = configs.getConfig();
@@ -157,6 +169,13 @@ public class CommentController {
                         Auth auth = Auth.create(configmap.get("accesskey")+"", configmap.get("secretkey")+"");
                         QiniuUploadUtil qiniuUploadUtil = new QiniuUploadUtil(configmap.get("url")+"", configmap.get("bucket")+"", auth);
                         String imgurl = qiniuUploadUtil.uploadBigFile("/"+filepath+"/", file);
+                       boolean check = checkPicAPI.check(imgurl,access_token);
+                        if(!check){
+                            jsonResult.setData(imgurl);
+                            jsonResult.setCode(JsonResult.ERROR);
+                            jsonResult.setMsg("图片存在不合规");
+                            return jsonResult;
+                        }
                         LmImageCore lmImageCore = new LmImageCore();
                         lmImageCore.setAttachment("");
                         lmImageCore.setCreatetime(new Date());
@@ -196,6 +215,8 @@ public class CommentController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setMsg("上传成功");
         jsonResult.setCode(JsonResult.SUCCESS);
+        CheckPicAPI checkPicAPI=new  CheckPicAPI();
+        String access_token = GetAuthService.getAuth(checkPicAPI.apiKey,checkPicAPI.secretKey);
         List<String> urllist = new ArrayList<String>();
         if(files!=null){
             try {
@@ -215,6 +236,13 @@ public class CommentController {
                                 Auth auth = Auth.create(configmap.get("accesskey")+"", configmap.get("secretkey")+"");
                                 QiniuUploadUtil qiniuUploadUtil = new QiniuUploadUtil(configmap.get("url")+"", configmap.get("bucket")+"", auth);
                                 String imgurl = qiniuUploadUtil.uploadFile("/"+filepath+"/", file);
+                                boolean check = checkPicAPI.check(imgurl,access_token);
+                                    if(!check){
+                                        jsonResult.setData(imgurl);
+                                        jsonResult.setCode(JsonResult.ERROR);
+                                        jsonResult.setMsg("部分图片存在不合规");
+                                        return jsonResult;
+                                    }
                                 LmImageCore lmImageCore = new LmImageCore();
                                 lmImageCore.setAttachment("");
                                 lmImageCore.setCreatetime(new Date());
@@ -338,26 +366,32 @@ public class CommentController {
     /*
     */
 /**
-     * 获取轮播图
+     * 违规文字
      * @return
-     *//*
+     */
 
-    @ApiOperation(value = "获取直营商品直播信息")
-    @PostMapping("directlyinfo")
-    public JsonResult directlyinfo(HttpServletRequest request){
+    @ApiOperation(value = "查询违规文字")
+    @PostMapping("violation")
+    public JsonResult directlyinfo(HttpServletRequest request,
+                                   @ApiParam(name = "violation", value = "违规文字", required = true)@RequestParam("violation") String violation){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        CheckTextAPI checkTextAPI =new CheckTextAPI();
+        String access_token = GetAuthService.getAuth(CheckTextAPI.apiKey,CheckTextAPI.secretKey);
         try {
-
-            Map<String,Object> map =lmLiveService.finddirectlyinfoByApi();
-            jsonResult.setData(map);
+            HttpJsonResult check = checkTextAPI.check(violation,access_token);
+            if(check.getCode()!=200){
+                jsonResult.setCode(JsonResult.ERROR);
+                jsonResult.setMsg(check.getMsg());
+                return jsonResult;
+            }
         } catch (Exception e) {
             jsonResult.setMsg(e.getMessage());
             jsonResult.setCode(JsonResult.ERROR);
         }
         return jsonResult;
     }
-*/
+
     /**
      * 获取官方imid
      * @return
@@ -400,6 +434,13 @@ public class CommentController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
+            if(!StringUtils.isEmpty(name)){
+                String regEx="[\n`~!@#$%^&*()+=|{}':;',\\[\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。， 、？]";
+                String aa = " ";
+                Pattern p = Pattern.compile(regEx);
+                Matcher m = p.matcher(name);
+                name = m.replaceAll(aa).trim();
+            }
             if("1".equals(type)){
                 List<Map> list = new ArrayList<>();
                 //查询商品列表
@@ -426,10 +467,7 @@ public class CommentController {
                             goodlists.put("price", 0);
                         }
                     }
-                }
-
-                for(Map mapinfo:goodlist){
-                    mapinfo.put("showtype","good");
+                    goodlists.put("showtype","good");
                 }
                 if(goodlist!=null){
                     list.addAll(goodlist);
@@ -458,6 +496,12 @@ public class CommentController {
                     }
                     if(goodlist!=null&&goodlist.size()>0){
                         map.put("goodlist",new Gson().toJson(goodlist));
+                    }
+                    LmLive lmLive = lmLiveService.findByMerchid(merchid);
+                    if(lmLive!=null){
+                        map.put("live",lmLive);
+                    }else {
+                        map.put("live",null);
                     }
                     returnlist.add(map);
                 }
@@ -491,6 +535,31 @@ public class CommentController {
             Version version = versionService.findActive();
             if(version!=null){
                 jsonResult.setData(version);
+            }else{
+                jsonResult.setCode(JsonResult.ERROR);
+                jsonResult.setMsg("暂无发布版本");
+            }
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+        }
+        return jsonResult;
+    }
+
+    /**
+     * 提供最新版本信息
+     * @return
+     */
+    @ApiOperation(value = "提供最新版本信息")
+    @PostMapping("getIOSVersion")
+    public JsonResult getIOSVersion(HttpServletRequest request){
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+            //获取直营店信息
+            VersionIOS versionIOS = versionService.findActiveIOS();
+            if(versionIOS!=null){
+                jsonResult.setData(versionIOS);
             }else{
                 jsonResult.setCode(JsonResult.ERROR);
                 jsonResult.setMsg("暂无发布版本");

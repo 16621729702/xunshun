@@ -5,6 +5,7 @@ import com.wink.livemall.admin.api.live.LiveController;
 import com.wink.livemall.admin.util.DateUtils;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.PageUtil;
+import com.wink.livemall.admin.util.TokenUtil;
 import com.wink.livemall.coupon.dto.LmCouponLog;
 import com.wink.livemall.coupon.dto.LmCoupons;
 import com.wink.livemall.goods.dto.Good;
@@ -125,8 +126,8 @@ public class ShareController {
             String header = request.getHeader("Authorization");
             String userid = "";
             if (!StringUtils.isEmpty(header)) {
-                if(!StringUtils.isEmpty(redisUtils.get(header))){
-                    userid = redisUtils.get(header)+"";
+                if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                    userid = TokenUtil.getUserId(header);
                 }else{
                     jsonResult.setCode(JsonResult.LOGIN);
                     return jsonResult;
@@ -182,8 +183,8 @@ public class ShareController {
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         if (!StringUtils.isEmpty(header)) {
-            if(!StringUtils.isEmpty(redisUtils.get(header))){
-                userid = redisUtils.get(header)+"";
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
             }else{
                 jsonResult.setCode(JsonResult.LOGIN);
                 return jsonResult;
@@ -264,8 +265,12 @@ public class ShareController {
                     //直播间是否关注
                     LmMemberFollow livefollow = lmMemberFollowService.findByMemberidAndTypeAndId(Integer.parseInt(userid), 0, Integer.parseInt(liveid));
                     if(livefollow!=null){
-                        returnmap.put("livefollowid",livefollow.getId());
-                        returnmap.put("liveisfollow","yes");
+                        if(livefollow.getState()==0) {
+                            returnmap.put("livefollowid", livefollow.getId());
+                            returnmap.put("liveisfollow", "yes");
+                        }else {
+                            returnmap.put("liveisfollow","no");
+                        }
                     }else{
                         returnmap.put("liveisfollow","no");
                     }
@@ -276,8 +281,12 @@ public class ShareController {
                     }
                     LmMemberFollow merchfollow = lmMemberFollowService.findByMemberidAndTypeAndId(Integer.parseInt(userid), 1,lmMerchInfo.getId());
                     if(merchfollow!=null){
-                        returnmap.put("merchfollowid",merchfollow.getId());
-                        returnmap.put("merchisfollow","yes");
+                        if(merchfollow.getState()==0) {
+                            returnmap.put("merchfollowid", merchfollow.getId());
+                            returnmap.put("merchisfollow", "yes");
+                        }else {
+                            returnmap.put("merchisfollow","no");
+                        }
                     }else{
                         returnmap.put("merchisfollow","no");
                     }
@@ -578,8 +587,8 @@ public class ShareController {
         String header = request.getHeader("Authorization");
         String userid = "";
         if (!StringUtils.isEmpty(header)) {
-            if(!StringUtils.isEmpty(redisUtils.get(header))){
-                userid = redisUtils.get(header)+"";
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
             }else{
                 jsonResult.setCode(JsonResult.LOGIN);
                 return jsonResult;

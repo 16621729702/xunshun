@@ -30,6 +30,9 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 	@Select("SELECT count(*) FROM lm_goods where mer_id = #{mer_id} and isdelete =0 ")
 	int countGoodsNum(@Param("mer_id") int mer_id);
 
+	@Select("SELECT count(*) FROM lm_goods where mer_id = #{mer_id}  and type =#{type}  and state =#{state} and isdelete =0 ")
+	int newCountGoodsNum(@Param("mer_id") int mer_id,@Param("type") int type,@Param("state") int state);
+
 	@Select("SELECT count(*) FROM lm_orders where merchid = #{merchid}  ")
 	int countOrderNum(@Param("merchid") int merchid);
 
@@ -98,12 +101,19 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			String pageindex = (String) params.get("pageindex");
 			String pagesize = (String) params.get("pagesize");
-
 			StringBuilder sql = new StringBuilder();
-			sql.append("select g.state,g.auction_start_time,g.auction_end_time,c.name catename,g.thumb,g.id,g.material,g.place,g.spec,g.stock,g.title,g.productprice,g.warehouse,g.sn from lm_goods g left join lm_goods_categories c on g.category_id=c.id where g.isdelete = 0 and mer_id=" + params.get("merchid"));
-
+			sql.append("select g.state,g.auction_start_time,g.auction_end_time,g.label," +
+					"c.name catename,g.thumb,g.id,g.material," +
+					"g.place,g.spec,g.stock,g.title," +
+					"g.bidsnum,g.type,"+
+					"g.productprice,g.warehouse,g.sn" +
+					" from lm_goods g left join lm_goods_categories c on g.category_id=c.id where g.isdelete = 0 and mer_id=" + params.get("merchid"));
 			if (!StringUtils.isEmpty(params.get("warehouse"))) {
-				sql.append(" and find_in_set(" + params.get("warehouse") + ",g.warehouse)");
+				if(params.get("warehouse").equals("2")){
+					sql.append(" and g.state= 1 " );
+				}else {
+					sql.append(" and g.state= 0 " );
+				}
 			}
 			if (!StringUtils.isEmpty(params.get("type"))) {
 				sql.append(" and g.type=" + params.get("type"));
@@ -129,10 +139,10 @@ public interface MerchGoodDao extends tk.mybatis.mapper.common.Mapper<Good> {
 					date_end = calc_date(1);
 				} else if (params.get("date").equals("2")) {// 近七天
 					date_satrt = calc_date(-6);
-					date_end = calc_date(0);
+					date_end = calc_date(1);
 				} else if (params.get("date").equals("3")) {// 近30天
 					date_satrt = calc_date(-29);
-					date_end = calc_date(0);
+					date_end = calc_date(1);
 				}
 				sql.append(" and g.create_at between '" + date_satrt + "' and '" + date_end + "'");
 			}

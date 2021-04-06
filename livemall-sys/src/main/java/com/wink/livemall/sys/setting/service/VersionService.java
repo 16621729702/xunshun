@@ -1,6 +1,7 @@
 package com.wink.livemall.sys.setting.service;
 
 import com.wink.livemall.sys.setting.dto.Version;
+import com.wink.livemall.sys.setting.dto.VersionIOS;
 
 import java.util.List;
 
@@ -19,4 +20,6 @@ public interface VersionService {
     List<Version> findByList();
 
     Version findActive();
+
+    VersionIOS findActiveIOS();
 }

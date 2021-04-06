@@ -56,6 +56,7 @@ public class WithdrawalController {
     @RequestMapping("editpage")
     public ModelAndView categoryeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"0":request.getParameter("id");
+        id = id.replaceAll(",","");
         Map<String,Object> mapinfo = lmWithdrawalService.findinfoById(Integer.parseInt(id));
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("merch/withdrawaleditpage");
@@ -69,6 +70,7 @@ public class WithdrawalController {
     @ResponseBody
     public JsonResult editgoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String status = StringUtils.isEmpty(request.getParameter("status"))?null:request.getParameter("status");
         try {
             if(id==null||status==null){

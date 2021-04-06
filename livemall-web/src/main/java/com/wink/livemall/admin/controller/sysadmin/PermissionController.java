@@ -88,6 +88,7 @@ public class PermissionController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             Permission permission = permissionService.findPermissionById(Integer.parseInt(id));
             model.addAttribute("permission",permission);
@@ -127,6 +128,7 @@ public class PermissionController {
     @ResponseBody
     public JsonResult editPermission(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String pid = StringUtils.isEmpty(request.getParameter("pid"))?null:request.getParameter("pid");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String code = StringUtils.isEmpty(request.getParameter("code"))?null:request.getParameter("code");
@@ -154,6 +156,7 @@ public class PermissionController {
     @ResponseBody
     public JsonResult deleteAdmin(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(id!=null){
                 permissionService.deletepermission(Integer.parseInt(id));

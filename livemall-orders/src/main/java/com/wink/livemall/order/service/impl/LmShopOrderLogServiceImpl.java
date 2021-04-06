@@ -17,6 +17,10 @@ public class LmShopOrderLogServiceImpl implements LmOrderLogService {
     public List<LmOrderLog> findByOrderid(String orderid) {
         return lmShopOrderLogDao.findByOrderid(orderid);
     }
+    @Override
+    public List<LmOrderLog> findByOrderids(String orderid) {
+        return lmShopOrderLogDao.findByOrderids(orderid);
+    }
 
     @Override
     public void insert(LmOrderLog lmOrderLog) {

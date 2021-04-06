@@ -129,7 +129,6 @@ public class MerchAuctionController {
 			return jsonResult;
 		}
 		try {
-			
 			Good good=goodService.findById(Integer.parseInt(request.getParameter("id")));
 			if(good==null) {
 				jsonResult.setCode(JsonResult.ERROR);
@@ -141,7 +140,6 @@ public class MerchAuctionController {
 			}else if(request.getParameter("type").equals("2")){
 				good.setState(0);
 			}
-			
 			merchGoodService.updateEntity(good);
 			jsonResult.setCode(JsonResult.SUCCESS);
 		} catch (Exception e) {

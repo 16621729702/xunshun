@@ -10,6 +10,9 @@ import java.util.List;
 @Mapper
 public interface LmShopOrderLogDao extends tk.mybatis.mapper.common.Mapper<LmOrderLog>{
 
-    @Select("SELECT * FROM lm_orders_log WHERE orderid = #{orderid}")
+    @Select("SELECT * FROM lm_orders_log WHERE orderid = #{orderid} ")
     List<LmOrderLog> findByOrderid(@Param("orderid")String orderid);
+
+    @Select("SELECT * FROM lm_orders_log WHERE order_id = #{orderid} ")
+    List<LmOrderLog> findByOrderids(@Param("orderid")String orderid);
 }

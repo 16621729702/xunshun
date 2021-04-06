@@ -1,44 +1,37 @@
 package com.wink.livemall.admin.api.order;
 
 import com.google.gson.Gson;
-import com.wink.livemall.admin.api.help.HelpController;
-import com.wink.livemall.admin.api.shop.MerchController;
+import com.wink.livemall.admin.api.help.CommentService;
 import com.wink.livemall.admin.util.*;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
+import com.wink.livemall.coupon.dto.LmConpouMember;
 import com.wink.livemall.coupon.dto.LmCouponLog;
 import com.wink.livemall.coupon.dto.LmCoupons;
+import com.wink.livemall.coupon.service.LmCouponMemberService;
 import com.wink.livemall.coupon.service.LmCouponsService;
 import com.wink.livemall.goods.dto.Good;
 import com.wink.livemall.goods.dto.LivedGood;
-import com.wink.livemall.goods.dto.LmGoodAuction;
+
 import com.wink.livemall.goods.dto.LmShareGood;
 import com.wink.livemall.goods.service.GoodService;
-import com.wink.livemall.live.dto.LmLiveGood;
-import com.wink.livemall.live.service.LmLiveGoodService;
-import com.wink.livemall.member.dto.LmMember;
-import com.wink.livemall.member.dto.LmMemberAddress;
-import com.wink.livemall.member.dto.LmMemberLevel;
-import com.wink.livemall.member.service.LmMemberAddressService;
-import com.wink.livemall.member.service.LmMemberLevelService;
-import com.wink.livemall.member.service.LmMemberService;
+import com.wink.livemall.member.dto.*;
+import com.wink.livemall.member.service.*;
 import com.wink.livemall.merch.dto.LmMerchInfo;
 import com.wink.livemall.merch.service.LmMerchInfoService;
-import com.wink.livemall.order.dao.LmOrderRefundLogDao;
 import com.wink.livemall.order.dto.*;
 import com.wink.livemall.order.service.*;
-import com.wink.livemall.sys.dict.dto.LmSysDict;
 import com.wink.livemall.sys.dict.dto.LmSysDictItem;
-import com.wink.livemall.sys.dict.service.DictService;
 import com.wink.livemall.sys.dict.service.Dict_itemService;
 import com.wink.livemall.sys.msg.service.PushmsgService;
 import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.service.ConfigsService;
 import com.wink.livemall.utils.cache.redis.RedisUtil;
+import com.wink.livemall.utils.sms.SmsUtils;
 import io.swagger.annotations.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
@@ -46,6 +39,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -71,6 +65,8 @@ public class OrderController {
     @Autowired
     private LmCouponsService lmCouponsService;
     @Autowired
+    private LmCouponMemberService lmCouponMemberService;
+    @Autowired
     private LmMemberAddressService lmMemberAddressService;
     @Autowired
     private LmMerchInfoService lmMerchInfoService;
@@ -87,7 +83,16 @@ public class OrderController {
     @Autowired
     private LmMerchOrderService lmMerchOrderService;
     @Autowired
-    private LmLiveGoodService lmLiveGoodService;
+    private LmFalsifyService lmFalsifyService;
+    @Autowired
+    private CommentService commentService;
+    @Autowired
+    private CommissionLogService commissionLogService;
+    @Autowired
+    private AgencyInfoService agencyInfoService;
+    @Autowired
+    private ForwardUserService forwardUserService;
+
 
     @ApiOperation(value = "获取订单列表")
     @PostMapping("/list")
@@ -97,17 +102,18 @@ public class OrderController {
                                    @ApiParam(name = "pagesize", value = "每页个数",defaultValue = "10",required=true) @RequestParam(value = "pagesize",required = true,defaultValue = "10") int pagesize){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-           String header = request.getHeader("Authorization");
-            String userid = "";
-            if (!StringUtils.isEmpty(header)) {
-                if(!StringUtils.isEmpty(redisUtils.get(header))){
-                    userid = redisUtils.get(header)+"";
-                }else{
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
+
             //获取订单基本信息
             List<Map<String,Object>> list = lmOrderService.findOrderList(status,Integer.parseInt(userid));
             for(Map<String,Object> map:list){
@@ -115,6 +121,11 @@ public class OrderController {
                 String phone = StringUtils.isEmpty(map.get("chargephone"))?null:(String) map.get("chargephone");
                 map.put("address",address);
                 map.put("phone",phone);
+                BigDecimal totalprice = StringUtils.isEmpty(map.get("totalprice"))?new BigDecimal(0.00):(BigDecimal) map.get("totalprice");
+                BigDecimal realpayprice = StringUtils.isEmpty(map.get("realpayprice"))?new BigDecimal(0.00):(BigDecimal) map.get("realpayprice");
+                BigDecimal couponprice=(totalprice.subtract(realpayprice)).setScale(2,BigDecimal.ROUND_HALF_UP);
+                map.put("couponprice",couponprice);
+                map.put("realpayprice",realpayprice);
                 if(map.get("type")!=null){
                     if((int)map.get("type")==3){
                         //合买
@@ -144,16 +155,17 @@ public class OrderController {
                 }
                 if(map.get("backstatus")!=null){
                     if((int)map.get("backstatus")!=0){
-                        LmOrderRefundLog lmOrderRefundLog = lmOrderService.findRefundLogById((int)map.get("refundid"));
+                        int refundid = StringUtils.isEmpty(map.get("refundid"))?0:(int) map.get("refundid");
+                        LmOrderRefundLog lmOrderRefundLog = lmOrderService.findRefundLogById(refundid);
                         if(lmOrderRefundLog!=null){
                             map.put("reason",lmOrderRefundLog.getReason());
+                            map.put("refusal_instructions",lmOrderRefundLog.getRefusal_instructions());
                         }
                     }else{
                         map.put("reason","");
                     }
                 }
             }
-
             jsonResult.setData(PageUtil.startPage(list,page,pagesize));
         } catch (Exception e) {
             e.printStackTrace();
@@ -166,21 +178,20 @@ public class OrderController {
 
     @ApiOperation(value = "获取买家订单列表长度")
     @PostMapping("/listsize")
-    public JsonResult getorderlistsize(HttpServletRequest request
-                                       ){
+    public JsonResult getorderlistsize(HttpServletRequest request){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            String userid = "";
-            if (!StringUtils.isEmpty(header)) {
-                if(!StringUtils.isEmpty(redisUtils.get(header))){
-                    userid = redisUtils.get(header)+"";
-                }else{
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             //获取订单基本信息
             Map<String, Object> map = new ConcurrentHashMap<>();
             for(int i=-2;i<7;i++) {
@@ -205,187 +216,208 @@ public class OrderController {
         return jsonResult;
     }
 
-//    /**
-//     * 提交订单
-//     * @return
-//     */
-//    @ApiOperation(value = "提交订单")
-//    @PostMapping("/submit")
-//    @Transactional
-//    public JsonResult submit(HttpServletRequest request,
-//                             @ApiParam(name = "merchid", value = "商户id", required = true)@RequestParam int merchid,
-//                             @ApiParam(name = "goodid", value = "商品id", required = true)@RequestParam int goodid,
-//                             @ApiParam(name = "price", value = "价格", required = true)@RequestParam String price,
-//                             @ApiParam(name = "addressid", value = "地址id", required = true)@RequestParam int addressid,
-//                             @ApiParam(name = "couponid", value = "优惠券id", required = false)@RequestParam(required = false) String couponid,
-//                             @ApiParam(name = "num", value = "数量", required = true)@RequestParam String num){
-//        JsonResult jsonResult = new JsonResult();
-//        jsonResult.setCode(JsonResult.SUCCESS);
-//        try {
-//            String header = request.getHeader("Authorization");
-//            String userid = "";
-//            if (!StringUtils.isEmpty(header)) {
-//                if(!StringUtils.isEmpty(redisUtils.get(header))){
-//                    userid = redisUtils.get(header)+"";
-//                }else{
-//                    jsonResult.setCode(JsonResult.LOGIN);
-//                    return jsonResult;
-//                }
-//            }
-//            LmMemberAddress address = lmMemberAddressService.findById(addressid+"");
-//            Integer maxId = lmOrderService.findMaxId();
-//            if(maxId==null){
-//                maxId = 0;
-//            }
-//            String datetime = DateUtils.sdfyMdHm.format(new Date());
-//            Configs configs =configsService.findByTypeId(Configs.type_pay);
-//            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-//            String prfix=map.get("msgSrcId")+"";
-//            LmCoupons lmCoupons= null;
-//            if(!StringUtils.isEmpty(couponid)){
-//                lmCoupons = lmCouponsService.findById(couponid);
-//            }
-//            Good good = goodService.findById(goodid);
-//            if(address==null){
-//                return new JsonResult(JsonResult.ERROR,"参数错误");
-//            }
-//            LmMember lmMember = lmMemberService.findById(userid+"");
-//            if(lmMember==null){
-//                return new JsonResult(JsonResult.ERROR,"参数错误");
-//            }
-//            if(good==null){
-//                return new JsonResult(JsonResult.ERROR,"参数错误");
-//            }
-//            if(good.getStock()<Integer.parseInt(num)){
-//                return new JsonResult(JsonResult.ERROR,"库存不足");
-//            }
-//            if(lmCoupons!=null){
-//                Date date = new Date();
-//                if(date.getTime()>=lmCoupons.getStart_date().getTime()&&date.getTime()<=lmCoupons.getEnd_date().getTime()){
-//                    if(lmCoupons.getLeft_num()>0){
-//                        //扣除优惠券数量
-//                        lmCoupons.setUse_num(lmCoupons.getUse_num()+1);
-//                        lmCoupons.setLeft_num(lmCoupons.getLeft_num()-1);
-//                        lmCouponsService.updateService(lmCoupons);
-//                        LmOrder lmOrder = new LmOrder();
-//                        lmOrder.setStatus("0");
-//                        lmOrder.setOrderid(prfix+datetime+maxId);
-//                        lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-//                        lmOrder.setPayexpressprice(good.getExpressprice());
-//                        lmOrder.setChargename(address.getRealname());
-//                        lmOrder.setChargephone(address.getMobile());
-//                        lmOrder.setType(1);
-//                        lmOrder.setPaynickname(lmMember.getNickname());
-//                        lmOrder.setCreatetime(new Date());
-//                        lmOrder.setMerchid(merchid);
-//                        lmOrder.setMemberid(Integer.parseInt(userid));
-//                        if(good.getFreeshipping()==1){
-//                            lmOrder.setRealexpressprice(new BigDecimal(0));
-//                            lmOrder.setRealpayprice(new BigDecimal(price));
-//                        }else{
-//                            lmOrder.setRealexpressprice(good.getExpressprice());
-//                            lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
-//                        }
-//                        lmOrder.setTotalprice(new BigDecimal(price));
-//                        lmOrderService.insertService(lmOrder);
-//                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
-//                        lmOrderGoods.setGoodid(goodid);
-//                        lmOrderGoods.setGoodnum(Integer.parseInt(num));
-//                        lmOrderGoods.setGoodstype(0);
-//                        lmOrderGoods.setGoodprice(good.getProductprice());
-//                        lmOrderGoods.setOrderid(lmOrder.getId());
-//                        lmOrderGoodsService.insertService(lmOrderGoods);
-//
-//                        LmCouponLog lmCouponLog = new LmCouponLog();
-//                        lmCouponLog.setCouponid(Integer.parseInt(couponid));
-//                        lmCouponLog.setCreatetime(new Date());
-//                        lmCouponLog.setMerchid(lmOrder.getMerchid());
-//                        lmCouponLog.setMemberid(Integer.parseInt(userid));
-//                        lmCouponLog.setOrderid(lmOrder.getId());
-//                        lmCouponLog.setPrice(lmOrder.getTotalprice());
-//                        lmCouponsService.insertLogService(lmCouponLog);
-//                        jsonResult.setData(lmOrder.getOrderid());
-//
-//                        LmOrderLog lmOrderLog = new LmOrderLog();
-//                        lmOrderLog.setOrderid(lmOrder.getOrderid());
-//                        lmOrderLog.setOperatedate(new Date());
-//                        lmOrderLog.setOperate("订单创建");
-//                        lmOrderLogService.insert(lmOrderLog);
-//                        //设置库存
-//                        if(good.getStock()>0){
-//                            int newstock = good.getStock()-Integer.parseInt(num);
-//                            good.setStock(newstock);
-//                            if(newstock==0){
-//                                good.setState(0);
-//                            }
-//                        }
-//                        goodService.updateGoods(good);
-//
-//                    }else{
-//                        jsonResult.setCode("401");
-//                        jsonResult.setMsg("优惠券失效请重新下单");
-//                    }
-//                }else{
-//                    jsonResult.setCode("401");
-//                    jsonResult.setMsg("优惠券失效请重新下单");
-//                }
-//            }else{
-//                LmOrder lmOrder = new LmOrder();
-//                lmOrder.setOrderid(prfix+datetime+maxId);
-//                lmOrder.setStatus("0");
-//                lmOrder.setType(1);
-//                lmOrder.setPaynickname(lmMember.getNickname());
-//                lmOrder.setCreatetime(new Date());
-//                lmOrder.setMerchid(merchid);
-//                lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
-//                lmOrder.setChargename(address.getRealname());
-//                lmOrder.setChargephone(address.getMobile());
-//                lmOrder.setMemberid(Integer.parseInt(userid));
-//                lmOrder.setTotalprice(new BigDecimal(price));
-//                if(good.getFreeshipping()==1){
-//                    lmOrder.setRealexpressprice(new BigDecimal(0));
-//                    lmOrder.setRealpayprice(new BigDecimal(price));
-//                }else{
-//                    lmOrder.setRealexpressprice(good.getExpressprice());
-//                    lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
-//                }
-//                lmOrderService.insertService(lmOrder);
-//                LmOrderGoods lmOrderGoods = new LmOrderGoods();
-//                lmOrderGoods.setGoodid(goodid);
-//                lmOrderGoods.setGoodstype(0);
-//                lmOrderGoods.setGoodnum(Integer.parseInt(num));
-//                lmOrderGoods.setGoodprice(good.getProductprice());
-//                lmOrderGoods.setOrderid(lmOrder.getId());
-//                lmOrderGoodsService.insertService(lmOrderGoods);
-//
-//                LmOrderLog lmOrderLog = new LmOrderLog();
-//                lmOrderLog.setOrderid(lmOrder.getOrderid());
-//                lmOrderLog.setOperatedate(new Date());
-//                lmOrderLog.setOperate("订单创建");
-//                lmOrderLogService.insert(lmOrderLog);
-//                jsonResult.setData(lmOrder.getOrderid());
-//                //设置库存
-//                if(good.getStock()>0){
-//                    int newstock = good.getStock()-Integer.parseInt(num);
-//                    good.setStock(newstock);
-//                    if(newstock==0){
-//                        good.setState(0);
-//                    }
-//
-//                }
-//                goodService.updateGoods(good);
-//            }
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            jsonResult.setMsg(e.getMessage());
-//            jsonResult.setCode(JsonResult.ERROR);
-//            logger.error(e.getMessage());
-//            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-//
-//        }
-//        return jsonResult;
-//
-//    }
+    /**
+     * 提交订单
+     * @return
+     */
+    @ApiOperation(value = "提交订单")
+    @PostMapping("/submit")
+    @Transactional
+    public JsonResult submit(HttpServletRequest request,
+                             @ApiParam(name = "merchid", value = "商户id", required = true)@RequestParam int merchid,
+                             @ApiParam(name = "goodid", value = "商品id", required = true)@RequestParam int goodid,
+                             @ApiParam(name = "price", value = "价格", required = true)@RequestParam String price,
+                             @ApiParam(name = "addressid", value = "地址id", required = true)@RequestParam int addressid,
+                             @ApiParam(name = "couponid", value = "优惠券id", required = false)@RequestParam(required = false) String couponid,
+                             @ApiParam(name = "num", value = "数量", required = true)@RequestParam String num){
+        System.out.print("用户优惠券id+++++++++++=="+couponid);
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
+        try {
+            LmMemberAddress address = lmMemberAddressService.findById(addressid+"");
+            Integer maxId = lmOrderService.findMaxId();
+            if(maxId==null){
+                maxId = 0;
+            }
+            String datetime = DateUtils.sdfyMdHm.format(new Date());
+            Configs configs =configsService.findByTypeId(Configs.type_pay);
+            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+            String prfix=map.get("msgSrcId")+"";
+            LmConpouMember lmConpouMember =null;
+            if(!StringUtils.isEmpty(couponid)){
+                if(merchid==363){
+                    lmConpouMember =null;
+                }else {
+                    lmConpouMember = lmCouponMemberService.findById(Integer.parseInt(couponid));
+                }
+            }
+            Good good = goodService.findById(goodid);
+            if(address==null){
+                return new JsonResult(JsonResult.ERROR,"参数错误");
+            }
+            LmMember lmMember = lmMemberService.findById(userid+"");
+            if(lmMember==null){
+                return new JsonResult(JsonResult.ERROR,"参数错误");
+            }
+            if(good==null){
+                return new JsonResult(JsonResult.ERROR,"参数错误");
+            }
+            if(good.getStock()<Integer.parseInt(num)){
+                return new JsonResult(JsonResult.ERROR,"库存不足");
+            }
+            LmCoupons lmCoupons =null;
+            if(lmConpouMember!=null){
+                if(1==lmConpouMember.getCanUse()){
+                    lmCoupons = lmCouponsService.findById(String.valueOf(lmConpouMember.getCouponId()));
+                }else {
+                    lmCoupons=null;
+                }
+            }
+            if(lmCoupons!=null){
+
+                       // 扣除优惠券数量
+                        LmOrder lmOrder = new LmOrder();
+                        lmOrder.setStatus("0");
+                        lmOrder.setOrderid(prfix+datetime+maxId);
+                        lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
+                        lmOrder.setPayexpressprice(good.getExpressprice());
+                        lmOrder.setChargename(address.getRealname());
+                        lmOrder.setChargephone(address.getMobile());
+                        lmOrder.setType(1);
+                        lmOrder.setPaynickname(lmMember.getNickname());
+                        lmOrder.setCreatetime(new Date());
+                        lmOrder.setMerchid(merchid);
+                        lmOrder.setMemberid(Integer.parseInt(userid));
+                        lmOrder.setCoupon_id(lmCoupons.getId());
+                        lmOrder.setCoupon_price(lmCoupons.getCouponValue());
+                        BigDecimal min=new BigDecimal(0);
+                        if(good.getFreeshipping()==1){
+                            lmOrder.setRealexpressprice(new BigDecimal(0));
+                            BigDecimal  realPayPrice= new BigDecimal(price).subtract(lmCoupons.getCouponValue()).setScale(2,BigDecimal.ROUND_HALF_UP);
+                            if(realPayPrice.compareTo(min)>0){
+                                lmOrder.setRealpayprice(realPayPrice);
+                            }else {
+                                lmOrder.setRealpayprice(new BigDecimal(0.01).setScale(2,BigDecimal.ROUND_HALF_UP));
+                            }
+                        }else{
+                            lmOrder.setRealexpressprice(good.getExpressprice());
+                            BigDecimal total = new BigDecimal(price).add(good.getExpressprice()).setScale(2,BigDecimal.ROUND_HALF_UP);
+                            BigDecimal  realPayPrice= total.subtract(lmCoupons.getCouponValue());
+                            if(realPayPrice.compareTo(min)>0){
+                                lmOrder.setRealpayprice(realPayPrice);
+                            }else {
+                                lmOrder.setRealpayprice(good.getExpressprice());
+                            }
+                        }
+                        lmOrder.setTotalprice(new BigDecimal(price));
+                        lmOrderService.insertService(lmOrder);
+                        //设置库存
+                        if(good.getStock()>0){
+                            int newstock = good.getStock()-Integer.parseInt(num);
+                            good.setStock(newstock);
+                            if(newstock==0){
+                                good.setState(0);
+                                good.setWarehouse("3");
+                            }
+                        }
+                        goodService.updateGoods(good);
+                        //添加关联表信息
+                        LmOrderGoods lmOrderGoods = new LmOrderGoods();
+                        lmOrderGoods.setGoodid(goodid);
+                        lmOrderGoods.setGoodnum(Integer.parseInt(num));
+                        lmOrderGoods.setGoodstype(0);
+                        lmOrderGoods.setGoodprice(good.getProductprice());
+                        lmOrderGoods.setOrderid(lmOrder.getId());
+                        lmOrderGoodsService.insertService(lmOrderGoods);
+                        //修改用户优惠券信息
+                        lmConpouMember.setUseTime(new Date());
+                        lmConpouMember.setCanUse(0);
+                        lmConpouMember.setOrderId(lmOrder.getId());
+                        lmCouponMemberService.updateService(lmConpouMember);
+                        //添加优惠券使用记录
+                        LmCouponLog lmCouponLog = new LmCouponLog();
+                        lmCouponLog.setCouponid(Integer.parseInt(couponid));
+                        lmCouponLog.setCreatetime(new Date());
+                        lmCouponLog.setMerchid(lmOrder.getMerchid());
+                        lmCouponLog.setMemberid(Integer.parseInt(userid));
+                        lmCouponLog.setOrderid(lmOrder.getId());
+                        lmCouponLog.setPrice(lmCoupons.getCouponValue());
+                        lmCouponsService.insertLogService(lmCouponLog);
+                        jsonResult.setData(lmOrder.getOrderid());
+                        //添加订单记录
+                        LmOrderLog lmOrderLog = new LmOrderLog();
+                        lmOrderLog.setOrderid(lmOrder.getOrderid());
+                        lmOrderLog.setOperatedate(new Date());
+                        lmOrderLog.setOperate("订单创建");
+                        lmOrderLogService.insert(lmOrderLog);
+
+            }else{
+                LmOrder lmOrder = new LmOrder();
+                lmOrder.setOrderid(prfix+datetime+maxId);
+                lmOrder.setStatus("0");
+                lmOrder.setType(1);
+                lmOrder.setPaynickname(lmMember.getNickname());
+                lmOrder.setCreatetime(new Date());
+                lmOrder.setMerchid(merchid);
+                lmOrder.setChargeaddress(address.getProvince()+address.getCity()+address.getDistrict()+address.getAddress_info());
+                lmOrder.setChargename(address.getRealname());
+                lmOrder.setChargephone(address.getMobile());
+                lmOrder.setMemberid(Integer.parseInt(userid));
+                lmOrder.setTotalprice(new BigDecimal(price));
+                if(good.getFreeshipping()==1){
+                    lmOrder.setRealexpressprice(new BigDecimal(0));
+                    lmOrder.setRealpayprice(new BigDecimal(price));
+                }else{
+                    lmOrder.setRealexpressprice(good.getExpressprice());
+                    lmOrder.setRealpayprice(new BigDecimal(price).add(good.getExpressprice()));
+                }
+                lmOrderService.insertService(lmOrder);
+                //设置库存
+                if(good.getStock()>0){
+                    int newstock = good.getStock()-Integer.parseInt(num);
+                    good.setStock(newstock);
+                    if(newstock==0){
+                        good.setState(0);
+                        good.setWarehouse("3");
+                    }
+
+                }
+                goodService.updateGoods(good);
+                LmOrderGoods lmOrderGoods = new LmOrderGoods();
+                lmOrderGoods.setGoodid(goodid);
+                lmOrderGoods.setGoodstype(0);
+                lmOrderGoods.setGoodnum(Integer.parseInt(num));
+                lmOrderGoods.setGoodprice(good.getProductprice());
+                lmOrderGoods.setOrderid(lmOrder.getId());
+                lmOrderGoodsService.insertService(lmOrderGoods);
+                LmOrderLog lmOrderLog = new LmOrderLog();
+                lmOrderLog.setOrderid(lmOrder.getOrderid());
+                lmOrderLog.setOperatedate(new Date());
+                lmOrderLog.setOperate("订单创建");
+                lmOrderLogService.insert(lmOrderLog);
+                jsonResult.setData(lmOrder.getOrderid());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
+        }
+        return jsonResult;
+
+    }
     /**
      * 支付设置订单状态
      * 废弃
@@ -400,14 +432,19 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
+
             LmOrder lmOrder = lmOrderService.findById(id);
             LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
             if(lmOrder!=null&&lmOrderGoods!=null){
@@ -475,14 +512,18 @@ public class OrderController {
     	logger.info("开始确认收货............orderId:"+id);
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             LmOrder lmOrder = lmOrderService.findById(id);
             if(null!=lmOrder&& null!=lmOrder.getStatus() && lmOrder.getStatus().equals("4")) {
             	 return jsonResult;
@@ -490,7 +531,7 @@ public class OrderController {
             if(lmOrder!=null){
             	
             	logger.info("开始确认收货............更改订单状态:"+id);
-                lmOrder.setStatus("4");
+                lmOrder.setStatus("3");
                 lmOrder.setFinishtime(new Date());
                 lmOrderService.updateService(lmOrder);
                 //合买订单处理
@@ -498,19 +539,17 @@ public class OrderController {
                     boolean flag = true;
                     List<LmOrder> childlist = lmOrderService.findChildOrder(lmOrder.getPorderid());
                     for(LmOrder order:childlist){
-                        if(!"4".equals(order.getStatus())){
+                        if(!"3".equals(order.getStatus())){
                             flag = false;
                         }
                     }
                     if(flag){
                         LmOrder porder = lmOrderService.findById(lmOrder.getPorderid()+"");
-                        porder.setStatus("4");
+                        porder.setStatus("3");
                         porder.setFinishtime(new Date());
                         lmOrderService.updateService(porder);
                     }
                 }
-                	
-            	logger.info("开始确认收货............订单信息:"+lmOrder);
                 //成长值处理
                 LmMember lmMember = lmMemberService.findById(lmOrder.getMemberid()+"");
                 int price = lmOrder.getRealpayprice().intValue();
@@ -545,10 +584,39 @@ public class OrderController {
                 logger.info("商户基本信息:"+lmMerchInfo);
                 
                 logger.info("开始确认收货............商户现有总资产:"+lmMerchInfo.getCredit());
-                
-                logger.info("开始确认收货............商户新增总资产:"+lmOrder.getRealpayprice());
                 //将订单金额 打到商户余额上
-                lmMerchInfo.setCredit((null==lmMerchInfo.getCredit()?BigDecimal.ZERO:lmMerchInfo.getCredit()).add(lmOrder.getRealpayprice()));
+                BigDecimal realPrice = lmOrder.getRealpayprice();
+                if(lmOrder.getPaystatus().equals("3")){
+                    realPrice = realPrice.multiply(new BigDecimal(94.4)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+                }else {
+                    realPrice = realPrice.multiply(new BigDecimal(94.7)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+                }
+                LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
+                if(lmOrderGoods.getGoodstype()==0){
+                    ForwardUser forwardUser = forwardUserService.findListByUserId(lmOrder.getMemberid());
+                    if(forwardUser!=null){
+                        AgencyInfo agencyInfo = agencyInfoService.findListByUserId(forwardUser.getForward_id());
+                        if(agencyInfo!=null){
+                            Good byId = goodService.findById(lmOrderGoods.getGoodid());
+                            BigDecimal min=new BigDecimal(0);
+                            if(byId.getCommission().compareTo(min)>0){
+                                realPrice = realPrice.subtract(byId.getCommission()).setScale(2, BigDecimal.ROUND_DOWN);
+                                CommissionLog commissionLog=new CommissionLog();
+                                commissionLog.setGiver(lmMerchInfo.getMember_id());
+                                commissionLog.setGainer(forwardUser.getForward_id());
+                                commissionLog.setOrder_id(lmOrder.getId());
+                                commissionLog.setCommission(byId.getCommission());
+                                commissionLogService.insertCommissionLog(commissionLog);
+                                LmMember Forward = lmMemberService.findById(String.valueOf(lmOrder.getForward()));
+                                Forward.setBlance(Forward.getBlance().subtract(byId.getCommission()));
+                                Forward.setCredit2(Forward.getCredit2().add(byId.getCommission()));
+                                lmMemberService.updateService(Forward);
+                            }
+                        }
+                    }
+                }
+                logger.info("开始确认收货............商户新增总资产:"+realPrice);
+                lmMerchInfo.setCredit((null==lmMerchInfo.getCredit()?BigDecimal.ZERO:lmMerchInfo.getCredit()).add(realPrice).setScale(2,BigDecimal.ROUND_DOWN));
                 lmMerchInfoService.updateService(lmMerchInfo);
                 System.out.println(new Gson().toJson(lmMerchInfo));
                 LmOrderLog lmOrderLog = new LmOrderLog();
@@ -556,6 +624,17 @@ public class OrderController {
                 lmOrderLog.setOperatedate(new Date());
                 lmOrderLog.setOperate("订单确认收货");
                 lmOrderLogService.insert(lmOrderLog);
+                //给他退款
+                LmFalsify lmFalsify = lmFalsifyService.isFalsify(String.valueOf(lmOrder.getMemberid()), String.valueOf(lmOrderGoods.getGoodid()), String.valueOf(lmOrderGoods.getGoodstype()));
+                if(!isEmpty(lmFalsify)){
+                  String falsifyId=lmFalsify.getFalsify_id();
+                  BigDecimal falsify =lmFalsify.getFalsify();
+                    falsify=falsify.multiply(new BigDecimal(100)).setScale(0,BigDecimal.ROUND_HALF_UP);
+                    String falsifyP=String.valueOf(falsify);
+                    commentService.autoRefundFalsify(falsifyId,falsifyP);
+                    HttpClient httpClient = new HttpClient();
+                    httpClient.send("交易消息",lmFalsify.getMember_id()+"","违约金退款已完成，请确认是否收到退款");
+                }
 
             }
 
@@ -585,20 +664,25 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         try {
             if(id==null||reason==null||StringUtils.isEmpty(type)){
                 jsonResult.setCode(JsonResult.ERROR);
                 jsonResult.setMsg("参数异常");
             }
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
             LmOrder lmOrder = lmOrderService.findById(id);
             if(lmOrder!=null){
+                lmOrder.setSend_type(5);
                 if(lmOrder.getFinishtime()!=null){
                     Long finishtime =lmOrder.getFinishtime().getTime();
                     Long nowtime = new Date().getTime();
@@ -673,6 +757,12 @@ public class OrderController {
                     httpClient.send("交易消息",lmMerchInfo.getMember_id()+"",msg);
                 }
             }
+            LmMerchInfo info = lmMerchInfoService.findById(lmOrder.getMerchid() + "");
+            LmMember merMember = lmMemberService.findById(info.getMember_id() + "");
+            SmsUtils.sendValidCodeMsgs(merMember.getMobile(), info.getStore_name(),  "SMS_213281260");
+            String msg="亲爱的商家，您的"+info.getStore_name()+"店铺中收到一笔退款请求，请在72小时内处理，避免逾期，请尽快处理，谢谢配合";
+            PropellingUtil.IOSPropellingMessage("系统消息",msg,merMember.getId()+"");
+            PropellingUtil.AndroidPropellingMessage("系统消息",msg,merMember.getId()+"");
         } catch (Exception e) {
             e.printStackTrace();
             jsonResult.setMsg(e.getMessage());
@@ -700,14 +790,18 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             LmOrder lmOrder = lmOrderService.findById(id);
             if(lmOrder!=null)
             {
@@ -723,14 +817,7 @@ public class OrderController {
                 if(lmOrderRefundLog.getChecktime()==null){
                     return new JsonResult(JsonResult.ERROR,"申请尚未审核，请稍后再试");
                 }
-                Long nowtime = new Date().getTime();
-                Long checktime = lmOrderRefundLog.getChecktime().getTime();
 
-             //   Long time = nowtime-checktime;
-               // if(time>1000*60*60*24*7){
-                //    lmOrderRefundLog.setStatus(-1);
-                //    lmOrder.setStatus("4");
-              //  }
                 lmOrderService.updateRefundLogService(lmOrderRefundLog);
                 lmOrderService.updateService(lmOrder);
 
@@ -764,15 +851,19 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         Map<String,Object> returnmap = new HashMap<>();
         try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
             LmOrder lmOrder = lmOrderService.findById(id);
             LmOrderRefundLog lmOrderRefundLog = lmOrderService.findRefundLogById(lmOrder.getRefundid());
             LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(lmOrder.getMerchid()+"");
@@ -818,14 +909,18 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             LmOrder lmOrder = lmOrderService.findById(id+"");
             LmMemberAddress lmMemberAddress = lmMemberAddressService.findById(addressid+"");
             if(lmOrder!=null&&lmMemberAddress!=null){
@@ -858,16 +953,21 @@ public class OrderController {
                               @ApiParam(name = "imgurl", value = "图片地址", required = true)@RequestParam(required = true) String imgurl){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             LmOrder lmOrder = lmOrderService.findById(id+"");
             LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
+            lmOrder.setStatus("4");
             lmOrder.setCommentstatus(1);
             lmOrderService.updateService(lmOrder);
             LmOrderComment lmOrderComment  = new LmOrderComment();
@@ -934,14 +1034,18 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             LmOrder lmOrder = lmOrderService.findById(id);
             if(lmOrder!=null){
                 LmOrderRefundLog lmOrderRefundLog = lmOrderService.findRefundLogById(lmOrder.getRefundid());
@@ -975,15 +1079,19 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         Map<String,Object> returnmap = new HashMap<>();
         try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
             LmOrder lmOrder = lmOrderService.findById(id);
             if(lmOrder!=null){
                 LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
@@ -1043,8 +1151,7 @@ public class OrderController {
     @ApiOperation(value = "订单字典接口")
     @PostMapping("/dict")
     @Transactional
-    public JsonResult undo(HttpServletRequest request
-    ){
+    public JsonResult undo(HttpServletRequest request){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
         try {
@@ -1077,20 +1184,26 @@ public class OrderController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         Map<String,Object> returnmap = new HashMap<>();
         try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
             LmOrder lmOrder = lmOrderService.findByOrderId(orderno);
             if(lmOrder!=null){
+                LmMerchInfo byId = lmMerchInfoService.findById(String.valueOf(lmOrder.getMerchid()));
                 LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(lmOrder.getId());
+                returnmap.put("delay",lmOrder.getDelay());
+                returnmap.put("freeze",byId.getFreeze());
                 returnmap.put("num",lmOrderGoods.getGoodnum());
                 returnmap.put("commentstatus",lmOrder.getCommentstatus());
+                returnmap.put("couponPrice",lmOrder.getCoupon_price());
                 if(lmOrder.getType()!=3){
                     if(lmOrder.getIslivegood()==1){
                         LivedGood good = goodService.findLivedGood(lmOrderGoods.getGoodid());
@@ -1101,14 +1214,14 @@ public class OrderController {
                                 returnmap.put("goodname",good.getName());
                                 returnmap.put("thumb",good.getImg());
                                 returnmap.put("price",lmOrder.getTotalprice());
-                                returnmap.put("coupons","");
+                                returnmap.put("coupons",lmOrder.getTotalprice().subtract(lmOrder.getRealpayprice()).subtract(lmOrder.getRealexpressprice()));
                             }else{
                                 //一口价
                                 returnmap.put("spec","");
                                 returnmap.put("goodname",good.getName());
                                 returnmap.put("thumb",good.getImg());
                                 returnmap.put("price",good.getPrice());
-                                returnmap.put("coupons","");
+                                returnmap.put("coupons",lmOrder.getTotalprice().subtract(lmOrder.getRealpayprice()).subtract(lmOrder.getRealexpressprice()));
                             }
                         }
                     }else{
@@ -1138,7 +1251,7 @@ public class OrderController {
                         returnmap.put("goodname",lmShareGood.getName());
                         returnmap.put("thumb",lmShareGood.getImg());
                         returnmap.put("price",lmOrder.getTotalprice());
-                        returnmap.put("coupons","");
+                        returnmap.put("coupons",lmOrder.getTotalprice().subtract(lmOrder.getRealpayprice()).subtract(lmOrder.getRealexpressprice()));
                     }
                 }
                 returnmap.put("address",lmOrder.getChargeaddress());
@@ -1153,14 +1266,24 @@ public class OrderController {
                 returnmap.put("realprice",lmOrder.getRealpayprice());
                 returnmap.put("status",lmOrder.getStatus());
                 returnmap.put("paystatus",lmOrder.getPaystatus());
+                returnmap.put("violate",lmOrder.getViolate());
                 returnmap.put("imid", lmOrder.getMemberid());
                 returnmap.put("imname",lmOrder.getPaynickname());
                 returnmap.put("immemberid", lmMerchInfo.getMember_id());
                 returnmap.put("immembername",lmMerchInfo.getStore_name());
+                returnmap.put("merId",lmMerchInfo.getId());
                 returnmap.put("orderid",lmOrder.getOrderid());
                 returnmap.put("type",lmOrder.getType());
                 returnmap.put("id",lmOrder.getId());
                 returnmap.put("createtime",DateUtils.sdf_yMdHms.format(lmOrder.getCreatetime()));
+                LmMember lmMember = lmMemberService.findById(String.valueOf(lmMerchInfo.getMember_id()));
+                if(lmMember!=null){
+                    returnmap.put("userName",lmMember.getNickname());
+                    returnmap.put("userImg",lmMember.getAvatar());
+                }else {
+                    returnmap.put("userName",null);
+                    returnmap.put("userImg",null);
+                }
                 ExpressUtil expressUtil = new ExpressUtil();
                 String result = expressUtil.synQueryData(lmOrder.getExpress(), lmOrder.getExpresssn(),"","","",0);
                 returnmap.put("expressinfo",result);
@@ -1168,8 +1291,18 @@ public class OrderController {
                 if(refund!=null){
                     returnmap.put("refundtype",refund.getType());
                     returnmap.put("refundstatus",refund.getStatus());
+                    returnmap.put("refusal_instructions",refund.getRefusal_instructions());
+                    returnmap.put("refundtext",refund.getText());
                 }
-                //发送通知给买家
+                if(!StringUtils.isEmpty(lmOrder.getStatus())){
+                    if(lmOrder.getStatus().equals("0")){
+                        Long aLong = timeLong(lmOrder.getType(), lmOrder.getIslivegood(), lmOrder.getCreatetime(),lmOrder.getMerchid(),lmOrder.getDelay());
+                        returnmap.put("countdown",aLong);
+                    }else {
+                        Long aLong = 0l;
+                        returnmap.put("countdown",aLong);
+                    }
+                }
             }
             jsonResult.setData(returnmap);
         } catch (Exception e) {
@@ -1182,33 +1315,111 @@ public class OrderController {
 
     }
 
+    public Long  timeLong(Integer type,Integer isLiveGood,Date times,int merId,int delay) {
+        Long longTime=0l;
+        Date date=new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(times);
+        if(delay==1){
+            calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) +3);
+        }
+        if(isLiveGood==0){
+            if(merId==363){
+                calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + 5);
+                Date time = calendar.getTime();
+                longTime =time.getTime()/1000-date.getTime()/1000;
+            }else {
+                if(type==1){
+                    calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + 30);
+                    Date time = calendar.getTime();
+                    longTime =time.getTime()/1000-date.getTime()/1000;
+                }else  if(type==2){
+                    calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) + 2);
+                    Date time = calendar.getTime();
+                    longTime =time.getTime()/1000-date.getTime()/1000;
+                }
+            }
+        }else if(isLiveGood==1){
+            if(type==1){
+                calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + 5);
+                Date time = calendar.getTime();
+                longTime =time.getTime()/1000-date.getTime()/1000;
+            }else  if(type==2){
+                calendar.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH) + 2);
+                Date time = calendar.getTime();
+                longTime =time.getTime()/1000-date.getTime()/1000;
+            }else if(type==3){
+                calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + 5);
+                Date time = calendar.getTime();
+                longTime =time.getTime()/1000-date.getTime()/1000;
+            }
+        }
+        Long min = 0l;
+        if(longTime.longValue()<min.longValue()){
+            longTime=0l;
+        }
+        return longTime;
+    }
 
 
     /**
-     * 订单删除
-     * 废弃
+     * 订单取消
+     *
      * @param id
      * @return
      */
-//    @ApiOperation(value = "订单删除")
-//    @PostMapping("/deleteorder")
-//    public JsonResult deleteorder(HttpServletRequest request,
-//                                  @ApiParam(name = "orderno", value = "订单号", required = true)@RequestParam String orderno
-//    ){
-//        JsonResult jsonResult = new JsonResult();
-//        jsonResult.setCode(JsonResult.SUCCESS);
-//        try {
-//            LmOrder order = lmOrderService.findByOrderId(orderno);
-//            if(order!=null){
-//                lmOrderService.deleteByOrderno(order);
-//            }
-//        } catch (Exception e) {
-//            jsonResult.setMsg(e.getMessage());
-//            jsonResult.setCode(JsonResult.ERROR);
-//            logger.error(e.getMessage());
-//        }
-//        return jsonResult;
-//
-//    }
+    @RequestMapping("/cancelTheOrder")
+    @ResponseBody
+    @ApiOperation(value = "订单取消",notes = "订单取消接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "id", value = "订单Id", dataType = "String",paramType = "query")
+    })
+    public JsonResult deleteorder(HttpServletRequest request, String id){
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+            LmOrder lmOrder = lmOrderService.findById(id);
+            if(!("0").equals(lmOrder.getStatus())){
+                jsonResult.setMsg("订单不可取消");
+                jsonResult.setCode(JsonResult.ERROR);
+                return jsonResult;
+            }
+            lmOrder.setStatus("7");
+            lmOrderService.updateService(lmOrder);
+            LmConpouMember lmConpouMember = lmCouponMemberService.findByOrderId(lmOrder.getId());
+            if(lmConpouMember!=null){
+                lmConpouMember.setCanUse(1);
+                lmConpouMember.setOrderId(0);
+                lmCouponMemberService.updateService(lmConpouMember);
+            }
+            LmOrderGoods lmOrderGoods = lmOrderGoodsService.findByOrderid(Integer.parseInt(id));
+            if(lmOrderGoods.getGoodstype()==0){
+                Good good = goodService.findById(lmOrderGoods.getGoodid());
+                if(good!=null){
+                    good.setStock(good.getStock()+lmOrderGoods.getGoodnum());
+                    good.setState(1);
+                    goodService.updateGoods(good);
+                }
+            }else {
+                LivedGood livedGood = goodService.findLivedGood(lmOrderGoods.getGoodid());
+                if(livedGood!=null){
+                    livedGood.setStatus(0);
+                    goodService.updateLivedGood(livedGood);
+                }
+            }
+            LmFalsify falsify = lmFalsifyService.isFalsify(String.valueOf(lmOrder.getMemberid()), String.valueOf(lmOrderGoods.getGoodid()), String.valueOf(lmOrderGoods.getGoodstype()));
+            if(falsify!=null){
+                falsify.setType(1);
+                falsify.setStatus(3);
+                lmFalsifyService.updateService(falsify);
+            }
+            jsonResult.setMsg("订单取消成功，期待您的再次购物");
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
 
 }

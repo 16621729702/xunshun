@@ -68,29 +68,93 @@
                                 <input type="hidden" name="id" class="layui-input" value="${lideshow.id!}"/>
                                 <div class="layui-form-item">
                                     <label class="layui-form-label">显示位置</label>
-                                    <div class="layui-input-block">
+                                    <div class="layui-input-block" >
                                         <select name="type" lay-verify="required" lay-search="" lay-filter="type">
                                             <option value="0">请选择</option>
                                             <option value="1" ${(lideshow.type==1)?string('selected','')} >首页</option>
-                                            <option value="2" ${(lideshow.type==2)?string('selected','')}>店铺</option>
+                                            <option value="2" ${(lideshow.type==2)?string('selected','')}>直播</option>
                                             <option value="3" ${(lideshow.type==3)?string('selected','')}>商城</option>
                                             <option value="4" ${(lideshow.type==4)?string('selected','')}>分类</option>
-                                            <option value="9" ${(lideshow.type==9)?string('selected','')}>直播</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
-                                    <label class="layui-form-label">关联商户</label>
-                                    <div class="layui-input-block">
-                                        <select name="merchid" lay-verify="required" lay-filter="parent_id">
-                                            <#if (merchlist)??>
-                                                <#if (merchlist?size > 0)>
-                                                    <#list merchlist as list>
-                                                        <option value="${list.id}" ${(list.id == lideshow.merchid)?string('selected','')}  >${list.store_name}</option>
+                                    <label class="layui-form-label">商城展示类型</label>
+                                    <div class="layui-input-block" >
+                                        <select name="mer_category" lay-verify="required" lay-search="" lay-filter="type">
+                                            <option value="">请选择</option>
+                                            <option value="0" ${(lideshow.mer_category==0)?string('selected','')} >关注店铺</option>
+                                            <option value="1" ${(lideshow.mer_category==1)?string('selected','')} >普通店铺</option>
+                                            <option value="2" ${(lideshow.mer_category==2)?string('selected','')}>优选店铺</option>
+                                            <option value="3" ${(lideshow.mer_category==3)?string('selected','')}>直播店铺</option>
+                                            <option value="4" ${(lideshow.mer_category==4)?string('selected','')}>大师定制</option>
+                                            <option value="9" ${(lideshow.mer_category==9)?string('selected','')}>热门店铺</option>
+                                        </select>
+                                    </div>
+                                    显示位置是商城需要选择这个
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label">直播展示类型</label>
+                                    <div class="layui-input-block" >
+                                        <select name="live_category" lay-verify="required" lay-search="" lay-filter="type">
+                                            <option value="">请选择</option>
+                                            <option value="0" ${(lideshow.live_category==0)?string('selected','')} >关注直播</option>
+                                            <option value="1" ${(lideshow.live_category==1)?string('selected','')} >玉翠珠宝</option>
+                                            <option value="2" ${(lideshow.live_category==2)?string('selected','')}>紫砂陶瓷</option>
+                                            <option value="3" ${(lideshow.live_category==3)?string('selected','')}>书画篆刻</option>
+                                            <option value="4" ${(lideshow.live_category==4)?string('selected','')}>工艺作品</option>
+                                            <option value="5" ${(lideshow.live_category==5)?string('selected','')}>文玩杂项</option>
+                                            <option value="9" ${(lideshow.live_category==9)?string('selected','')}>热门直播</option>
+                                        </select>
+                                    </div>
+                                    显示位置是直播需要选择这个
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label">跳转类型</label>
+                                    <div class="layui-input-block" >
+                                        <select name="link_type" lay-verify="required" lay-search="" lay-filter="type" >
+                                            <option value="0" ${(lideshow.link_type==0)?string('selected','')} >商户</option>
+                                            <option value="1" ${(lideshow.link_type==1)?string('selected','')} >商品</option>
+                                            <option value="2" ${(lideshow.link_type==2)?string('selected','')}>直播</option>
+                                            <option value="3" ${(lideshow.link_type==3)?string('selected','')}>URL</option>
+                                        </select>
+                                        <select lay-verify="required" lay-filter="parent_id">
+                                            <option value="-1" selected >查看店铺id</option>
+                                            <#if (merchList)??>
+                                                <#if (merchList?size > 0)>
+                                                    <#list merchList as list>
+                                                        <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
                                                     </#list>
                                                 </#if>
                                             </#if>
                                         </select>
+                                        <select  lay-verify="required" lay-filter="parent_id">
+                                            <option value="-1" selected >查看商品id</option>
+                                            <#if (goodList)??>
+                                                <#if (goodList?size > 0)>
+                                                    <#list goodList as list>
+                                                        <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
+                                                    </#list>
+                                                </#if>
+                                            </#if>
+                                        </select>
+                                        <select lay-verify="required" lay-filter="parent_id">
+                                            <option value="-1" selected >查看直播间id</option>
+                                            <#if (liveList)??>
+                                                <#if (liveList?size > 0)>
+                                                    <#list liveList as list>
+                                                        <option value="${list.id}">${list.id}:${list.typeName}&nbsp;${list.name}</option>
+                                                    </#list>
+                                                </#if>
+                                            </#if>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
+                                    <label class="layui-form-label">关联ID</label>
+                                    <div class="layui-input-block">
+                                            <input type="text" name="merchid" class="layui-input" value="${lideshow.merchid!}"/>
+                                        根据上面选择的类型自己查看相对应的ID输入ID  选择URL后关联ID随便填写 关联URL必须填写
                                     </div>
                                 </div>
 

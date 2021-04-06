@@ -7,7 +7,13 @@ import com.wink.livemall.help.dto.LmHelpInfo;
 import com.wink.livemall.help.service.LmFeedbackService;
 import com.wink.livemall.help.service.LmHelpCategoryService;
 import com.wink.livemall.help.service.LmHelpInfoService;
+import com.wink.livemall.member.service.LmFalsifyService;
+import com.wink.livemall.merch.dto.LmMerchInfo;
+import com.wink.livemall.merch.service.LmMerchInfoService;
+import com.wink.livemall.order.service.LmMerchOrderService;
+import com.wink.livemall.order.service.LmOrderService;
 import com.wink.livemall.sys.basic.dto.LmBasicConfig;
+import com.wink.livemall.sys.withdraw.dto.AllBankInfo;
 import io.swagger.annotations.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +22,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +38,13 @@ public class HelpController {
     private LmHelpInfoService lmHelpInfoService;
     @Autowired
     private LmFeedbackService lmFeedbackService;
+    @Autowired
+    private LmMerchInfoService lmMerchInfoService;
+    @Autowired
+    private LmOrderService lmOrderService;
+    @Autowired
+    private LmFalsifyService lmFalsifyService;
+
     /**
      * 获取帮助顶级分类
      */
@@ -122,6 +136,36 @@ public class HelpController {
         }
         return jsonResult;
     }
+
+
+    /**
+     *  所有银行列表接口
+     * @param request
+     * @return
+     */
+    @ApiOperation(value = "测试接口")
+    @RequestMapping(value = "/creditTest", method = RequestMethod.POST)
+    @ApiImplicitParams({
+    })
+    public JsonResult creditTest(HttpServletRequest request) {
+        JsonResult jsonResult = new JsonResult();
+        try {
+            List<LmMerchInfo> activeMerch = lmMerchInfoService.findActiveMerch();
+            for(LmMerchInfo lmMerchInfo:activeMerch){
+                BigDecimal bigDecimal = lmOrderService.merOrderPriceSum(lmMerchInfo.getId());
+                BigDecimal falsifySum = lmFalsifyService.falsifySum(lmMerchInfo.getId());
+                lmMerchInfo.setCredit(bigDecimal.add(falsifySum));
+                lmMerchInfoService.updateService(lmMerchInfo);
+            }
+            jsonResult.setCode(JsonResult.SUCCESS);
+        }catch (Exception e) {
+            jsonResult.setCode(JsonResult.ERROR);
+            jsonResult.setMsg(e.toString());
+            return jsonResult;
+        }
+        return  jsonResult;
+    }
+
 
 
 }

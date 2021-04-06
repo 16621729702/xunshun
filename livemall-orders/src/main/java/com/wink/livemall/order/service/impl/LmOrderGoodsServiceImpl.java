@@ -4,6 +4,7 @@ import com.wink.livemall.order.dao.LmOrderGoodsDao;
 import com.wink.livemall.order.dto.LmOrderComment;
 import com.wink.livemall.order.dto.LmOrderGoods;
 import com.wink.livemall.order.service.LmOrderGoodsService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,4 +40,11 @@ public class LmOrderGoodsServiceImpl implements LmOrderGoodsService {
     public List<LmOrderComment> findByMerchid(int merchid) {
         return lmOrderGoodsDao.findByMerchid(merchid);
     }
+
+    @Override
+    public List<LmOrderGoods> findByGoodRepeat(int goodid){
+
+            return lmOrderGoodsDao.findByGoodRepeat(goodid);
+    }
+
 }

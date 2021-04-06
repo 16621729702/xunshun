@@ -92,7 +92,7 @@ public class LmLiveServiceImpl implements LmLiveService {
 
     @Override
     public void updateService(LmLive lmLive) {
-        lmLiveDao.updateByPrimaryKey(lmLive);
+        lmLiveDao.updateByPrimaryKeySelective(lmLive);
     }
 
     @Override
@@ -106,7 +106,22 @@ public class LmLiveServiceImpl implements LmLiveService {
     }
 
     @Override
+    public List<LmLive> findLiveList() {
+        return lmLiveDao.findLiveList();
+    }
+
+    @Override
+    public List<LmLive> findLivePreview() {
+        return lmLiveDao.findLivePreview();
+    }
+
+    @Override
     public LmLive findByMerchid(int merchid) {
         return lmLiveDao.findLiveByMerchid(merchid);
+    }
+
+    @Override
+    public List<LmLive> findHotLive() {
+        return lmLiveDao.findHotLive();
     }
 }

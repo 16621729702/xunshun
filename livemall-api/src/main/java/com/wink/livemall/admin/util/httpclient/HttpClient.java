@@ -19,7 +19,10 @@ import org.apache.http.util.EntityUtils;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+
+
 public class HttpClient {
 
 
@@ -467,15 +470,69 @@ public class HttpClient {
         }
     }
 
-    public static void main(String[] args) {
-        SpringApplication.run(HttpClient.class, args);
-        HttpClient client = new HttpClient();
-        try {
 
-        } catch (Exception e) {
+    /**
+     * 获取组消息
+     */
+    public static Map getGroupNews() {
+        long appid = Long.parseLong("1400404340");
+        String privateinfo ="d99a57a24b9dd20a47f628b2cfbaba0569041feeec88fd651e87aa3641ec6288";
+        String identifier ="administrator";
+        String sign = IMUtil.genSig(appid,privateinfo,identifier);
+        // 获得Http客户端(可以理解为:你得先有一个浏览器;注意:实际上HttpClient与浏览器是不一样的)
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        Random ran=new Random();
+        String url = "https://console.tim.qq.com/v4/open_msg_svc/get_history?sdkappid="+appid+"&identifier=administrator&usersig="+sign+"&random="+ran.nextInt(1000000)+"&contenttype=json";
+        HttpPost httpPost = new HttpPost(url);
+        Map<String,Object> map = new HashMap<>();
+        map.put("ChatType","Group");
+        map.put("MsgTime","2021031012");
+        Map<String,Object> returnmap = new HashMap<>();
+        // 响应模型
+        CloseableHttpResponse response = null;
+        String body = JSONUtils.toJSONString(map);
+        try {
+            httpPost.setEntity(new StringEntity(body));
+            // 由客户端执行(发送)Post请求
+            response = httpClient.execute(httpPost);
+            // 从响应模型中获取响应实体
+            HttpEntity responseEntity = response.getEntity();
+
+            System.out.println("响应状态为:" + response.getStatusLine());
+            if (responseEntity != null) {
+                String result = EntityUtils.toString(responseEntity);
+                System.out.println("响应内容长度为:" + responseEntity.getContentLength());
+                System.out.println("响应内容为:" + result);
+                returnmap =  JSONObject.parseObject(result);
+            }
+
+        } catch (ClientProtocolException e) {
             e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                // 释放资源
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+                if (response != null) {
+                    response.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-//        client.deleteGroup("@TGS#aQ2CKCUGA");
-        client.send("26", "40", "你真是捣浆糊的我特么服你！");
+        return returnmap;
+    }
+
+    public static void main(String[] args) throws java.text.ParseException {
+      /*  Map map = HttpClient.getGroupNews();
+        System.out.println(map);*/
+   /*   String   msg = "系统提示:您的店铺青田国石居中的‘老封门竹叶且’商品产品图上有微拍堂水印，请及时修改";
+        HttpClient httpClient = new HttpClient();
+        httpClient.send("交易消息","533",msg);*/
     }
 }

@@ -9,7 +9,7 @@ public class JsonResult {
 	/** 操作失败 */
 	public static final String ERROR = "500";
 	/** 登录失效 */
-	public static final String LOGIN = "1024";
+	public static final String LOGIN = "301";
 
 	/** 状态 */
 	private String code;

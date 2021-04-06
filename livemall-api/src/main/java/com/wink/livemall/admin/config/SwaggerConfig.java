@@ -1,5 +1,6 @@
 package com.wink.livemall.admin.config;
 
+import io.swagger.annotations.Api;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -16,9 +17,10 @@ public class SwaggerConfig {
 
     @Bean
     public Docket createRestApi(){
-        return new Docket(DocumentationType.SWAGGER_2).apiInfo(apiInfo())
+        return new Docket(DocumentationType.SWAGGER_2)
+                .apiInfo(apiInfo())
                 .select()
-                .apis(RequestHandlerSelectors.any())
+                .apis(RequestHandlerSelectors.withClassAnnotation(Api.class))
                 .paths(PathSelectors.any()).build();
     }
 
@@ -26,11 +28,11 @@ public class SwaggerConfig {
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
                 //页面标题
-                .title("zyy")
+                .title("谢昕")
                 //描述
                 .description("api接口文档")
                 //版本号
-                .version("1.0")
+                .version("1.0.0")
                 .build();
     }
 

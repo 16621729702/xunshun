@@ -6,7 +6,9 @@ import com.wink.livemall.member.service.LmMemberTraceService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +51,17 @@ public class LmMemberTraceServiceImpl implements LmMemberTraceService {
     @Override
     public List<Map<String,Object>> findByMemberidAndType(int userid, int type) {
         List<Map<String,Object>> returnlist = new ArrayList<>();
+        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         if(1==type){
-            return lmMemberTraceDao.findByMemberidAndTypeLeftLive(userid,type);
+            List<Map<String, Object>> byLive = lmMemberTraceDao.findByMemberidAndTypeLeftLive(userid, type);
+            if(byLive!=null&&byLive.size()>0){
+                for(Map<String, Object> map :byLive){
+                    if(map.get("preview_time")!=null){
+                        map.put("preview_time",dateFormat.format((Date)map.get("preview_time")));
+                    }
+                }
+            }
+            return byLive;
         }else if(2==type){
             return lmMemberTraceDao.findByMemberidAndTypeLeftGood(userid,type);
         }

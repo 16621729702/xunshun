@@ -4,7 +4,6 @@ package com.wink.livemall.admin.api.member;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.member.dto.LmMemberStart;
 import com.wink.livemall.member.service.LmMemberStartService;
-import com.wink.livemall.merch.dto.LmMerchCategory;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.apache.logging.log4j.LogManager;
@@ -40,15 +39,18 @@ public class MemberStartController {
         JsonResult jsonResult = new JsonResult();
         String mobile=request.getParameter("mobile");
         Integer type=Integer.parseInt(request.getParameter("type"));
-
+        Integer businessid=Integer.parseInt(request.getParameter("businessid"));
         try {
-            List<LmMemberStart> list = lmMemberStartService.findByMobile(mobile,type);
+            List<LmMemberStart> list = lmMemberStartService.findByMobile(mobile,type,businessid);
             Map<String, Object> resdata=new HashMap<String, Object>();
-            if(null!=list) {
-                resdata.put("list", list);
+            if(list!=null&&list.size()>0) {
+                LmMemberStart lmMemberStart = list.get(0);
+                resdata.put("margin", lmMemberStart.getMargin());
+                resdata.put("coupon_price", lmMemberStart.getCoupon_price());
                 jsonResult.setData(resdata);
             }else {
-                resdata.put("list", null);
+                resdata.put("margin","0");
+                resdata.put("coupon_price", "-1");
                 jsonResult.setData(resdata);
             }
             jsonResult.setCode(JsonResult.SUCCESS);
@@ -67,9 +69,9 @@ public class MemberStartController {
         JsonResult jsonResult = new JsonResult();
         String mobile=request.getParameter("mobile");
         Integer type=Integer.parseInt(request.getParameter("type"));
-
+        Integer businessid=Integer.parseInt(request.getParameter("businessid"));
         try {
-            List<LmMemberStart> list = lmMemberStartService.findByMobile(mobile,type);
+            List<LmMemberStart> list = lmMemberStartService.findByMobile(mobile,type,businessid);
             for(LmMemberStart end:list){
                 end.setIsstart(0);
                 lmMemberStartService.updateMobile(end);

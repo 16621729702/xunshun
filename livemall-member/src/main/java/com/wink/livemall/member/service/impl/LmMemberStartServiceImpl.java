@@ -17,8 +17,18 @@ public class LmMemberStartServiceImpl implements LmMemberStartService {
 
 
     @Override
-    public List<LmMemberStart> findByMobile(String mobile, int type) {
-        return lmMemberStartDao.findByMobile(mobile,type);
+    public List<LmMemberStart> findAll() {
+        return lmMemberStartDao.selectAll();
+    }
+
+    @Override
+    public LmMemberStart findById(String id) {
+        return lmMemberStartDao.selectByPrimaryKey(Integer.parseInt(id));
+    }
+
+    @Override
+    public List<LmMemberStart> findByMobile(String mobile, int type, int businessid) {
+        return lmMemberStartDao.findByMobile(mobile,type,businessid);
     }
 
     @Override

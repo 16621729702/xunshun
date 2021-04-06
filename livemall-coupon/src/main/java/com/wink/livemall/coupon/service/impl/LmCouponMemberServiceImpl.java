@@ -6,6 +6,7 @@ import com.wink.livemall.coupon.service.LmCouponMemberService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Service
 public class LmCouponMemberServiceImpl implements LmCouponMemberService {
@@ -19,8 +20,23 @@ public class LmCouponMemberServiceImpl implements LmCouponMemberService {
     }
 
     @Override
+    public int updateService(LmConpouMember lmConpouMember) {
+        return lmCouponMemberDao.updateByPrimaryKeySelective(lmConpouMember);
+    }
+
+    @Override
+    public List<LmConpouMember> findByMemberId(Integer memberId,Integer couponId) {
+        return lmCouponMemberDao.findByMemberId(memberId,couponId);
+    }
+
+    @Override
     public int insert(LmConpouMember lmConpouMember) {
         return lmCouponMemberDao.insert(lmConpouMember);
+    }
+
+    @Override
+    public LmConpouMember findByOrderId(Integer orderId) {
+        return lmCouponMemberDao.findByOrderId(orderId) ;
     }
 
 }

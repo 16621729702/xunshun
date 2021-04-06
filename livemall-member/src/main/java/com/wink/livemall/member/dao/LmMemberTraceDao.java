@@ -36,6 +36,9 @@ public interface LmMemberTraceDao  extends tk.mybatis.mapper.common.Mapper<LmMem
                     " lg.title as goodname," +
                     " lg.thumb as img," +
                     " lg.id as id," +
+                    " lg.type as type," +
+                    " lg.bidsnum as bidsnum," +
+                    " lg.mer_id as merId," +
                     " lg.productprice as price" +
                     " from lm_goods lg  left join lm_member_trace lmt   on lmt.trace_id = lg.id where " +
                     " lmt.member_id = #{userid}";
@@ -46,12 +49,15 @@ public interface LmMemberTraceDao  extends tk.mybatis.mapper.common.Mapper<LmMem
         public String findByMemberidAndTypeLeftLive(@Param("userid")int userid,@Param("type") int type) {
             String sql = "SELECT " +
                     " ll.name as livename," +
-                    " ll.id as id," +
-                    " ll.type as type," +
-                    " ll.img as liveimg," +
+                    " ll.id as id, " +
+                    " ll.type as type, " +
+                    " ll.img as liveimg, " +
+                    " ll.isstart as isstart, " +
+                    " ll.pushurl as pushurl, " +
                     " lm.store_name as store_name," +
                     " lm.avatar as avatar," +
-                    " ll.watchnum as watchnum" +
+                    " ll.watchnum as watchnum, " +
+                    " ll.preview_time as preview_time " +
                     " from lm_member_trace lmt,lm_lives ll,lm_merch_info lm" +
                     " where lmt.trace_id = ll.id and ll.merch_id = lm.id " +
                     " and lmt.member_id = #{userid}";

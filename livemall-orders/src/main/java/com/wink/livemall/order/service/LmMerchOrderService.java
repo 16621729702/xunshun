@@ -3,6 +3,7 @@ package com.wink.livemall.order.service;
 import com.wink.livemall.order.dto.LmOrder;
 import com.wink.livemall.order.dto.LmOrderRefundLog;
 
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 
@@ -55,14 +56,14 @@ public interface LmMerchOrderService {
      * @param merchid
      * @return
      */
-    Map<String, Object> staticOrderRefund(String merchid);
+    Map<String, Object> staticOrderRefund(String merchid,int backStatus);
     List<Map<String, Object>> orderRefundList(Map<String, String> parmas);
     /**
      * 收款
      * @param merchid
      * @return
      */
-    Map<String, Object> staticOrderEarn(String merchid);
+    Map<String, Object> staticOrderEarn(String merchid,int status);
     List<Map<String, Object>> orderEarnList(Map<String, String> parmas);
     
     /**
@@ -71,6 +72,7 @@ public interface LmMerchOrderService {
      * @return
      */
     Map<String, Object> staticLive(String merchid);
+    int staticLiveNum(String merchid);
     List<Map<String, Object>> orderLiveList(Map<String, String> parmas);
     
     /**
@@ -91,5 +93,11 @@ public interface LmMerchOrderService {
     int countPay(String merchid);
     //退款处理
     int countRefund(String merchid);
+
+    //列表记录
+    Map<String, Object> orderLogList(String merId, Integer type, String startTime, String entTime) throws ParseException;
+
+    //直播销售列表
+    Map<String, Object> staticLiveList(String merId, String startTime, String entTime)throws ParseException;
     
 }

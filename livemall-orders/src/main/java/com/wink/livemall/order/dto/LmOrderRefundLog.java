@@ -29,8 +29,16 @@ public class LmOrderRefundLog {
 	private Date finishtime;
 	private String reason;
 	private BigDecimal refundmoney;
-	
-	
+	private String refusal_instructions;
+
+	public String getRefusal_instructions() {
+		return refusal_instructions;
+	}
+
+	public void setRefusal_instructions(String refusal_instructions) {
+		this.refusal_instructions = refusal_instructions;
+	}
+
 	public BigDecimal getRefundmoney() {
 		return refundmoney;
 	}

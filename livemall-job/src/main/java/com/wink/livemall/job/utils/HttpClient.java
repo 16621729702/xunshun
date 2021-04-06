@@ -3,6 +3,8 @@ package com.wink.livemall.job.utils;
 import com.alibaba.druid.support.json.JSONUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
+import com.wink.livemall.sys.setting.dto.Configs;
+import com.wink.livemall.sys.setting.service.ConfigsService;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
 import org.apache.http.ParseException;
@@ -18,6 +20,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -208,7 +211,6 @@ public class HttpClient {
         HttpPost httpPost = new HttpPost(url);
         Map<String,Object> map = new HashMap<>();
         map.put("GroupId",groupid);
-
         // 响应模型
         CloseableHttpResponse response = null;
         String body = JSONUtils.toJSONString(map);
@@ -245,6 +247,65 @@ public class HttpClient {
             }
         }
     }
+
+    /**
+     * 发送群组信息
+     */
+    public void sendgroup(String groupid,String text,int type) {
+        // 获得Http客户端(可以理解为:你得先有一个浏览器;注意:实际上HttpClient与浏览器是不一样的)
+        CloseableHttpClient httpClient = HttpClientBuilder.create().build();
+        Random ran=new Random();
+        String url = "https://console.tim.qq.com/v4/group_open_http_svc/send_group_msg?sdkappid="+IMUtil.sakappid+"&identifier=administrator&usersig="+IMUtil.genSig()+"&random="+ran.nextInt(1000000)+"&contenttype=json";
+        HttpPost httpPost = new HttpPost(url);
+        Map<String,Object> map = new HashMap<>();
+        map.put("GroupId",groupid);
+        map.put("Random",ran.nextInt(1000000));
+        List<Map> array = new ArrayList<>();
+        Map<String,Object> childmap = new HashMap<>();
+        childmap.put("MsgType","TIMCustomElem");
+        Map<String,Object> datainfo = new HashMap<>();
+        Map<String,Object> cchildmap = new HashMap<>();
+        cchildmap.put("data",text);
+        cchildmap.put("type",type);
+        datainfo.put("Data",new Gson().toJson(cchildmap));
+        childmap.put("MsgContent",datainfo);
+        array.add(childmap);
+        map.put("MsgBody",array);
+        // 响应模型
+        CloseableHttpResponse response = null;
+        String body = JSONUtils.toJSONString(map);
+        try {
+            httpPost.setEntity(new StringEntity(body,"UTF-8"));
+            // 由客户端执行(发送)Post请求
+            response = httpClient.execute(httpPost);
+            // 从响应模型中获取响应实体
+            HttpEntity responseEntity = response.getEntity();
+            System.out.println("响应状态为:" + response.getStatusLine());
+            if (responseEntity != null) {
+                System.out.println("响应内容长度为:" + responseEntity.getContentLength());
+                System.out.println("响应内容为:" + EntityUtils.toString(responseEntity));
+            }
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                // 释放资源
+                if (httpClient != null) {
+                    httpClient.close();
+                }
+                if (response != null) {
+                    response.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 
     public static void main(String[] args) {

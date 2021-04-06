@@ -4,6 +4,7 @@ package com.wink.livemall.member.service;
 import com.wink.livemall.member.dto.LmFalsify;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -33,22 +34,29 @@ public interface LmFalsifyService {
     void deleteService(int id);
 
     /**
-     * @param falsifyId
+     * @param memberId
      * @param status
-     * 列表
+     * 用户列表
      * @return
      */
-    List<Map<String, Object>> findFalsify(String falsifyId,String status);
-
+    List<Map<String, Object>> findFalsify(String memberId,String status);
 
     /**
-     * @param falsifyId
+     * @param merchId
+     * @param status
+     * 商户列表
+     * @return
+     */
+    List<Map<String, Object>> getMerchFalsifyList(String merchId,String status);
+
+    /**
+     * @param memberid
      * @param goodid
      * @param goodstype
      * 寻找到违约金记录
      * @return
      */
-    LmFalsify isFalsify(String falsifyId,String goodid,String goodstype);
+    LmFalsify isFalsify(String memberid,String goodid,String goodstype);
 
     /**
      *
@@ -64,4 +72,14 @@ public interface LmFalsifyService {
      */
     Map<String,String>  isRefundFalsify(String falsifyId);
 
+
+    List<Map<String,Object>>  autoRefundFalsify(int goodId,int goodsType);
+
+    //退款中 商家未处理
+    List<LmFalsify> findNoFalsify();
+
+   //总
+    BigDecimal  falsifySum(int merId);
+
+    List<Map<String,Object>> merFalsifyList(Integer merId);
 }

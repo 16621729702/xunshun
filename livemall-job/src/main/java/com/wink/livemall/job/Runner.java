@@ -19,9 +19,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @ServletComponentScan
 @EnableScheduling
 public class Runner    {
-	
-	 
-	
 	public static void main(String[] args) {
 		SpringApplication.run(Runner.class, args);
 	}

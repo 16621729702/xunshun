@@ -79,10 +79,9 @@
                                                 <select name="type" lay-verify="required" lay-search="" lay-filter="type">
                                                     <option value="" selected >请选择</option>
                                                     <option value="1" ${(type=='1')?string('selected','')} >首页</option>
-                                                    <option value="2" ${(type=='2')?string('selected','')}>店铺</option>
+                                                    <option value="2" ${(type=='2')?string('selected','')}>直播</option>
                                                     <option value="3" ${(type=='3')?string('selected','')}>商城</option>
                                                     <option value="4" ${(type=='4')?string('selected','')}>分类</option>
-
                                                 </select>
                                             </div>
                                         </div>
@@ -116,8 +115,11 @@
                                             <tr>
                                                 <th>ID</th>
                                                 <th>位置</th>
+                                                <th>商城展示类型</th>
+                                                <th>直播间展示类型</th>
                                                 <th>名称</th>
                                                 <th>排序</th>
+                                                <th>跳转类型</th>
                                                 <th>轮播图</th>
                                                 <th>操作</th>
                                             </tr>
@@ -130,12 +132,35 @@
                                                 <td>${list.id!}</td>
                                                 <td>
                                                     <#if list.type==1>首页</#if>
-                                                    <#if list.type==2>店铺</#if>
+                                                    <#if list.type==2>直播</#if>
                                                     <#if list.type==3>商城</#if>
                                                     <#if list.type==4>分类</#if>
                                                 </td>
+                                                <td>
+                                                    <#if list.mer_category==0>关注店铺</#if>
+                                                    <#if list.mer_category==1>普通店铺</#if>
+                                                    <#if list.mer_category==2>优选店铺</#if>
+                                                    <#if list.mer_category==3>直播店铺</#if>
+                                                    <#if list.mer_category==4>大师定制</#if>
+                                                    <#if list.mer_category==9>热门店铺</#if>
+                                                </td>
+                                                <td>
+                                                    <#if list.live_category==0>关注直播</#if>
+                                                    <#if list.live_category==1>玉翠珠宝</#if>
+                                                    <#if list.live_category==2>紫砂陶瓷</#if>
+                                                    <#if list.live_category==3>书画篆刻</#if>
+                                                    <#if list.live_category==4>工艺作品</#if>
+                                                    <#if list.live_category==5>文玩杂项</#if>
+                                                    <#if list.live_category==9>热门直播</#if>
+                                                </td>
                                                 <td>${list.name!}</td>
                                                 <td>${list.sort!}</td>
+                                                <td>
+                                                    <#if list.link_type==0>商户编号 : ${list.merchid!}</#if>
+                                                    <#if list.link_type==1>商品编号 : ${list.merchid!}</#if>
+                                                    <#if list.link_type==2>直播标号 : ${list.merchid!}</#if>
+                                                    <#if list.link_type==3>URL地址 : ${list.wxappurl!}</#if>
+                                                </td>
                                                 <td><img class="rounded img-md img_pop_show" src="${list.pic!}"></td>
                                                 <td>
                                                     <a class="btn btn-outline btn-success load_iframe" href="javascript:;" data-url="${request.contextPath}/lideshow/editpage?id=${list.id!}" data-width="1000px" data-height="700px">编辑</a>

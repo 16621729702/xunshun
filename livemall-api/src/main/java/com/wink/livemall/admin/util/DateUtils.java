@@ -192,7 +192,7 @@ public class DateUtils {
 	}
 
 	public static String getTimeZHCNBySeconds(Long seconds) {
-		String result = "";
+		String result = "0";
 		if (seconds != null && seconds.compareTo(0L) > 0) {
 			try {
 				long d = seconds / 86400;

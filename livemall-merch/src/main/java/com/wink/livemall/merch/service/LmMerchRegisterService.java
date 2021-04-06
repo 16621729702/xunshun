@@ -36,4 +36,12 @@ public interface LmMerchRegisterService {
 	 */
 	LmMerchInfo findMerchInfoByid(int id);
 
+
+    /**
+     * 根据id获取商户
+     * @param store_name
+     * @return
+     */
+    int isRepeat(String  store_name);
+
 }

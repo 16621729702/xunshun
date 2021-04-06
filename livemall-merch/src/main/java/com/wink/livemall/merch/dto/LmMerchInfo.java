@@ -73,6 +73,16 @@ public class LmMerchInfo {
 	private Double successper;//成交率
 	private Double backper;//退款率
 	private BigDecimal credit;//商户月
+	private int freeze;
+
+
+	public int getFreeze() {
+		return freeze;
+	}
+
+	public void setFreeze(int freeze) {
+		this.freeze = freeze;
+	}
 
 	public String getRefund_mobile() {
 		return refund_mobile;

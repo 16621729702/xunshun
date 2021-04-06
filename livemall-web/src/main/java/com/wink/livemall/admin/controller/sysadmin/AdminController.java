@@ -73,6 +73,7 @@ public class AdminController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             Admin admin = adminService.findAdminById(Integer.parseInt(id));
             admin.setPassword(Md5Util.md5jiami(admin.getPassword()));
@@ -130,6 +131,7 @@ public class AdminController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String username = StringUtils.isEmpty(request.getParameter("username"))?null:request.getParameter("username");
         String password = StringUtils.isEmpty(request.getParameter("password"))?null:request.getParameter("password");
@@ -157,6 +159,7 @@ public class AdminController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(id!=null){
                 adminService.deleteAdmin(id);

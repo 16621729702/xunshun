@@ -3,6 +3,7 @@ package com.wink.livemall.order.service;
 import com.wink.livemall.order.dto.LmOrder;
 import com.wink.livemall.order.dto.LmOrderRefundLog;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -78,9 +79,20 @@ public interface LmOrderService {
 
     List<LmOrder> findOrderListByPid2(int id);
 
-    List<LmOrder> findOrderListByStatus(int i);
+    List<LmOrder> findOrderListByStatus(int status);
 
     LmOrder findByNewOrderid(String out_trade_no);
-    
-    
+
+
+    List<LmOrder> violateOrderOne(int type);
+
+    List<LmOrder> violateOrderTwo(int type);
+
+    List<LmOrder> isBuy(int merId,int memberId);
+
+
+    BigDecimal merOrderPriceSum(Integer merId);
+
+    List<Map<String, Object>> merOrderList(Integer merId);
+
 }

@@ -34,7 +34,7 @@ public interface LmMemberFollowDao extends tk.mybatis.mapper.common.Mapper<LmMem
 	@Select("SELECT * FROM lm_member_follow WHERE member_id = #{userid} and follow_id = #{merchid} and state = 0 and follow_type = 1 limit 0,1")
 	LmMemberFollow findByMemberidAndMerchId(@Param("userid")int userid, @Param("merchid")int merchid);
 
-	@Select("SELECT * FROM lm_member_follow WHERE member_id = #{userid} and follow_id = #{id} and state = 0 and follow_type = #{type} limit 0,1")
+	@Select("SELECT * FROM lm_member_follow WHERE member_id = #{userid} and follow_id = #{id} and follow_type = #{type} limit 0,1")
     LmMemberFollow findByMemberidAndTypeAndId(@Param("userid")int userid, @Param("type")int type, @Param("id")int id);
 
 	@Select("SELECT * FROM lm_member_follow WHERE follow_id = #{merchid} and state = 0 and follow_type = #{type} ")
@@ -84,7 +84,8 @@ public interface LmMemberFollowDao extends tk.mybatis.mapper.common.Mapper<LmMem
 					" ll.isstart as isstart," +
 					" lm.store_name as store_name," +
 					" lm.avatar as avatar," +
-					" ll.watchnum as watchnum" +
+					" ll.watchnum as watchnum, " +
+					" ll.preview_time as preview_time " +
 					" from lm_member_follow lmf ,lm_lives ll,lm_merch_info lm where lmf.follow_id = ll.id and ll.merch_id = lm.id " +
 					" and lmf.member_id = #{memberid} and lmf.follow_type = 0 and lmf.state = 0";
 			return sql;

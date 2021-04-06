@@ -16,13 +16,17 @@ public interface LmOrderGoodsDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 
 
     //普通拍卖
-    @Select("select * from lm_order_goods where goodid=#{id} goodstype =0  limit 1 ")
+    @Select("select * from lm_order_goods where goodid=#{id} and goodstype =0  limit 1 ")
     LmOrderGoods findByGoodsid0(@Param("id") int id);
 
 
     //直播拍卖
     @Select("select * from lm_order_goods where goodid=#{id} and goodstype =1 limit 1 ")
     LmOrderGoods findByGoodsid1(@Param("id") int id);
+
+    //直播拍卖
+    @Select("select * from lm_order_goods where goodid=#{goodid} and goodstype =1  ")
+   List<LmOrderGoods> findByGoodRepeat(@Param("goodid") int goodid);
 
     @Select("select log.* from lm_order_goods log left join lm_orders  lo on log.orderid = lo.id  where lo.merchid=#{merchid} ")
     List<LmOrderComment> findByMerchid(@Param("merchid")int merchid);

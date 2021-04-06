@@ -22,4 +22,10 @@ public class LmSmsVcodeServiceImpl implements LmSmsVcodeService {
     public List<LmSmsVcode> findByMobile(String mobile) {
         return lmSmsVcodeDao.findByMobile(mobile);
     }
+
+    @Override
+    public List<LmSmsVcode> restrictMobile(String mobile) {
+        return lmSmsVcodeDao.restrictMobile(mobile);
+    }
+
 }

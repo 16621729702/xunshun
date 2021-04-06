@@ -89,6 +89,7 @@
                                     <div class="layui-input-block">
                                         <input type="radio" name="status"  value="0" title="开始" ${(lmLive.status==0)?string('checked','')}>
                                         <input type="radio" name="status" value="1" title="关闭" ${(lmLive.status==1)?string('checked','')}>
+                                        <input type="radio" name="status" value="2" title="过期" ${(lmLive.status==1)?string('checked','')}>
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
@@ -104,6 +105,7 @@
                                     <div class="layui-input-block">
                                         <input type="radio" name="isstart"  value="0" title="否" ${(lmLive.isrecommend==0)?string('checked','')}>
                                         <input type="radio" name="isstart" value="1" title="是" ${(lmLive.isrecommend==1)?string('checked','')}>
+                                        <input type="radio" name="isstart"  value="2" title="预展" ${(lmLive.isrecommend==0)?string('checked','')}>
                                     </div>
                                 </div>
                                 <div class="layui-form-item">

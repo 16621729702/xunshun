@@ -1,9 +1,8 @@
 package com.wink.livemall.admin.api.good;
 
 import com.google.gson.Gson;
-import com.wink.livemall.admin.util.DateUtils;
-import com.wink.livemall.admin.util.JsonResult;
-import com.wink.livemall.admin.util.PageUtil;
+import com.wink.livemall.admin.util.*;
+import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.coupon.dto.LmCoupons;
 import com.wink.livemall.coupon.service.LmCouponsService;
 import com.wink.livemall.goods.dto.Good;
@@ -15,17 +14,18 @@ import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
 import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveService;
-import com.wink.livemall.member.dto.LmMember;
-import com.wink.livemall.member.dto.LmMemberFav;
-import com.wink.livemall.member.dto.LmMemberFollow;
-import com.wink.livemall.member.dto.LmMemberTrace;
+import com.wink.livemall.member.dto.*;
+import com.wink.livemall.member.service.AgencyInfoService;
 import com.wink.livemall.member.service.LmMemberFavService;
 import com.wink.livemall.member.service.LmMemberFollowService;
 import com.wink.livemall.member.service.LmMemberTraceService;
+import com.wink.livemall.merch.dto.LmMerchCategory;
 import com.wink.livemall.merch.dto.LmMerchInfo;
+import com.wink.livemall.merch.service.LmMerchCategoryService;
 import com.wink.livemall.merch.service.LmMerchInfoService;
 import com.wink.livemall.utils.cache.redis.RedisUtil;
 import io.swagger.annotations.*;
+import io.swagger.models.auth.In;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,6 +65,10 @@ public class GoodController {
     private LmMemberTraceService lmMemberTraceService;
     @Autowired
     private LmGoodAuctionService lmGoodAuctionService;
+    @Autowired
+    private LmMerchCategoryService lmMerchCategoryService;
+    @Autowired
+    private AgencyInfoService agencyInfoService;
 
     /**
      * 获取所有顶级分类
@@ -190,20 +194,26 @@ public class GoodController {
     @Transactional
     @ApiImplicitParams({ @ApiImplicitParam(paramType = "header", dataType = "String", name = "Authorization", value = "token标记", required = false) })
     public JsonResult detail(@ApiParam(name = "goodid", value = "商品id",defaultValue = "3", required = true)@PathVariable String goodid,HttpServletRequest request){
-        String header = request.getHeader("Authorization");
-        String userid = "";
-        if (StringUtils.isEmpty(header)) {
-
-        }else{
-            userid = redisUtils.get(header)+"";
-        }
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         try {
             Map<String,Object> map = new HashMap<>();
             Good good = goodService.findById(Integer.parseInt(goodid));
 
             if(good!=null){
+                map.put("auther",good.getAuther());
+                map.put("certificate",good.getCertificate());
+                map.put("model",good.getModel());
                 map.put("type",good.getType());
                 map.put("name",good.getTitle());
                 map.put("price",good.getProductprice());
@@ -211,6 +221,7 @@ public class GoodController {
                 map.put("spec",good.getSpec());
                 map.put("weight",good.getWeight());
                 map.put("material",good.getMaterial());
+                map.put("commission",good.getCommission());
                 if(good.getAuction_end_time()!=null){
                     map.put("endtime",DateUtils.sdf_yMdHms.format(good.getAuction_end_time()));
                 }
@@ -221,30 +232,27 @@ public class GoodController {
                 if(goodCategory!=null){
                     map.put("category",goodCategory.getName());
                 }
-               /*if(good.getThumbs().contains(",")){
-                    String[] imgs = good.getThumbs().split(",");
-                    *//*map.put("goodimg",imgs[0]);*//*
-                    map.put("goodimg",imgs);
-                }else{
-                    map.put("goodimg",good.getThumbs());
-                }*/
                 map.put("thumbimg",good.getThumb());
                 map.put("goodimg",good.getThumbs());
                 map.put("state",good.getState());
                 map.put("productprice",good.getProductprice());
                 map.put("description",good.getDescription());
+                LmLive lmLive = lmLiveService.findByMerchid(good.getMer_id());
+                if(lmLive!=null){
+                    map.put("live",lmLive);
+                }else {
+                    map.put("live",null);
+                }
                 LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(good.getMer_id()+"");
                 List<Map<String,Object>> list = goodService.findAuctionlistByGoodid(good.getId(),0);
-
+                map.put("marketprice",good.getMarketprice());
                 if(good.getType()==1){
                     for(Map<String,Object> mapinfo:list){
                         mapinfo.put("createtime",DateUtils.sdf_yMdHms.format(mapinfo.get("createtime")));
                     }
                     map.put("startprice",good.getStartprice());
                     map.put("stepprice",good.getStepprice());
-                    map.put("marketprice",good.getMarketprice());
                     map.put("auctionlist",list);
-
                     long newdatetime = System.currentTimeMillis();
                     if(good.getAuction_start_time()!=null&&good.getAuction_end_time()!=null){
                         if(newdatetime>=good.getAuction_start_time().getTime()&&newdatetime<=(good.getAuction_end_time().getTime())){
@@ -266,17 +274,20 @@ public class GoodController {
                             map.put("resttimes",diff);
                         }
                     }
-
                 }
                 if(!StringUtils.isEmpty(userid)&&!"null".equals(userid)){
-
                     LmMemberFav lmMemberFav = lmMemberFavService.findByMemberidAndGoodid(userid,goodid);
-
                     if(lmMemberFav!=null){
                         map.put("favid",lmMemberFav.getId());
                         map.put("isfav","yes");
                     }else{
                         map.put("isfav","no");
+                    }
+                    AgencyInfo agencyInfo = agencyInfoService.findListByUserId(Integer.valueOf(userid));
+                    if(agencyInfo!=null){
+                        map.put("agencyInfo",1);
+                    }else{
+                        map.put("agencyInfo",0);
                     }
                 }
                 if(lmMerchInfo!=null){
@@ -295,30 +306,37 @@ public class GoodController {
                     condient.put("merchid",lmMerchInfo.getId());
                     /*List<Map<String, Object> > lmCouponsList = lmCouponsService.findByCondient(condient);
                     map.put("lmCouponsList", new Gson().toJson(lmCouponsList));*/
+                    List<LmMerchCategory> acticeListByApi = lmMerchCategoryService.findActiceListByApi();
+                    for(LmMerchCategory lmMerchCategory :acticeListByApi){
+                        if(lmMerchCategory.getId()==lmMerchInfo.getCategoryid()){
+                            map.put("categoryname",lmMerchCategory.getName());
+                        }
+                    }
                     if(!StringUtils.isEmpty(userid)&&!"null".equals(userid)) {
-                        //添加浏览记录
-                        LmMemberTrace lmMemberTrace = lmMemberTraceService.findByMemberidAndGoodid(Integer.parseInt(userid),good.getId());
-                        if(lmMemberTrace==null){
-                            lmMemberTrace = new LmMemberTrace();
-                            lmMemberTrace.setMember_id(Integer.parseInt(userid));
-                            lmMemberTrace.setTrace_id(good.getId());
-                            lmMemberTrace.setTrace_time(new Date());
-                            lmMemberTrace.setTrace_type(2);
-                            lmMemberTraceService.insertService(lmMemberTrace);
-                        }else{
-                            lmMemberTrace.setMember_id(Integer.parseInt(userid));
-                            lmMemberTrace.setTrace_id(good.getId());
-                            lmMemberTrace.setTrace_time(new Date());
-                            lmMemberTrace.setTrace_type(2);
-                            lmMemberTraceService.updateService(lmMemberTrace);
-                        }
-                        LmMemberFollow lmMemberFollow = lmMemberFollowService.findByMemberidAndMerchId(userid, lmMerchInfo.getId());
-                        if (lmMemberFollow != null) {
-                            map.put("followid",lmMemberFollow.getId());
-                            map.put("isfollow", "yes");
-                        } else {
-                            map.put("isfollow", "no");
-                        }
+                            //添加浏览记录
+                            LmMemberTrace lmMemberTrace = lmMemberTraceService.findByMemberidAndGoodid(Integer.parseInt(userid), good.getId());
+                            if (lmMemberTrace == null) {
+                                lmMemberTrace = new LmMemberTrace();
+                                lmMemberTrace.setMember_id(Integer.parseInt(userid));
+                                lmMemberTrace.setTrace_id(good.getId());
+                                lmMemberTrace.setTrace_time(new Date());
+                                lmMemberTrace.setTrace_type(2);
+                                lmMemberTraceService.insertService(lmMemberTrace);
+                            } else {
+                                lmMemberTrace.setMember_id(Integer.parseInt(userid));
+                                lmMemberTrace.setTrace_id(good.getId());
+                                lmMemberTrace.setTrace_time(new Date());
+                                lmMemberTrace.setTrace_type(2);
+                                lmMemberTraceService.updateService(lmMemberTrace);
+                            }
+                            LmMemberFollow lmMemberFollow = lmMemberFollowService.findByMemberidAndMerchId(userid, lmMerchInfo.getId());
+                            if (lmMemberFollow != null) {
+                                map.put("followid", lmMemberFollow.getId());
+                                map.put("isfollow", "yes");
+                            } else {
+                                map.put("isfollow", "no");
+                            }
+
                     }
                 }
             }
@@ -450,8 +468,8 @@ public class GoodController {
         String header = request.getHeader("Authorization");
         String userid = "";
         if (!StringUtils.isEmpty(header)) {
-            if(!StringUtils.isEmpty(redisUtils.get(header))){
-                userid = redisUtils.get(header)+"";
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
             }else{
                 jsonResult.setCode(JsonResult.LOGIN);
                 return jsonResult;
@@ -479,6 +497,13 @@ public class GoodController {
                            jsonResult.setCode(JsonResult.ERROR);
                            jsonResult.setMsg("已有人出价更高");
                            return jsonResult;
+                       }
+                       if(!userid.equals(lmGoodAuction.getMemberid())){
+                           HttpClient httpClient = new HttpClient();
+                           String msg ="您竞拍的"+good.getTitle()+":\n"+"已被超过，为了防止您错失，请及时关注。";
+                           httpClient.send("交易消息",lmGoodAuction.getMemberid()+"",msg);
+                           PropellingUtil.IOSPropellingMessage("系统消息",msg,lmGoodAuction.getMemberid()+"");
+                           PropellingUtil.AndroidPropellingMessage("系统消息",msg,lmGoodAuction.getMemberid()+"");
                        }
                        LmGoodAuction newauction =new LmGoodAuction();
                        newauction.setCreatetime(new Date());

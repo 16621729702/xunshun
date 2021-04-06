@@ -2,10 +2,9 @@ package com.wink.livemall.admin.api.member;
 
 import com.alibaba.fastjson.JSON;
 import com.google.gson.Gson;
-import com.wink.livemall.admin.util.DateUtils;
-import com.wink.livemall.admin.util.JsonResult;
-import com.wink.livemall.admin.util.PageUtil;
-import com.wink.livemall.admin.util.WeixinpayUtil;
+import com.wink.livemall.admin.api.help.CommentService;
+import com.wink.livemall.admin.util.*;
+import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.admin.util.payUtil.PayCommonUtil;
 import com.wink.livemall.admin.util.payUtil.PayUtil;
 import com.wink.livemall.admin.util.payUtil.StringUtil;
@@ -18,7 +17,9 @@ import com.wink.livemall.live.dto.LmLive;
 import com.wink.livemall.live.service.LmLiveGoodService;
 import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.member.dto.LmFalsify;
+import com.wink.livemall.member.dto.LmFalsifyRefundReason;
 import com.wink.livemall.member.dto.LmMember;
+import com.wink.livemall.member.service.LmFalsifyRefundReasonService;
 import com.wink.livemall.member.service.LmFalsifyService;
 import com.wink.livemall.member.service.LmMemberService;
 import com.wink.livemall.merch.dto.LmMerchInfo;
@@ -32,9 +33,7 @@ import com.wink.livemall.order.service.LmPayLogService;
 import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.service.ConfigsService;
 import com.wink.livemall.utils.cache.redis.RedisUtil;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.annotations.*;
 import io.swagger.models.auth.In;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.time.DateFormatUtils;
@@ -43,6 +42,7 @@ import org.apache.logging.log4j.Logger;
 import org.jdom2.JDOMException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -55,6 +55,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Api(tags = "违约金列表")
@@ -74,6 +75,8 @@ public class LmFalsifyController {
     @Autowired
     private LmFalsifyService lmFalsifyService;
     @Autowired
+    private LmFalsifyRefundReasonService lmFalsifyRefundReasonService;
+    @Autowired
     private RedisUtil redisUtils;
     @Autowired
     private GoodService goodService;
@@ -83,43 +86,45 @@ public class LmFalsifyController {
     private LmLiveService lmLiveService;
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    private CommentService commentService;
 
-    @ApiOperation(value = "获取违约金订单列表")
+    @ApiOperation(value = "用户获取违约金订单列表")
     @PostMapping("/list")
-    public JsonResult getfalsifylist(HttpServletRequest request,
-                    @ApiParam(name = "status", value = "-1已结束0未处理1审核中2退款完成3已违约", required = true)@RequestParam(value = "status",required = true,defaultValue = "0") String status,
+    public JsonResult getFalsifyList(HttpServletRequest request,
+                    @ApiParam(name = "status", value = "-1已结束0未处理1审核中2退款完成3已违约4已拒绝", required = true)@RequestParam(value = "status",required = true,defaultValue = "0") String status,
                     @ApiParam(name = "page", value = "页码",defaultValue = "1",required=true) @RequestParam(value = "page",required = true,defaultValue = "1") int page,
                      @ApiParam(name = "pagesize", value = "每页个数",defaultValue = "10",required=true) @RequestParam(value = "pagesize",required = true,defaultValue = "10") int pagesize){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            String header = request.getHeader("Authorization");
-            String userid = "";
-            if (!StringUtils.isEmpty(header)) {
-                if(!StringUtils.isEmpty(redisUtils.get(header))){
-                    userid = redisUtils.get(header)+"";
-                }else{
-                    jsonResult.setMsg("用户未登陆,请重新登陆");
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
+        String header = request.getHeader("Authorization");
+        String userid = "";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登陆,请重新登陆");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
             }
+        }
+        try {
             List<Map<String, Object>> findfalsify = lmFalsifyService.findFalsify(userid, status);
             for(Map<String,Object> map:findfalsify){
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                map.put("create_time", format.format((Date)map.get("create_time")));
                 if(map.get("goodstype")!=null&&(int)map.get("goodstype")==1){
                     //直播商品
                     LivedGood good = goodService.findLivedGood((int)map.get("good_id"));
-                    map.put("goodname",good.getName());
+                    map.put("goodName",good.getName());
                     map.put("thumb",good.getImg());
                     map.put("spec","");
                 }else{
-                    //普通订单
+                    //普通商品
                     Good good = goodService.findById((int)map.get("good_id"));
-                    if(good!=null){
-                        map.put("goodname",good.getTitle());
+                        map.put("goodName",good.getTitle());
                         map.put("thumb",good.getThumb());
                         map.put("spec",good.getSpec());
-                    }
                 }
             }
             jsonResult.setData(PageUtil.startPage(findfalsify,page,pagesize));
@@ -130,6 +135,106 @@ public class LmFalsifyController {
             logger.error(e.getMessage());
         }
         return jsonResult;
+    }
+
+
+
+
+
+
+    @ApiOperation(value = "商户获取违约金订单列表")
+    @PostMapping("/merchList")
+    public JsonResult getMerchFalsifyList(HttpServletRequest request,
+                                     @ApiParam(name = "status", value = "0申请退款1已违约2退款完成3已拒绝", required = true)@RequestParam(value = "status",required = true,defaultValue = "0") String status,
+                                     @ApiParam(name = "merchId", value = "商户Id", required = true)@RequestParam(value = "merchId",required = true,defaultValue = "0") String merchId,
+                                     @ApiParam(name = "page", value = "页码",defaultValue = "1",required=true) @RequestParam(value = "page",required = true,defaultValue = "1") int page,
+                                     @ApiParam(name = "pagesize", value = "每页个数",defaultValue = "10",required=true) @RequestParam(value = "pagesize",required = true,defaultValue = "10") int pagesize){
+        JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
+        try {
+            List<Map<String, Object>> getMerchFalsifyList = lmFalsifyService.getMerchFalsifyList(merchId, status);
+            for(Map<String,Object> map:getMerchFalsifyList){
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+                map.put("create_time", format.format((Date)map.get("create_time")));
+                if(map.get("goodstype")!=null&&(int)map.get("goodstype")==1){
+                    //直播商品
+                    LivedGood good = goodService.findLivedGood((int)map.get("good_id"));
+                    map.put("goodName",good.getName());
+                    map.put("thumb",good.getImg());
+                    map.put("spec","");
+                }else{
+                    //普通商品
+                    Good good = goodService.findById((int)map.get("good_id"));
+                    map.put("goodName",good.getTitle());
+                    map.put("thumb",good.getThumb());
+                    map.put("spec",good.getSpec());
+                }
+            }
+            jsonResult.setData(PageUtil.startPage(getMerchFalsifyList,page,pagesize));
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return jsonResult;
+    }
+
+
+    @ApiOperation(value = "商户是否同意退款要求接口")
+    @RequestMapping(value = "/merchRefund",method = RequestMethod.POST)
+    public Map<String, Object> merchRefund(HttpServletResponse response,
+                                     @ApiParam(name = "falsifyId", value = "订单号", required = true)@RequestParam(value = "falsifyId",defaultValue = "0") String falsifyId,
+                                     @ApiParam(name = "status", value = "0同意1拒绝", required = true)@RequestParam(value = "status",required = true,defaultValue = "0") String status,
+                                     @ApiParam(name = "refundAmount", value = "退款金额", required = true)@RequestParam(value = "refundAmount",defaultValue = "0") String refundAmount,
+                                     @ApiParam(name = "refusal_instructions", value = "拒绝说明", required = false)@RequestParam(value = "refusal_instructions",defaultValue = "") String refusal_instructions) throws Exception {
+        Map<String,Object> returnmap = new HashMap<>();
+        try {
+            LmFalsify lmFalsify = lmFalsifyService.findFalsifyId(falsifyId);
+            if(("0").equals(status)){
+                System.out.println(falsifyId+"+++++++++++++++++++="+refundAmount);
+                BigDecimal realPrice = lmFalsify.getFalsify();
+                if(lmFalsify.getPaystatus()==3){
+                    realPrice = realPrice.multiply(new BigDecimal(94.4)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+                }else {
+                    realPrice = realPrice.multiply(new BigDecimal(94.7)).divide(new BigDecimal(100)).setScale(2,BigDecimal.ROUND_DOWN);
+                }
+                LmMerchInfo byId = lmMerchInfoService.findById(String.valueOf(lmFalsify.getMerch_id()));
+                if(byId!=null){
+                    byId.setCredit(byId.getCredit().subtract(realPrice).setScale(2,BigDecimal.ROUND_HALF_UP));
+                    lmMerchInfoService.updateService(byId);
+                }
+                commentService.autoRefundFalsify(falsifyId,refundAmount);
+                String msg = "您申请违约金退款已自动退回";
+                HttpClient httpClient = new HttpClient();
+                httpClient.send("拍品消息",lmFalsify.getMember_id()+"",msg);
+                returnmap.put("errCode","SUCCESS");
+                returnmap.put("msg","已同意退款");
+            }else if(("1").equals(status)){
+               if(!StringUtils.isEmpty(refusal_instructions)){
+                   LmFalsifyRefundReason refundReason = lmFalsifyRefundReasonService.findRefundReason(lmFalsify.getMember_id(), lmFalsify.getGood_id(), lmFalsify.getGoodstype());
+                   if(refundReason!=null){
+                       refundReason.setRefusal_instructions(refusal_instructions);
+                       lmFalsifyRefundReasonService.update(refundReason);
+                   }
+               }
+                lmFalsify.setType(1);
+                lmFalsify.setStatus(4);
+                lmFalsifyService.updateService(lmFalsify);
+                String msg = "您申请的违约金退款已被商家拒绝,请联系商家询问原因";
+                HttpClient httpClient = new HttpClient();
+                httpClient.send("拍品消息",lmFalsify.getMember_id()+"",msg);
+                returnmap.put("errCode","SUCCESS");
+                returnmap.put("msg","已拒绝退款");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            returnmap.put("errCode","FAIL");
+            returnmap.put("msg",e.getMessage());
+            logger.error(e.getMessage());
+            return returnmap;
+        }
+        return returnmap;
     }
 
     /**
@@ -145,18 +250,21 @@ public class LmFalsifyController {
     ){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        String header = request.getHeader("Authorization");
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setMsg("用户未登录");
+                jsonResult.setCode(JsonResult.LOGIN);
+                return jsonResult;
+            }
+        }
         Map<String,Object> lmFalsify = new HashMap<>();
         try {
-            String header = request.getHeader("Authorization");
-            if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
-                    jsonResult.setMsg("用户未登陆,请重新登陆");
-                    jsonResult.setCode(JsonResult.LOGIN);
-                    return jsonResult;
-                }
-            }
             LmFalsify byId = lmFalsifyService.findById(id);
-            if(null!=byId){
+            if(byId!=null){
                 LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(byId.getMerch_id()));
                 lmFalsify.put("falsify_id",byId.getFalsify_id());
                 lmFalsify.put("type",byId.getType());
@@ -169,6 +277,12 @@ public class LmFalsifyController {
                 lmFalsify.put("status",byId.getStatus());
                 lmFalsify.put("good_id",byId.getGood_id());
                 lmFalsify.put("create_time", DateUtils.sdf_yMdHms.format(byId.getCreate_time()));
+                LmFalsifyRefundReason refundReason = lmFalsifyRefundReasonService.findRefundReason(byId.getMember_id(), byId.getGood_id(), byId.getGoodstype());
+                if(refundReason!=null){
+                    lmFalsify.put("imgs",refundReason.getImgs());
+                    lmFalsify.put("description",refundReason.getDescription());
+                    lmFalsify.put("refusal_instructions",refundReason.getRefusal_instructions());
+                }
                 if(1==byId.getGoodstype()){
                     //直播商品
                     LivedGood good = goodService.findLivedGood(byId.getGood_id());
@@ -209,52 +323,64 @@ public class LmFalsifyController {
             String header = request.getHeader("Authorization");
             String userid = "";
             if (!StringUtils.isEmpty(header)) {
-                if(StringUtils.isEmpty(redisUtils.get(header))){
+                if(StringUtils.isEmpty(TokenUtil.getUserId(header))){
                     jsonResult.setMsg("用户未登陆,请重新登陆");
                     jsonResult.setCode(JsonResult.LOGIN);
                     return jsonResult;
                 }else {
-                    userid = redisUtils.get(header)+"";
+                        userid = TokenUtil.getUserId(header);
+
                 }
             }
             LmFalsify isfalsify = lmFalsifyService.isFalsify(userid, goodid, goodstype);
-            if(null!=isfalsify){
+            if(isfalsify!=null){
                 jsonResult.setMsg("用户已缴纳过保证金");
                 jsonResult.setData(0);
                 return jsonResult;
             }else {
-                int merchId;
+                int buyway;
                 if(("0").equals(goodstype)){
                     Good good = goodService.findById(Integer.parseInt(goodid));
-                    merchId= good.getMer_id();
+                    buyway= good.getBuyway();
                 }else {
                     LivedGood livedGood = goodService.findLivedGood(Integer.parseInt(goodid));
-                    int liveid = livedGood.getLiveid();
-                    LmLive lmLive = lmLiveService.findbyId(String.valueOf(liveid));
-                    merchId=lmLive.getMerch_id();
+                    buyway=livedGood.getBuyway();
+                    System.out.print("是否需要缴纳违约金+++++++++："+buyway);
                 }
-                LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(String.valueOf(merchId));
                 if(("0").equals(goodstype)){
-                    if(1==lmMerchInfo.getAutodeduct()){
+                    if(1==buyway){
                         Good good = goodService.findById(Integer.parseInt(goodid));
-                        BigDecimal falsify=good.getMarketprice();
-                        falsify=(falsify.multiply(new BigDecimal(30))).divide(new BigDecimal(100),2,BigDecimal.ROUND_HALF_UP);
+                        BigDecimal falsify=good.getStepprice();
+                        BigDecimal falsifyp=new BigDecimal(100).setScale(2,BigDecimal.ROUND_HALF_UP);
+                        if(falsify.compareTo(falsifyp)>-1){
+                            jsonResult.setData(good.getStepprice());
+                        }else {
+                            jsonResult.setData(100.00);
+                        }
+                        jsonResult.setData(good.getStepprice());
                         jsonResult.setMsg("用户需要缴纳违约金");
-                        jsonResult.setData(falsify);
+
                     }else {
                         jsonResult.setData(0);
-                        jsonResult.setMsg("该店铺无需缴纳保证金");
+                        jsonResult.setMsg("该商品无需缴纳保证金");
                         return jsonResult;
                     }
                 }else {
-                    if(1==lmMerchInfo.getRefund_open()){
+                    if(1==buyway){
                         LivedGood livedGood = goodService.findLivedGood(Integer.parseInt(goodid));
                         BigDecimal falsify=livedGood.getStepprice();
-                        jsonResult.setMsg("用户需要缴纳违约金");
+                        BigDecimal falsifyp=new BigDecimal(100).setScale(2,BigDecimal.ROUND_HALF_UP);
+                        if(falsify.compareTo(falsifyp)>-1){
+                            jsonResult.setData(falsify);
+                        }else {
+                            jsonResult.setData(100.00);
+                        }
                         jsonResult.setData(falsify);
+                        jsonResult.setMsg("用户需要缴纳违约金");
+
                     }else {
                         jsonResult.setData(0);
-                        jsonResult.setMsg("该店铺无需缴纳保证金");
+                        jsonResult.setMsg("该商品无需缴纳保证金");
                         return jsonResult;
                     }
                 }
@@ -283,12 +409,12 @@ public class LmFalsifyController {
         JsonResult jsonResult = new JsonResult();
         Map<String,Object> returnmap = new HashMap<>();
         String header = request.getHeader("Authorization");
-        String userid = "";
-        if (!org.springframework.util.StringUtils.isEmpty(header)) {
-            if(!org.springframework.util.StringUtils.isEmpty(redisUtil.get(header))){
-                userid = redisUtil.get(header)+"";
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
             }else{
-                jsonResult.setMsg("用户未登录,请重新登陆");
+                jsonResult.setMsg("用户未登录");
                 jsonResult.setCode(JsonResult.LOGIN);
                 return jsonResult;
             }
@@ -297,18 +423,30 @@ public class LmFalsifyController {
         String falsifyId = prfix+System.currentTimeMillis()+ new Random().nextInt(10);
         System.out.println("请求参数对象merOrderId{}totalAmount{}："+falsifyId+"  "+falsify);
         returnmap.put("falsifyId",falsifyId);
-        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(falsifyId,"falsify");
-        if(oldlmPayLog!=null){
-            returnmap.put("returninfo",oldlmPayLog.getSysmsg());
-            jsonResult.setCode(JsonResult.ERROR);
-            jsonResult.setMsg("违约金已支付成功");
-            jsonResult.setData(returnmap);
-            return jsonResult;
-        }
         try {
             WeixinpayUtil weixinpayUtil = new WeixinpayUtil();
             Map<String,String> returninfo = weixinpayUtil.wxPayFalsify(falsify+"",falsifyId,"微信下单",getIpAddr(request),goodstype,goodid,userid);
             returninfo.put("falsifyId",falsifyId);
+            int merch_id;
+            if(("0").equals(goodstype)){
+                Good good = goodService.findById(Integer.parseInt(goodid));
+                merch_id=good.getMer_id();
+            }else {
+                LivedGood livedGood = goodService.findLivedGood(Integer.parseInt(goodid));
+                int liveid=livedGood.getLiveid();
+                LmLive lmLive = lmLiveService.findbyId(String.valueOf(liveid));
+                merch_id= lmLive.getMerch_id();
+            }
+            Map<String ,Object> map=new HashMap<>();
+            map.put("merchId",merch_id);
+            map.put("falsifyId",falsifyId);
+            String  falsifyP=String.valueOf(falsify);
+            map.put("falsify",falsifyP);
+            map.put("goodsType",goodstype);
+            map.put("goodId",goodid);
+            map.put("userId",userid);
+            //存入redis 有效时间10分钟
+            redisUtil.hmset(falsifyId,map,10*60*1000);
             jsonResult.setCode(JsonResult.SUCCESS);
             jsonResult.setData(returninfo);
             return jsonResult;
@@ -332,7 +470,6 @@ public class LmFalsifyController {
      */
     @RequestMapping(value = "/falsifyWeiXinPay", produces = MediaType.APPLICATION_JSON_VALUE)
     public String notifyWeiXinPay(HttpServletRequest request, HttpServletResponse response) throws IOException, JDOMException {
-        System.out.println("微信支付回调");
         logger.info("微信支付回调");
         InputStream inStream = request.getInputStream();
         ByteArrayOutputStream outSteam = new ByteArrayOutputStream();
@@ -346,9 +483,16 @@ public class LmFalsifyController {
         outSteam.close();
         inStream.close();
         Map<String,String> return_data = new HashMap<String,String>();
+        String falsifyIds = String.valueOf(params.get("out_trade_no"));
+        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(falsifyIds,"falsify");
+        if(oldlmPayLog!=null){
+            return_data.put("return_code", "FAIL");
+            return_data.put("return_msg", "已支付成功");
+            return StringUtil.GetMapToXML(return_data);
+        }
         if (!PayCommonUtil.isTenpaySign(params)) {
             logger.info("微信验签不通过");
-
+            String out_trade_no = String.valueOf(params.get("out_trade_no"));
             // 支付失败
             return_data.put("return_code", "FAIL");
             return_data.put("return_msg", "return_code不正确");
@@ -358,35 +502,40 @@ public class LmFalsifyController {
             System.out.println("===============付款成功==============");
             String out_trade_no = String.valueOf(params.get("out_trade_no"));
             String total_fee = String.valueOf(params.get("total_fee"));
-            String goodstype = String.valueOf(params.get("goodstype"));
-            String goodid = String.valueOf(params.get("goodid"));
-            String userid = String.valueOf(params.get("userid"));
-            Long price = Long.parseLong(total_fee)/100;
             logger.info("订单号："+out_trade_no);
             logger.info("金额："+total_fee);
-            int merch_id=0;
-            if(("0").equals(goodstype)){
-                Good good = goodService.findById(Integer.parseInt(goodid));
-                merch_id=good.getMer_id();
-            }else {
-                LivedGood livedGood = goodService.findLivedGood(Integer.parseInt(goodid));
-               int liveid=livedGood.getLiveid();
-                LmLive lmLive = lmLiveService.findbyId(String.valueOf(liveid));
-                merch_id= lmLive.getMerch_id();
-            }
+            Map<Object, Object> lmFalsifyMap = redisUtil.hmget(out_trade_no);
+            String merchId = String.valueOf(lmFalsifyMap.get("merchId"));
+            String falsifyId = String.valueOf(lmFalsifyMap.get("falsifyId"));
+            String falsify = String.valueOf(lmFalsifyMap.get("falsify"));
+            String goodsType = String.valueOf(lmFalsifyMap.get("goodsType"));
+            String goodId = String.valueOf(lmFalsifyMap.get("goodId"));
+            String userId = String.valueOf(lmFalsifyMap.get("userId"));
+            logger.info("数据+++++++++++++++++++++++"+lmFalsifyMap);
             //添加违约金订单
             LmFalsify lmFalsify =new LmFalsify();
             lmFalsify.setFalsify_id(out_trade_no);
             lmFalsify.setPaystatus(1);
             lmFalsify.setType(0);
-            lmFalsify.setGoodstype(Integer.parseInt(goodstype));
-            lmFalsify.setFalsify(new BigDecimal(price));
-            lmFalsify.setMember_id(Integer.parseInt(userid));
-            lmFalsify.setMerch_id(merch_id);
+            lmFalsify.setGoodstype(Integer.parseInt(goodsType));
+            BigDecimal falsifyP=new  BigDecimal(falsify);
+            falsifyP=falsifyP.divide(new BigDecimal(100));
+            lmFalsify.setFalsify(falsifyP);
+            lmFalsify.setMember_id(Integer.parseInt(userId));
+            lmFalsify.setMerch_id(Integer.parseInt(merchId));
             lmFalsify.setStatus(0);
-            lmFalsify.setGood_id(Integer.parseInt(goodid));
+            lmFalsify.setGood_id(Integer.parseInt(goodId));
             lmFalsify.setCreate_time(new Date());
             lmFalsifyService.insertService(lmFalsify);
+            redisUtil.delete(falsifyId);
+            //记录保存
+            LmPayLog lmPayLog = new LmPayLog();
+            lmPayLog.setCreatetime(new Date());
+            lmPayLog.setOrderno(out_trade_no);
+            lmPayLog.setType("falsify");
+            lmPayLog.setSysmsg(new Gson().toJson(params));
+            lmPayLogService.insertService(lmPayLog);
+
             return_data.put("return_code", "SUCCESS");
             return_data.put("return_msg", "OK");
         }
@@ -408,10 +557,10 @@ public class LmFalsifyController {
                                           @ApiParam(name = "falsify", value = "违约金", required = true)@RequestParam(value = "falsify",defaultValue = "0") long falsify){
         Map<String, Object> returnmap = new HashMap<>();
         String header = request.getHeader("Authorization");
-        String userid = "";
-        if (!org.springframework.util.StringUtils.isEmpty(header)) {
-            if(!org.springframework.util.StringUtils.isEmpty(redisUtil.get(header))){
-                userid = redisUtil.get(header)+"";
+        String userid="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userid = TokenUtil.getUserId(header);
             }else{
                 returnmap.put("returninfo","token失效,请重新登录");
                 return returnmap;
@@ -419,16 +568,10 @@ public class LmFalsifyController {
         }
         Configs configs =configsService.findByTypeId(Configs.falsify_pay);
         Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-        String prfix="10F8";
+        String prfix=map.get("msgSrcId")+"";
         String falsifyId = prfix+System.currentTimeMillis()+ new Random().nextInt(10);
         returnmap.put("falsifyId",falsifyId);
         //查询是否有相同订单下单请求
-        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(falsifyId, "falsify");
-        if (oldlmPayLog != null) {
-            returnmap.put("returninfo",oldlmPayLog.getSysmsg());
-            returnmap.put("return_msg", "违约金已支付成功");
-            return returnmap;
-        }
         String  paystatus="";
         if ("trade.precreate".equals(type)) {
             paystatus ="0";
@@ -439,25 +582,28 @@ public class LmFalsifyController {
         if ("uac.appOrder".equals(type)) {
             paystatus ="2";
         }
+        Map<String ,Object> maps=new HashMap<>();
+        maps.put("goodsType",goodstype);
+        maps.put("payStatus",paystatus);
+        maps.put("goodId",goodid);
+        maps.put("userId",userid);
+        //存入redis 有效时间10分钟
+        redisUtil.hmset(falsifyId,maps,10*60*1000);
 
         returnmap.put("config",configs.getConfig());
         //组织请求报文
         JSONObject json = new JSONObject();
         json.put("instMid", map.get("instMid"));
         json.put("mid", map.get("mid"));
-        json.put("falsifyId", falsifyId);
+        json.put("merOrderId", falsifyId);
         json.put("msgSrc", map.get("msgSrc"));
         json.put("msgType", type);
-        json.put("userId", userid);
-        json.put("payStatus", paystatus);
-        json.put("goodsType", goodstype);
-        json.put("goodId", goodid);
         json.put("notifyUrl", map.get("notifyUrl"));
         //是否要在商户系统下单，看商户需求  createBill()
         json.put("requestTimestamp", DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
         json.put("signType", "SHA256");
         json.put("tid", map.get("tid"));
-        json.put("falsify", falsify);
+        json.put("totalAmount", falsify);
         Map<String, String> paramsMap = PayUtil.jsonToMap(json);
         paramsMap.put("sign", PayUtil.makeSign(map.get("MD5Key")+"", paramsMap));
         System.out.println("paramsMap："+paramsMap);
@@ -533,17 +679,32 @@ public class LmFalsifyController {
     @ApiOperation(value = "交易成功反馈信息")
     @RequestMapping(value = "/falsifysuccess",method = RequestMethod.POST)
     public String orderQuery(HttpServletRequest request){
-        String falsifyId = request.getParameter("falsifyId");
-        String falsify = request.getParameter("falsify");
-        String userId = request.getParameter("userId");
-        String payStatus = request.getParameter("payStatus");
-        String goodsType = request.getParameter("goodsType");
-        String goodId = request.getParameter("goodId");
+
+
+        String falsifyId = request.getParameter("merOrderId");
+        String falsify = request.getParameter("totalAmount");
+        Map<Object, Object> lmFalsifyMap = redisUtil.hmget(falsifyId);
+        String payStatus = String.valueOf(lmFalsifyMap.get("payStatus"));
+        String goodsType = String.valueOf(lmFalsifyMap.get("goodsType"));
+        String goodId = String.valueOf(lmFalsifyMap.get("goodId"));
+        String userId = String.valueOf(lmFalsifyMap.get("userId"));
         Configs configs =configsService.findByTypeId(Configs.type_pay);
         Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-        Long price = Long.parseLong(falsify)/100;
+        BigDecimal falsifyP=new  BigDecimal(falsify);
+        falsifyP=falsifyP.divide(new BigDecimal(100));
         Map<String, String> params = PayUtil.getRequestParams(request);
         System.out.println("params："+params);
+        LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(falsifyId,"refund");
+        if(oldlmPayLog!=null) {
+            Map msgmap =  com.alibaba.fastjson.JSONObject.parseObject(oldlmPayLog.getSysmsg());
+            if(msgmap!=null){
+                String code = msgmap.get("errCode")+"";
+                if(code.equals("SUCCESS")){
+                    logger.info("已经发生过退款请求。。。。。。。。。falsifyId:"+falsifyId);
+                    return SUCCESS_KEY;
+                }
+            }
+        }
         // 验签
         boolean checkRet = PayUtil.checkSign(map.get("MD5Key")+"", params);
         try {
@@ -555,15 +716,17 @@ public class LmFalsifyController {
                 lmPayLog.setType("falsify");
                 lmPayLog.setSysmsg(new Gson().toJson(params));
                 lmPayLogService.insertService(lmPayLog);
-                int merchId=0;
+                int merchId;
                 if(("0").equals(goodsType)){
                     Good good = goodService.findById(Integer.parseInt(goodId));
                     merchId=good.getMer_id();
-                }else {
+                }else if(("1").equals(goodsType)){
                     LivedGood livedGood = goodService.findLivedGood(Integer.parseInt(goodId));
                     int liveId=livedGood.getLiveid();
                     LmLive lmLive = lmLiveService.findbyId(String.valueOf(liveId));
                     merchId= lmLive.getMerch_id();
+                }else {
+                    return SUCCESS_KEY;
                 }
                 //添加违约金订单
                 LmFalsify lmFalsify =new LmFalsify();
@@ -571,13 +734,14 @@ public class LmFalsifyController {
                 lmFalsify.setPaystatus(Integer.parseInt(payStatus));
                 lmFalsify.setType(0);
                 lmFalsify.setGoodstype(Integer.parseInt(goodsType));
-                lmFalsify.setFalsify(new BigDecimal(price));
+                lmFalsify.setFalsify(falsifyP);
                 lmFalsify.setMember_id(Integer.parseInt(userId));
                 lmFalsify.setMerch_id(merchId);
                 lmFalsify.setStatus(0);
                 lmFalsify.setGood_id(Integer.parseInt(goodId));
                 lmFalsify.setCreate_time(new Date());
                 lmFalsifyService.insertService(lmFalsify);
+                redisUtil.delete(falsifyId);
                     return SUCCESS_KEY;
                 }else{
                     return FAILED_KEY;
@@ -590,11 +754,15 @@ public class LmFalsifyController {
 
 
 
-    @ApiOperation(value = "退款要求接口")
+    @ApiOperation(value = "用户退款请求接口")
     @RequestMapping(value = "/falsifyrefund",method = RequestMethod.POST)
-    public Map<String,Object> refund(HttpServletResponse response,@ApiParam(name = "falsifyId", value = "订单号", required = true)@RequestParam(value = "falsifyId",defaultValue = "0") String falsifyId,
-                                     @ApiParam(name = "refundAmount", value = "退款金额", required = true)@RequestParam(value = "refundAmount",defaultValue = "0") String refundAmount) throws Exception {
-        System.out.println("请求参数对象："+falsifyId);
+    public Map<String,Object> refund(HttpServletResponse response,
+                                     @ApiParam(name = "falsifyId", value = "订单号", required = true)@RequestParam(value = "falsifyId",defaultValue = "0") String falsifyId,
+                                     @ApiParam(name = "refundAmount", value = "退款金额", required = true)@RequestParam(value = "refundAmount",defaultValue = "0") String refundAmount,
+                                     @ApiParam(name = "imgs", value = "图片", required = false)@RequestParam(value = "imgs",defaultValue = "") String imgs,
+                                     @ApiParam(name = "description", value = "退款描述", required = false)@RequestParam(value = "description",defaultValue = "") String description
+    ) throws Exception {
+        System.out.println("请求参数对象："+falsifyId+refundAmount);
         Map<String,Object> returnmap = new HashMap<>();
         //查询是否有相同订单下单请求
         LmPayLog oldlmPayLog = lmPayLogService.findBymerOrderIdAndType(falsifyId,"refund");
@@ -605,133 +773,76 @@ public class LmFalsifyController {
                 String code = msgmap.get("errCode")+"";
                 if(code.equals("SUCCESS")){
                     logger.info("已经发生过退款请求。。。。。。。。。falsifyId:"+falsifyId);
+                    returnmap.put("msg","已经发生过退款请求");
                     return returnmap;
                 }
             }
         }
         LmFalsify lmFalsify = lmFalsifyService.findFalsifyId(falsifyId);
-        Map<String, String> refundFalsify = lmFalsifyService.isRefundFalsify(falsifyId);
-        if(null!=refundFalsify){
-            String resultStr = JSONObject.fromObject(refundFalsify).toString();
-            returnmap.put("returninfo",resultStr);
-            return returnmap;
+        lmFalsify.setStatus(1);
+        lmFalsifyService.updateService(lmFalsify);
+        LmFalsifyRefundReason refundReason = lmFalsifyRefundReasonService.findRefundReason(lmFalsify.getMember_id(), lmFalsify.getGood_id(), lmFalsify.getGoodstype());
+        if(refundReason!=null){
+            refundReason.setCreat_time(new Date());
+            refundReason.setDescription(description);
+            refundReason.setFalsify_price(lmFalsify.getFalsify());
+            refundReason.setImgs(imgs);
+            refundReason.setGood_id(lmFalsify.getGood_id());
+            refundReason.setMember_id(lmFalsify.getMember_id());
+            refundReason.setType(lmFalsify.getGoodstype());
+            lmFalsifyRefundReasonService.update(refundReason);
+        }else {
+            refundReason=new LmFalsifyRefundReason();
+            refundReason.setCreat_time(new Date());
+            refundReason.setDescription(description);
+            refundReason.setFalsify_price(lmFalsify.getFalsify());
+            refundReason.setImgs(imgs);
+            refundReason.setGood_id(lmFalsify.getGood_id());
+            refundReason.setMember_id(lmFalsify.getMember_id());
+            refundReason.setType(lmFalsify.getGoodstype());
+            lmFalsifyRefundReasonService.insert(refundReason);
         }
-        // 支付宝 云闪付退款逻辑
-        if(!"1".equals(lmFalsify.getPaystatus())){
-
-            logger.info("发起支付宝退款。。。。。。。。。falsifyId:"+falsifyId);
-            Configs configs =configsService.findByTypeId(Configs.falsify_pay);
-            Map map =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
-            returnmap.put("config",configs.getConfig());
-            //组织请求报文
-            JSONObject json = new JSONObject();
-            json.put("mid",  map.get("mid"));
-            json.put("tid",map.get("tid"));
-            json.put("msgType", "refund");
-            json.put("msgSrc", map.get("msgSrc"));
-            json.put("instMid", map.get("instMid"));
-            json.put("falsifyId", falsifyId);
-            //是否要在商户系统下单，看商户需求  createBill()
-            json.put("refundAmount",refundAmount);
-            json.put("requestTimestamp", DateFormatUtils.format(new Date(), "yyyy-MM-dd HH:mm:ss"));
-            json.put("signType", "SHA256");
-            Map<String, String> paramsMap = PayUtil.jsonToMap(json);
-            paramsMap.put("sign", PayUtil.makeSign(map.get("MD5Key")+"", paramsMap));
-
-            String strReqJsonStr = JSON.toJSONString(paramsMap);
-
-            //调用银商平台获取二维码接口
-            HttpURLConnection httpURLConnection = null;
-            BufferedReader in = null;
-            PrintWriter out = null;
-//        OutputStreamWriter out = null;
-            String resultStr = null;
-            Map<String,String> resultMap = new HashMap<String,String>();
-            if (!org.apache.commons.lang3.StringUtils.isNotBlank(map.get("APIurl")+"")) {
-                resultMap.put("errCode","URLFailed");
-                resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
-            }
-            try {
-
-                URL url = new URL(map.get("APIurl")+"");
-                httpURLConnection = (HttpURLConnection) url.openConnection();
-                httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.setDoInput(true);
-                httpURLConnection.setDoOutput(true);
-                httpURLConnection.setRequestProperty("Content_Type","application/json");
-                httpURLConnection.setRequestProperty("Accept_Charset","UTF-8");
-                httpURLConnection.setRequestProperty("contentType","UTF-8");
-                //发送POST请求参数
-                out = new PrintWriter(httpURLConnection.getOutputStream());
-                out.write(strReqJsonStr);
-                out.flush();
-                //读取响应
-                if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    StringBuffer content = new StringBuffer();
-                    String tempStr = null;
-                    in = new BufferedReader(new InputStreamReader(httpURLConnection.getInputStream(),"UTF-8"));
-                    while ((tempStr=in.readLine()) != null){
-                        content.append(tempStr);
-                    }
-                    logger.info("发起支付宝退款。。。。。。。。。content::"+content.toString());
-
-                    //转换成json对象
-                    com.alibaba.fastjson.JSONObject respJson = JSON.parseObject(content.toString());
-                    String resultCode = respJson.getString("errCode");
-                    resultMap.put("errCode",resultCode);
-                    resultMap.put("respStr",respJson.toString());
-                    resultStr = JSONObject.fromObject(resultMap).toString();
-                    returnmap.put("returninfo",resultStr);
-                    //添加记录
-                    LmPayLog lmPayLog = new LmPayLog();
-                    lmPayLog.setCreatetime(new Date());
-                    lmPayLog.setOrderno(falsifyId);
-                    lmPayLog.setType("refund");
-                    lmPayLog.setSysmsg(resultStr);
-                    lmPayLogService.insertService(lmPayLog);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                resultMap.put("errCode","HttpURLException");
-                resultMap.put("msg","调用银商接口出现异常："+e.toString());
-                resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
-            }finally {
-                if (out != null) {
-                    out.close();
-                }
-                httpURLConnection.disconnect();
-            }
-        }else{
-            //微信退款逻辑
-            Map<String,String> resultMap = new HashMap<String,String>();
-            try {
-                WeixinpayUtil weixinpayUtil = new WeixinpayUtil();
-                Map<String,String> weixinrefund=weixinpayUtil.falsifyRefund(refundAmount,falsifyId);
-                weixinrefund.put("refundStatus","SUCCESS");
-                resultMap.put("errCode","SUCCESS");
-                resultMap.put("respStr",JSONObject.fromObject(weixinrefund).toString());
-                String resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
-                logger.info("发起微信退款。。。。。。。。。content:"+resultStr.toString());
-                //添加记录
-                LmPayLog lmPayLog = new LmPayLog();
-                lmPayLog.setCreatetime(new Date());
-                lmPayLog.setOrderno(falsifyId);
-                lmPayLog.setType("refund");
-                lmPayLog.setSysmsg(resultStr);
-                lmPayLogService.insertService(lmPayLog);
-            } catch (Exception e) {
-                e.printStackTrace();
-                resultMap.put("errCode","HttpURLException");
-                resultMap.put("msg","微信支付接口异常："+e.toString());
-                String resultStr = JSONObject.fromObject(resultMap).toString();
-                returnmap.put("returninfo",resultStr);
-            }
-        }
-        logger.info("发起退款。。。。。。。。。服务器返回:"+returnmap);
+        returnmap.put("errCode","SUCCESS");
+        returnmap.put("msg","已申请退款,需要商家确认信息");
         return returnmap;
+    }
+
+
+    /**
+     * 订单查询
+     * @param request
+     * @param falsifyId
+     * @return
+     */
+    @ApiOperation(value = "订单查询")
+    @RequestMapping(value = "/falsifyQuery",method = RequestMethod.POST)
+    public HttpJsonResult falsifyQuery(HttpServletRequest request,
+                                       @ApiParam(name = "falsifyId", value = "订单号", required = true)@RequestParam(value = "falsifyId",defaultValue = "0") String falsifyId){
+        HttpJsonResult   jsonResult=new HttpJsonResult<>();
+        LmFalsify lmFalsify = lmFalsifyService.findFalsifyId(falsifyId);
+        try {
+            if(lmFalsify!=null){
+                int status = lmFalsify.getStatus();
+                if(0==status){
+                    jsonResult.setCode(Errors.SUCCESS.getCode());
+                    jsonResult.setMsg(Errors.SUCCESS.getMsg());
+                    return jsonResult;
+                }else{
+                    jsonResult.setCode(Errors.ERROR.getCode());
+                    jsonResult.setMsg(Errors.ERROR.getMsg());
+                    return jsonResult;
+                }
+            }else{
+                jsonResult.setCode(Errors.ERROR.getCode());
+                jsonResult.setMsg("未付款，付款失效");
+                return jsonResult;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            jsonResult.setCode(Errors.ERROR.getCode());
+            jsonResult.setMsg(Errors.ERROR.getMsg());
+            return jsonResult;
+        }
     }
 
 

@@ -75,6 +75,7 @@ public class ConsultController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String title = StringUtils.isEmpty(request.getParameter("title"))?null:request.getParameter("title");
         String content = StringUtils.isEmpty(request.getParameter("content"))?null:request.getParameter("content");
         String status = StringUtils.isEmpty(request.getParameter("status"))?null:request.getParameter("status");

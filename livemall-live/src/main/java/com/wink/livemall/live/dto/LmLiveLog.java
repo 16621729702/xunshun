@@ -17,7 +17,16 @@ public class LmLiveLog {
     private int diff;
     private int status;
     private int liveid;
-    
+    private int concurrent;
+
+	public int getConcurrent() {
+		return concurrent;
+	}
+
+	public void setConcurrent(int concurrent) {
+		this.concurrent = concurrent;
+	}
+
 	public int getLiveid() {
 		return liveid;
 	}

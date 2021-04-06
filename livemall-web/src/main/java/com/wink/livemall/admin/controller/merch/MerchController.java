@@ -98,6 +98,7 @@ public class MerchController {
         String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
         String member_id = StringUtils.isEmpty(request.getParameter("member_id"))?"0":request.getParameter("member_id");
         String weixin = StringUtils.isEmpty(request.getParameter("weixin"))?"":request.getParameter("weixin");
+        String isLive = StringUtils.isEmpty(request.getParameter("islive"))?"0":request.getParameter("islive");
         try {
             LmMerchInfo lmMerchInfo= new LmMerchInfo();
             lmMerchInfo.setState(Integer.parseInt(state));
@@ -108,6 +109,7 @@ public class MerchController {
             lmMerchInfo.setCreate_at(new Date());
             lmMerchInfo.setDescription(description);
             lmMerchInfo.setWeixin(weixin);
+            lmMerchInfo.setIslive(Integer.parseInt(isLive));
             lmMerchInfo.setMember_id(Integer.parseInt(member_id));
             lmMerchInfo.setUpdate_at(new Date());
             lmMerchInfoService.insertService(lmMerchInfo);
@@ -129,6 +131,7 @@ public class MerchController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id);
         List<LmMember> lmMemberList = lmMemberService.findAll();
         model.addAttribute("lmMerchInfo",lmMerchInfo);
@@ -146,6 +149,7 @@ public class MerchController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String avatar = StringUtils.isEmpty(request.getParameter("avatar"))?"":request.getParameter("avatar");
         String store_name = StringUtils.isEmpty(request.getParameter("store_name"))?"":request.getParameter("store_name");
         String description = StringUtils.isEmpty(request.getParameter("description"))?"":request.getParameter("description");
@@ -153,7 +157,7 @@ public class MerchController {
         String mobile = StringUtils.isEmpty(request.getParameter("mobile"))?"":request.getParameter("mobile");
         String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
         String weixin = StringUtils.isEmpty(request.getParameter("weixin"))?"":request.getParameter("weixin");
-
+        String isLive = StringUtils.isEmpty(request.getParameter("islive"))?"0":request.getParameter("islive");
         try {
             LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id);
             lmMerchInfo.setState(Integer.parseInt(state));
@@ -161,6 +165,7 @@ public class MerchController {
             lmMerchInfo.setMobile(mobile);
             lmMerchInfo.setStore_name(store_name);
             lmMerchInfo.setWeixin(weixin);
+            lmMerchInfo.setIslive(Integer.parseInt(isLive));
             lmMerchInfo.setBg_image(bg_image);
             lmMerchInfo.setUpdate_at(new Date());
             lmMerchInfo.setDescription(description);
@@ -206,6 +211,7 @@ public class MerchController {
     @RequestMapping("applyeditpage")
     public ModelAndView applyeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id);
         model.addAttribute("lmMerchInfo",lmMerchInfo);
         return new ModelAndView("/merch/applyeditpage");
@@ -220,6 +226,7 @@ public class MerchController {
     @ResponseBody
     public JsonResult applyqueryedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String categoryid = StringUtils.isEmpty(request.getParameter("categoryid"))?"0":request.getParameter("categoryid");
         String state = StringUtils.isEmpty(request.getParameter("state"))?"":request.getParameter("state");
         String ischipped = StringUtils.isEmpty(request.getParameter("ischipped"))?"":request.getParameter("ischipped");
@@ -296,6 +303,7 @@ public class MerchController {
     @RequestMapping("baseSettingsave")
     public JsonResult baseSettingsave(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String enable = StringUtils.isEmpty(request.getParameter("enable"))?null:request.getParameter("enable");
         String is_deduct_commission = StringUtils.isEmpty(request.getParameter("is_deduct_commission"))?null:request.getParameter("is_deduct_commission");
         String settlement_rate = StringUtils.isEmpty(request.getParameter("settlement_rate"))?null:request.getParameter("settlement_rate");
@@ -482,6 +490,7 @@ public class MerchController {
     @RequestMapping("intoSettingsave")
     public JsonResult intoSettingsave(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String open_apply = StringUtils.isEmpty(request.getParameter("open_apply"))?null:request.getParameter("open_apply");
         String apply_limit = StringUtils.isEmpty(request.getParameter("apply_limit"))?null:request.getParameter("apply_limit");
         String apply_limit_pay_money = StringUtils.isEmpty(request.getParameter("apply_limit_pay_money"))?null:request.getParameter("apply_limit_pay_money");
@@ -533,6 +542,7 @@ public class MerchController {
     @ResponseBody
     public JsonResult check(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String state = StringUtils.isEmpty(request.getParameter("state"))?null:request.getParameter("state");
         try {
             lmMerchInfoService.check(id,state);
@@ -551,6 +561,7 @@ public class MerchController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmMerchInfoService.deleteMerch(id);
         } catch (Exception e) {

@@ -20,7 +20,7 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
     @SelectProvider(type = LmShopOrderDaoprovider.class, method = "findInfoById")
     Map<String, Object> findInfoById(int id);
 
-    @Select("SELECT * FROM lm_orders WHERE orderid = #{orderid}")
+    @Select("SELECT * FROM lm_orders WHERE orderid = #{orderid} ")
     LmOrder findByOrderId(@Param("orderid")String orderid);
 
     @SelectProvider(type = LmShopOrderDaoprovider.class, method = "findListByTypeByApi")
@@ -34,6 +34,9 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
 
     @Select("SELECT id FROM lm_orders order by id desc limit 0,1")
     Integer findMaxId();
+
+    @Select("SELECT * FROM lm_orders where id = #{id} ")
+    LmOrder findOrderById(@Param("id")int id);
 
     @SelectProvider(type = LmShopOrderDaoprovider.class, method = "ordersize")
     Integer ordersize(@Param("status") int status, @Param("userid") int userid);
@@ -84,7 +87,43 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
     @Select("SELECT * FROM lm_orders where  neworderid = #{neworderid} ")
     LmOrder findByNewOrderid(@Param("neworderid")String out_trade_no);
 
+    @SelectProvider(type = LmShopOrderDaoprovider.class, method = "violateOrderOne")
+    List<LmOrder> violateOrderOne(@Param("type")int type);
+
+    @SelectProvider(type = LmShopOrderDaoprovider.class, method = "violateOrderTwo")
+    List<LmOrder> violateOrderTwo(@Param("type")int type);
+
+    @Select("SELECT * FROM lm_orders where  merchid = #{merId} and  memberid = #{memberId}  and status >= 0 ")
+    List<LmOrder> isBuy(@Param("merId")int merId,@Param("memberId")int memberId);
+
+    @Select("SELECT * FROM lm_orders where  merchid = #{merId}  and (backstatus =0  or backstatus =3 )  and status > 2 and status < 5  order by createtime desc")
+    List<LmOrder> merOrderPriceSum(@Param("merId")int merId);
+
     class LmShopOrderDaoprovider{
+
+        public String violateOrderOne(int type) {
+            StringBuilder sql = new StringBuilder();
+            sql.append( "SELECT * FROM lm_orders  WHERE violate = 0 " );
+            if(type==0){
+                sql.append(" and  paystatus = 1 ");
+            }else if(type==1){
+                sql.append(" and  backstatus = 1");
+            }
+            return sql.toString();
+        }
+
+
+        public String violateOrderTwo(int type) {
+            StringBuilder sql = new StringBuilder();
+            sql.append( "SELECT * FROM lm_orders  WHERE violate = 2 " );
+            if(type==0){
+                sql.append(" and  paystatus = 1 ");
+            }else if(type==1){
+                sql.append(" and  backstatus = 1");
+            }
+            return sql.toString();
+        }
+
         public String findListByCondient(Map<String, String> condient) {
             String sql = "SELECT " +
                     " lo.id as id, " +
@@ -154,6 +193,13 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
                     if(!StringUtils.isEmpty(condient.get("enddate"))){
                         sql += " and lo.finishtime <= '"+condient.get("enddate")+"'";
                     }
+                }
+            }else {
+                if(!StringUtils.isEmpty(condient.get("startdate"))){
+                    sql += " and lo.createtime >= '"+condient.get("startdate")+"'";
+                }
+                if(!StringUtils.isEmpty(condient.get("enddate"))){
+                    sql += " and lo.createtime <= '"+condient.get("enddate")+"'";
                 }
             }
             sql+=" order by lo.createtime desc ";
@@ -275,6 +321,10 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
                     " lo.backstatus as backstatus," +
                     " lo.refundid as refundid," +
                     " lo.type as type," +
+                    " lo.violate as violate," +
+                    " lo.delay as delay," +
+                    " lo.totalprice as totalprice," +
+                    " lo.realpayprice as realpayprice," +
                     " lo.islivegood as islivegood," +
                     " lo.commentstatus as commentstatus," +
                     " lm.isauction as isauction ," +
@@ -284,13 +334,14 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
                     " lm.refund as refund ," +
                     " lm.isoem as isoem ," +
                     " lo.status as status," +
+                    " lo.merchid as merchid," +
                     " lo.id as id," +
                     " lo.orderid as orderid," +
                     " log.goodid as goodid," +
                     " log.goodprice as goodprice," +
                     " log.goodnum as goodnum, " +
                     " lo.chargeaddress as chargeaddress," +
-                        " lo.chargephone as chargephone" +
+                    " lo.chargephone as chargephone" +
                     " FROM lm_orders lo,lm_order_goods log,lm_merch_info lm " +
                     " WHERE lo.merchid = lm.id " +
                     " AND lo.id = log.orderid " +
@@ -298,13 +349,13 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
             if(!"-2".equals(status)&&!"6".equals(status)){
                 if("3".equals(status)){
                     //待评价
-                    sql+=" and lo.commentstatus= 0 and lo.backstatus = 0 and lo.status = 4 ";
+                    sql+=" and lo.commentstatus= 0 and (lo.backstatus=0 or lo.backstatus=3)  and lo.status = 3 ";
                 }else{
-                    sql+=" and lo.status=#{status} and lo.backstatus = 0";
+                    sql+=" and lo.status=#{status} and (lo.backstatus=0 or lo.backstatus=3) ";
                 }
             }
             if("6".equals(status)){
-                sql+=" and lo.backstatus > 0 ";
+                sql+=" and lo.backstatus > 0 and lo.backstatus < 3  ";
             }
             sql+=" order by lo.createtime desc";
             return sql;
@@ -316,13 +367,13 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
             if(-2!=status&&6!=status){
                 if(3==status){
                     //待评价
-                    sql+=" and lo.commentstatus= 0 and lo.backstatus = 0 and lo.status = 4 ";
+                    sql+=" and lo.commentstatus= 0 and  (lo.backstatus=0 or lo.backstatus=3) and lo.status = 3 ";
                 }else{
-                    sql+=" and lo.status=#{status} and lo.backstatus = 0";
+                    sql+=" and lo.status=#{status} and  (lo.backstatus=0 or lo.backstatus=3) ";
                 }
             }
             if(6==status){
-                sql+=" and lo.backstatus > 0 ";
+                sql+=" and lo.backstatus > 0  and lo.backstatus < 5 ";
             }
             return sql;
         }
@@ -358,14 +409,14 @@ public interface LmShopOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder>
             if(!"-2".equals(status)&&!"6".equals(status)){
                 if("3".equals(status)){
                     //待评价
-                    sql+=" and lo.commentstatus= 0 and lo.backstatus = 0 and lo.status = 4 ";
+                    sql+=" and lo.commentstatus= 0 and (lo.backstatus=0 or lo.backstatus=3) and lo.status = 3 ";
                 }else{
-                    sql+=" and lo.status=#{status} and lo.backstatus = 0";
+                    sql+=" and lo.status=#{status} and (lo.backstatus=0 or lo.backstatus=3) ";
                 }
 
             }
             if("6".equals(status)){
-                sql+=" and lo.backstatus > 0 ";
+                sql+=" and lo.backstatus > 0 and lo.backstatus <5 ";
             }
             sql+=" order by lo.createtime desc";
             return sql;

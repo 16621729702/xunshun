@@ -135,10 +135,9 @@
                                 <div class="form-group">
                                     <label class="layui-form-label">优惠券类型</label>
                                     <div class="layui-input-block">
-                                        <select id="type" name="type" class="form-control">
                                             <input type="radio" name="type"  ${(lmCoupons.type==1)?string('checked','')} value="1" title="分享APP" lay-filter="is_show">
                                             <input type="radio" name="type"   ${(lmCoupons.type==0)?string('checked','')} value="0" title="新人领取"  lay-filter="is_show">
-                                        </select>
+                                            <input type="radio" name="type"  ${(lmCoupons.type==1)?string('checked','')} value="3" title="平台卷" lay-filter="is_show">
                                     </div>
                                 </div>
                                 <div class="layui-form-item">

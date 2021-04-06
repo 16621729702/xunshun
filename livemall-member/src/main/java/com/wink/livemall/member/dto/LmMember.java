@@ -37,6 +37,24 @@ public class LmMember {
   private Date level_valid_time;
   private String paypassword;
   private BigDecimal credit2;
+  private String open_id;
+  private BigDecimal blance;
+
+  public BigDecimal getBlance() {
+    return blance;
+  }
+
+  public void setBlance(BigDecimal blance) {
+    this.blance = blance;
+  }
+
+  public String getOpen_id() {
+    return open_id;
+  }
+
+  public void setOpen_id(String open_id) {
+    this.open_id = open_id;
+  }
 
   public BigDecimal getCredit2() {
 	return credit2;

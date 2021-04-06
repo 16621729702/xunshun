@@ -8,7 +8,11 @@ import java.util.List;
 public interface LmMemberStartService {
 
 
-    List<LmMemberStart> findByMobile(String mobile, int type);
+    List<LmMemberStart> findAll();
+
+    LmMemberStart  findById(String id);
+
+    List<LmMemberStart> findByMobile(String mobile, int type,int businessid);
 
     void delete(int id);
 

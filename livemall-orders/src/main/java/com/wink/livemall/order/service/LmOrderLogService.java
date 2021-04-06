@@ -7,5 +7,7 @@ import java.util.List;
 public interface LmOrderLogService {
     List<LmOrderLog> findByOrderid(String orderid);
 
+    List<LmOrderLog> findByOrderids(String orderid);
+
     void insert(LmOrderLog lmOrderLog);
 }

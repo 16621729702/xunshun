@@ -81,7 +81,10 @@ public class GoodServiceImpl implements GoodService {
         return goodDao.findHotList();
     }
 
-
+    @Override
+    public List<Good> findGoodList() {
+        return goodDao.findGoodList();
+    }
 
     @Override
     public List<Map<String, Object>> findByMerchIdByApi(Integer merchid) {
@@ -155,7 +158,7 @@ public class GoodServiceImpl implements GoodService {
 
     @Override
     public void insertLivedGood(LivedGood livedGood) {
-        liveGoodDao.insert(livedGood);
+        liveGoodDao.insertSelective(livedGood);
     }
 
     @Override
@@ -244,5 +247,9 @@ public class GoodServiceImpl implements GoodService {
 		return lmShareGoodDao.findshareGoodByLiveid(Integer.parseInt(liveid));
 	}
 
+    @Override
+    public List<LivedGood> movementImLive(int liveid) {
+        return liveGoodDao.movementImLive(liveid);
+    }
 
 }

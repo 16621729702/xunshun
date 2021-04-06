@@ -138,6 +138,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult infoedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String h_category_id = StringUtils.isEmpty(request.getParameter("h_category_id"))?"0":request.getParameter("h_category_id");
         String title = StringUtils.isEmpty(request.getParameter("title"))?"":request.getParameter("title");
         String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
@@ -170,6 +171,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult infodelete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmHelpInfoService.deleteService(id);
         } catch (NumberFormatException e) {
@@ -247,6 +249,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult categoryedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String isshow = StringUtils.isEmpty(request.getParameter("isshow"))?"0":request.getParameter("isshow");
         String state = StringUtils.isEmpty(request.getParameter("state"))?"0":request.getParameter("state");
@@ -277,6 +280,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult categorydelete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmHelpCategoryService.deleteService(id);
         } catch (NumberFormatException e) {
@@ -297,6 +301,7 @@ public class HelpController {
     @RequestMapping("categoryeditpage")
     public ModelAndView categoryeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmHelpCategory lmHelpCategory = lmHelpCategoryService.findById(id);
         model.addAttribute("lmHelpCategory",lmHelpCategory);
         return new ModelAndView("/help/categoryeditpage");
@@ -346,7 +351,7 @@ public class HelpController {
     @RequestMapping("feedbackeditpage")
     public ModelAndView feedbackeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
-
+        id = id.replaceAll(",","");
         LmFeedback lmFeedback = lmFeedbackService.findById(id);
         model.addAttribute("lmFeedback",lmFeedback);
         return new ModelAndView("/help/feedbackedit");
@@ -360,6 +365,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult feedbackedit(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String content = StringUtils.isEmpty(request.getParameter("content"))?null:request.getParameter("content");
         try {
            LmFeedback lmFeedback = lmFeedbackService.findById(id);
@@ -385,6 +391,7 @@ public class HelpController {
     @ResponseBody
     public JsonResult feedbackdelete(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmFeedbackService.deleteService(id);
         } catch (NumberFormatException e) {

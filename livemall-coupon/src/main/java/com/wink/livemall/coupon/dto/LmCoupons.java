@@ -1,6 +1,9 @@
 package com.wink.livemall.coupon.dto;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import org.springframework.format.annotation.DateTimeFormat;
+
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -22,13 +25,21 @@ public class LmCoupons {
 
   private BigDecimal minAmount;
 
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private Date sendStartTime;
 
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private Date sendEndTime;
 
-  private String useStartTime;
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private Date useStartTime;
 
-  private String useEndTime;
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+  private Date useEndTime;
 
   private Integer personLimitNum;
 
@@ -44,13 +55,38 @@ public class LmCoupons {
 
   private String remark;
 
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private Date createTime;
 
+  @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+  @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private Date updateTime;
 
   private String productIds;
 
   private Integer productType;
+
+  private Integer goodsType;
+
+  private Integer couponType;
+
+
+  public Integer getCouponType() {
+    return couponType;
+  }
+
+  public void setCouponType(Integer couponType) {
+    this.couponType = couponType;
+  }
+
+  public Integer getGoodsType() {
+    return goodsType;
+  }
+
+  public void setGoodsType(Integer goodsType) {
+    this.goodsType = goodsType;
+  }
 
   public Integer getProductType() {
     return productType;
@@ -116,19 +152,19 @@ public class LmCoupons {
     this.sendEndTime = sendEndTime;
   }
 
-  public String getUseStartTime() {
+  public Date getUseStartTime() {
     return useStartTime;
   }
 
-  public void setUseStartTime(String useStartTime) {
+  public void setUseStartTime(Date useStartTime) {
     this.useStartTime = useStartTime;
   }
 
-  public String getUseEndTime() {
+  public Date getUseEndTime() {
     return useEndTime;
   }
 
-  public void setUseEndTime(String useEndTime) {
+  public void setUseEndTime(Date useEndTime) {
     this.useEndTime = useEndTime;
   }
 

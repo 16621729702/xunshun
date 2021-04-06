@@ -25,6 +25,16 @@ public interface LmLiveLogDao extends tk.mybatis.mapper.common.Mapper<LmLiveLog>
 	@SelectProvider(type = sqlprovider.class, method = "countTime")
 	Long countTime(String merchid);
 
+	@SelectProvider(type = sqlprovider.class, method = "countTimeList")
+	Long countTimeList(String merId, String startTime, String entTime);
+
+	@SelectProvider(type = sqlprovider.class, method = "liveLogNum")
+	List<LmLiveLog> liveLogNum(String merId, String startTime, String entTime);
+
+	@SelectProvider(type = sqlprovider.class, method = "liveLogTotal")
+	Map<String, Object> liveLogTotal(String merId, String startTime, String entTime);
+
+
 	class sqlprovider {
 		
 		public String countTime(String merchid) {
@@ -38,8 +48,31 @@ public interface LmLiveLogDao extends tk.mybatis.mapper.common.Mapper<LmLiveLog>
 			System.err.println(date_end);
 			return sql.toString();
 		}
-		
-		
+
+		public String liveLogNum(String merId, String startTime, String entTime) {
+			StringBuilder sql=new StringBuilder();
+			sql.append("select * from lm_live_log  where merchid="+merId);
+			sql.append(" and status=2 and endtime!='NULL' ");
+			sql.append(" and starttime between '"+startTime+"'"+" and "+"'"+entTime+"'");
+			return sql.toString();
+		}
+
+		public String liveLogTotal(String merId, String startTime, String entTime) {
+			StringBuilder sql=new StringBuilder();
+			sql.append("select ifnull(sum(diff),0) diffTotal, ifnull(sum(concurrent),0) concurrentTotal from lm_live_log  where merchid="+merId);
+			sql.append(" and status=2 and endtime!='NULL' ");
+			sql.append(" and starttime between '"+startTime+"'"+" and "+"'"+entTime+"'");
+			return sql.toString();
+		}
+
+		public String countTimeList(String merId, String startTime, String entTime) {
+			StringBuilder sql=new StringBuilder();
+			sql.append("select ifnull(sum(diff),0) from lm_live_log  where merchid="+merId);
+			sql.append(" and starttime between '"+startTime+"'"+" and "+"'"+entTime+"'");
+			System.out.println(sql.toString());
+			return sql.toString();
+		}
+
 		public String findPage(Map<String, String> params) {
     		StringBuilder sql=new StringBuilder();
     		String pageindex=(String) params.get("pageindex");

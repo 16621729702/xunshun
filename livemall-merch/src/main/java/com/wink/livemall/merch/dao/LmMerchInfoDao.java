@@ -45,6 +45,8 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
             " lm.isquality as isquality ," +
             " lm.postage as postage ," +
             " lm.refund as refund ," +
+             " lm.bg_image as bg_image ," +
+            " lm.categoryid as categoryid ," +
             " lm.isoem as isoem ," +
             " lm.margin as margin ," +
             " lm.focusnum as focusnum ," +
@@ -61,11 +63,14 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
     List<Map<String, Object>> findMerchInfoByNameByApi(String name);
 
 
-    @Select("SELECT * FROM lm_merch_info WHERE state = 1 ")
+    @Select("SELECT * FROM lm_merch_info WHERE state = 1 order by id desc")
     List<LmMerchInfo> findActiveMerch();
 
     @Select("SELECT id FROM lm_merch_info order by id desc limit 0,1 ")
     int findmaxno();
+
+    @SelectProvider(type = LmMerchInfoDaoprovider.class, method = "isRepeat")
+    List<Map<String, Object>> isRepeat(String store_name);
 
     class LmMerchInfoDaoprovider{
         public String findListByCondient(Map<String, String> condient) {
@@ -105,6 +110,7 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
                    " lm.id as id," +
                    " lm.label as label," +
                    " lm.avatar as avatar," +
+                   " lm.categoryid as categoryid," +
                    " lm.store_name as store_name," +
                    " lm.isauction as isauction ," +
                    " lm.isdirect as isdirect ," +
@@ -112,8 +118,8 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
                    " lm.postage as postage ," +
                    " lm.refund as refund ," +
                    " lm.isoem as isoem " +
-                   " FROM lm_merch_info lm" +
-                   " WHERE  lm.state = 1";
+                   " FROM lm_merch_info lm " +
+                   " WHERE  lm.state = 1 ";
             if(categoryid==0){
                 sql += " and lm.isrecommend = 1";
             }else if(categoryid==9){
@@ -121,6 +127,7 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
             }else{
                 sql += " and lm.categoryid =#{categoryid}";
             }
+            sql += "  order by lm.create_at desc ";
             return sql;
         }
         public String findMerchInfoByNameByApi(@Param("name")String name) {
@@ -163,6 +170,17 @@ public interface LmMerchInfoDao extends tk.mybatis.mapper.common.Mapper<LmMerchI
         	builder.append(" where id="+id);
         	System.out.println(builder.toString());
         	return builder.toString();
+        }
+
+        public String isRepeat(@Param("store_name")String store_name) {
+            String sql = " SELECT " +
+                    " lm.store_name as store_name" +
+                    " FROM lm_merch_info lm"+
+                    " WHERE lm.state = 1 ";
+            if(!StringUtils.isEmpty(store_name)){
+                sql += " and store_name like '"+store_name+"'";
+            }
+            return sql;
         }
         
     }

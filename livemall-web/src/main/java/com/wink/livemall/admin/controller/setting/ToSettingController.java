@@ -51,6 +51,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult basicupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String site_name = StringUtils.isEmpty(request.getParameter("site_name"))?null:request.getParameter("site_name");
         String logo = StringUtils.isEmpty(request.getParameter("logo"))?null:request.getParameter("logo");
         String consumer_hotline = StringUtils.isEmpty(request.getParameter("consumer_hotline"))?null:request.getParameter("consumer_hotline");
@@ -116,6 +117,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult flowupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String access_key_id = StringUtils.isEmpty(request.getParameter("access_key_id"))?null:request.getParameter("access_key_id");
         String access_secret = StringUtils.isEmpty(request.getParameter("access_secret"))?null:request.getParameter("access_secret");
         String readurl = StringUtils.isEmpty(request.getParameter("readurl"))?null:request.getParameter("readurl");
@@ -189,6 +191,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult chatupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String type_value = StringUtils.isEmpty(request.getParameter("type_value"))?null:request.getParameter("type_value");
         String privateinfo = StringUtils.isEmpty(request.getParameter("privateinfo"))?null:request.getParameter("privateinfo");
         String sdk_appid = StringUtils.isEmpty(request.getParameter("sdk_appid"))?null:request.getParameter("sdk_appid");
@@ -267,6 +270,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult smsupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String appkey = StringUtils.isEmpty(request.getParameter("appkey"))?null:request.getParameter("appkey");
         String smstype = StringUtils.isEmpty(request.getParameter("smstype"))?null:request.getParameter("smstype");
         String app_code = StringUtils.isEmpty(request.getParameter("app_code"))?null:request.getParameter("app_code");
@@ -337,6 +341,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult payupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String mid = StringUtils.isEmpty(request.getParameter("mid"))?null:request.getParameter("mid");
         String tid = StringUtils.isEmpty(request.getParameter("tid"))?null:request.getParameter("tid");
         String instMid = StringUtils.isEmpty(request.getParameter("instMid"))?null:request.getParameter("instMid");
@@ -410,6 +415,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult logisticsupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String store_postage = StringUtils.isEmpty(request.getParameter("store_postage"))?null:request.getParameter("store_postage");
         String store_free_postage = StringUtils.isEmpty(request.getParameter("store_free_postage"))?null:request.getParameter("store_free_postage");
         String express_appsecret = StringUtils.isEmpty(request.getParameter("express_appsecret"))?null:request.getParameter("express_appsecret");
@@ -464,6 +470,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult tradingupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String order_cancel_time = StringUtils.isEmpty(request.getParameter("order_cancel_time"))?null:request.getParameter("order_cancel_time");
         String automatic_receiving_goods = StringUtils.isEmpty(request.getParameter("automatic_receiving_goods"))?null:request.getParameter("automatic_receiving_goods");
         String automatic_close_goods = StringUtils.isEmpty(request.getParameter("automatic_close_goods"))?null:request.getParameter("automatic_close_goods");
@@ -542,6 +549,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult liveupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String chat_nums = StringUtils.isEmpty(request.getParameter("chat_nums"))?null:request.getParameter("chat_nums");
         String open_deduct = StringUtils.isEmpty(request.getParameter("open_deduct"))?null:request.getParameter("open_deduct");
         String deduct_ratio = StringUtils.isEmpty(request.getParameter("deduct_ratio"))?null:request.getParameter("deduct_ratio");
@@ -606,6 +614,7 @@ public class ToSettingController {
     @ResponseBody
     public JsonResult uploadconfigupdate(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String localurl = StringUtils.isEmpty(request.getParameter("localurl"))?null:request.getParameter("localurl");
         String url = StringUtils.isEmpty(request.getParameter("url"))?null:request.getParameter("url");
         String accesskey = StringUtils.isEmpty(request.getParameter("accesskey"))?null:request.getParameter("accesskey");

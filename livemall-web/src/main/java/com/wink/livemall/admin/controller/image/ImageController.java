@@ -136,6 +136,7 @@ public class ImageController {
     public Map<String,String> uploadfile(@RequestParam("file") MultipartFile file, HttpServletRequest request)
             throws IllegalStateException, IOException {
         String id = StringUtils.isEmpty(request.getParameter("id"))?"-1":request.getParameter("id");
+        id = id.replaceAll(",","");
         Map<String,String> map=new HashMap<String,String>();
         map.put("code", "0");
         map.put("msg","上传成功");
@@ -276,6 +277,7 @@ public class ImageController {
     @ResponseBody
     public JsonResult editgroup(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?"":request.getParameter("name");
 
         try {
@@ -301,6 +303,7 @@ public class ImageController {
     @ResponseBody
     public JsonResult deletegroup(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(!StringUtils.isEmpty(id)){
                 lmImageGroupService.deleteByPK(Integer.parseInt(id));

@@ -70,4 +70,9 @@ public class LmMemberServiceImpl implements LmMemberService {
 		// TODO Auto-generated method stub
 		lmMemberLogDao.insertSelective(entity);
 	}
+
+    @Override
+    public Map<String, Object> findByIdList(int id) {
+        return lmMemberDao.findByIdList(id);
+    }
 }

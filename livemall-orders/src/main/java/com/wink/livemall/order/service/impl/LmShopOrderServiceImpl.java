@@ -1,34 +1,21 @@
 package com.wink.livemall.order.service.impl;
 
-import com.alibaba.fastjson.JSON;
-import com.wink.livemall.order.dao.LmMerchOrderDao;
-import com.wink.livemall.order.dao.LmOrderRefundLogDao;
-import com.wink.livemall.order.dao.LmPayLogDao;
-import com.wink.livemall.order.dao.LmShopOrderDao;
+import com.wink.livemall.goods.dao.GoodDao;
+import com.wink.livemall.goods.dao.LiveGoodDao;
+import com.wink.livemall.goods.dto.Good;
+import com.wink.livemall.goods.dto.LivedGood;
+import com.wink.livemall.order.dao.*;
 import com.wink.livemall.order.dto.LmOrder;
+import com.wink.livemall.order.dto.LmOrderGoods;
 import com.wink.livemall.order.dto.LmOrderRefundLog;
-import com.wink.livemall.order.dto.LmPayLog;
 import com.wink.livemall.order.service.LmOrderService;
-import com.wink.livemall.sys.setting.dto.Configs;
 import com.wink.livemall.sys.setting.service.ConfigsService;
-
-import net.sf.json.JSONObject;
-
-import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import javax.annotation.Resource;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Service
 public class LmShopOrderServiceImpl implements LmOrderService {
@@ -36,12 +23,20 @@ public class LmShopOrderServiceImpl implements LmOrderService {
     private LmOrderRefundLogDao lmOrderRefundLogDao;
     @Resource
     private LmShopOrderDao lmShopOrderDao;
-    
-    
+    @Resource
+    private LmOrderGoodsDao lmOrderGoodsDao;
+    @Resource
+    private GoodDao goodDao;
+    @Resource
+    private LiveGoodDao liveGoodDao;
+
     @Resource
     private LmPayLogDao lmPayLogDao;
     @Autowired
     private ConfigsService configsService;
+
+
+
     
     @Override
     public List<Map<String, Object>> findByCondient(Map<String, String> condient) {
@@ -60,7 +55,7 @@ public class LmShopOrderServiceImpl implements LmOrderService {
 
     @Override
     public void updateService(LmOrder lmOrder) {
-        lmShopOrderDao.updateByPrimaryKey(lmOrder);
+        lmShopOrderDao.updateByPrimaryKeySelective(lmOrder);
     }
 
     @Override
@@ -95,7 +90,7 @@ public class LmShopOrderServiceImpl implements LmOrderService {
 
     @Override
     public void insertService(LmOrder lmOrder) {
-        lmShopOrderDao.insert(lmOrder);
+        lmShopOrderDao.insertSelective(lmOrder);
     }
 
     @Override
@@ -115,12 +110,12 @@ public class LmShopOrderServiceImpl implements LmOrderService {
 
     @Override
     public void insertRefindLogService(LmOrderRefundLog lmOrderRefundLog) {
-        lmOrderRefundLogDao.insert(lmOrderRefundLog);
+        lmOrderRefundLogDao.insertSelective(lmOrderRefundLog);
     }
 
     @Override
     public void updateRefundLogService(LmOrderRefundLog lmOrderRefundLog) {
-        lmOrderRefundLogDao.updateByPrimaryKey(lmOrderRefundLog);
+        lmOrderRefundLogDao.updateByPrimaryKeySelective(lmOrderRefundLog);
     }
 
     @Override
@@ -199,7 +194,76 @@ public class LmShopOrderServiceImpl implements LmOrderService {
         return lmShopOrderDao.findByNewOrderid(out_trade_no);
     }
 
- 
 
+
+    @Override
+    public List<LmOrder> violateOrderOne(int type) {
+        return lmShopOrderDao.violateOrderOne(type);
+    }
+
+    @Override
+    public List<LmOrder> violateOrderTwo(int type) {
+        return lmShopOrderDao.violateOrderTwo(type);
+    }
+
+    @Override
+    public List<LmOrder> isBuy(int merId,int memberId) {
+        return lmShopOrderDao.isBuy(merId,memberId);
+    }
+
+    @Override
+    public BigDecimal merOrderPriceSum(Integer merId) {
+        BigDecimal sum=new BigDecimal(0);
+        List<LmOrder> lmOrders = lmShopOrderDao.merOrderPriceSum(merId);
+        if(lmOrders.size()>0){
+            for(LmOrder lmOrder:lmOrders){
+                BigDecimal realPrice = lmOrder.getRealpayprice();
+                if(lmOrder.getPaystatus()!=null){
+                    if(lmOrder.getPaystatus().equals("3")){
+                        realPrice = realPrice.multiply(new BigDecimal(94.4)).divide(new BigDecimal(100));
+                    }else {
+                        realPrice = realPrice.multiply(new BigDecimal(94.7)).divide(new BigDecimal(100));
+                    }
+                    sum=sum.add(realPrice);
+                }
+            }
+        }
+        sum=sum.setScale(2,BigDecimal.ROUND_DOWN);
+        return sum;
+    }
+
+    @Override
+    public List<Map<String, Object>> merOrderList(Integer merId) {
+        List<Map<String, Object>> List=new LinkedList<>();
+        List<LmOrder> lmOrders = lmShopOrderDao.merOrderPriceSum(merId);
+        SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        if(lmOrders.size()>0){
+            for(LmOrder lmOrder:lmOrders){
+                if(lmOrder.getPaystatus()!=null) {
+                    Map<String, Object> map = new HashMap<>();
+                    BigDecimal realPrice = lmOrder.getRealpayprice();
+                    if (lmOrder.getPaystatus().equals("3")) {
+                        realPrice = realPrice.multiply(new BigDecimal(94.4)).divide(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_DOWN);
+                    } else {
+                        realPrice = realPrice.multiply(new BigDecimal(94.7)).divide(new BigDecimal(100)).setScale(2, BigDecimal.ROUND_DOWN);
+                    }
+                    LmOrderGoods byOrderid = lmOrderGoodsDao.findByOrderid(lmOrder.getId());
+                    if (byOrderid.getGoodstype() == 0) {
+                        Good byId = goodDao.findById(byOrderid.getGoodid());
+                        map.put("description", byId.getTitle() + "确认收货");
+                    } else if (byOrderid.getGoodstype() == 1) {
+                        LivedGood byId = liveGoodDao.findById(byOrderid.getGoodid());
+                        map.put("description", "直播商品" + byId.getName() + "确认收货");
+                    }
+                    map.put("price", realPrice);
+                    map.put("time", dateFormat.format(lmOrder.getCreatetime()));
+                    map.put("type", 0);
+                    List.add(map);
+                }
+            }
+        }
+
+        return List;
+    }
 
 }

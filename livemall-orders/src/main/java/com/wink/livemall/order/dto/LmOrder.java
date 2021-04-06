@@ -57,6 +57,70 @@ public class LmOrder {
 	private int isprepay;//是否全款
 	private int islivegood;//是否直播商品
 	private String neworderid;
+	private int coupon_id;
+	private BigDecimal coupon_price;
+	private int violate;
+	private int remind;
+	private int delay;
+	private int forward;
+
+	public int getForward() {
+		return forward;
+	}
+
+	public void setForward(int forward) {
+		this.forward = forward;
+	}
+
+	public int getDelay() {
+		return delay;
+	}
+
+	public void setDelay(int delay) {
+		this.delay = delay;
+	}
+
+	public int getRemind() {
+		return remind;
+	}
+
+	public void setRemind(int remind) {
+		this.remind = remind;
+	}
+
+	private int send_type;
+
+	public int getSend_type() {
+		return send_type;
+	}
+
+	public void setSend_type(int send_type) {
+		this.send_type = send_type;
+	}
+
+	public int getViolate() {
+		return violate;
+	}
+
+	public void setViolate(int violate) {
+		this.violate = violate;
+	}
+
+	public BigDecimal getCoupon_price() {
+		return coupon_price;
+	}
+
+	public void setCoupon_price(BigDecimal coupon_price) {
+		this.coupon_price = coupon_price;
+	}
+
+	public int getCoupon_id() {
+		return coupon_id;
+	}
+
+	public void setCoupon_id(int coupon_id) {
+		this.coupon_id = coupon_id;
+	}
 
 	public Date getChippedtime() {
 		return chippedtime;

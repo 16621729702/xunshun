@@ -47,6 +47,7 @@ public class DictController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmSysDict lmSysDict = dictService.findById(id);
         model.addAttribute("lmSysDict",lmSysDict);
         return new ModelAndView("setting/dicteditpage");
@@ -80,6 +81,7 @@ public class DictController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String code = StringUtils.isEmpty(request.getParameter("code"))?null:request.getParameter("code");
         String remark = StringUtils.isEmpty(request.getParameter("remark"))?null:request.getParameter("remark");
@@ -104,6 +106,7 @@ public class DictController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             dictService.deleteService(id);
         } catch (Exception e) {
@@ -117,6 +120,7 @@ public class DictController {
     @ResponseBody
     public JsonResult itemdelete(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             dict_itemService.deleteService(id);
         } catch (Exception e) {
@@ -147,6 +151,7 @@ public class DictController {
     @RequestMapping("itemeditpage")
     public ModelAndView itemeditpage(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmSysDictItem lmSysDictItem = dict_itemService.findById(id);
         model.addAttribute("lmSysDictItem",lmSysDictItem);
         return new ModelAndView("setting/itemeditpage");
@@ -185,6 +190,7 @@ public class DictController {
     @ResponseBody
     public JsonResult itemedit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String dictcode = StringUtils.isEmpty(request.getParameter("dictcode"))?null:request.getParameter("dictcode");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String code = StringUtils.isEmpty(request.getParameter("code"))?null:request.getParameter("code");

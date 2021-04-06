@@ -7,18 +7,18 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="livemall-utils" />
-        <module name="livemall-job" />
         <module name="livemall-help" />
-        <module name="livemall-web" />
-        <module name="livemall-sys" />
-        <module name="livemall-video" />
-        <module name="livemall-live" />
-        <module name="livemall-merch" />
-        <module name="livemall-coupon" />
-        <module name="livemall-orders" />
-        <module name="livemall-api" />
         <module name="livemall-goods" />
+        <module name="livemall-sys" />
         <module name="livemall-member" />
+        <module name="livemall-video" />
+        <module name="livemall-api" />
+        <module name="livemall-web" />
+        <module name="livemall-job" />
+        <module name="livemall-merch" />
+        <module name="livemall-live" />
+        <module name="livemall-orders" />
+        <module name="livemall-coupon" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
@@ -39,6 +39,7 @@
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-encoding=UTF-8" />
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="livemall-api" options="-parameters" />
       <module name="livemall-coupon" options="-parameters" />

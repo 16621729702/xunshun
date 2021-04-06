@@ -76,6 +76,7 @@ public class MaterController {
     @RequestMapping("editpage")
     public ModelAndView categoryeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"0":request.getParameter("id");
+        id = id.replaceAll(",","");
         LmGoodMaterial material = goodService.findMaterById(Integer.parseInt(id));
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("good/matereditpage");
@@ -119,6 +120,7 @@ public class MaterController {
     @ResponseBody
     public JsonResult deletegoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             try {
                 goodService.deletemater(Integer.parseInt(id));
@@ -136,6 +138,7 @@ public class MaterController {
     @ResponseBody
     public JsonResult editgoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String orderno = StringUtils.isEmpty(request.getParameter("orderno"))?"0":request.getParameter("orderno");
         String code = StringUtils.isEmpty(request.getParameter("code"))?"0":request.getParameter("code");

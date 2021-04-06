@@ -36,7 +36,7 @@ public interface LmLiveGoodDao extends tk.mybatis.mapper.common.Mapper<LmLiveGoo
 			" lg.auction_start_time as auction_start_time, " +
 			" lg.auction_end_time as auction_end_time, " +
 			" lg.stepprice as stepprice " +
-			"  from lm_live_good llg , lm_goods lg where llg.good_id = lg.id and llg.liveid = #{liveid} and lg.type = #{type} and lg.stock > 0 ")
+			"  from lm_live_good llg , lm_goods lg where llg.good_id = lg.id and llg.liveid = #{liveid} and lg.type = #{type} and lg.state = 1 and lg.stock > 0 ")
     List<Map<String, Object>> findByLiveIdByApi(@Param("liveid")int liveid, @Param("type")int type);
 
 	@Select("select llg.id as id ," +

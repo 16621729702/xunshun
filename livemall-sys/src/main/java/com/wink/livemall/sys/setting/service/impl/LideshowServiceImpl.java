@@ -23,12 +23,12 @@ public class LideshowServiceImpl implements LideshowService {
 
     @Override
     public void insertService(Lideshow lideshow) {
-        lideshowDao.insert(lideshow);
+        lideshowDao.insertSelective(lideshow);
     }
 
     @Override
     public void updateService(Lideshow lideshow) {
-        lideshowDao.updateByPrimaryKey(lideshow);
+        lideshowDao.updateByPrimaryKeySelective(lideshow);
     }
 
     @Override
@@ -40,6 +40,12 @@ public class LideshowServiceImpl implements LideshowService {
     public List<Lideshow> findListBytype(int type) {
         return lideshowDao.findListBytype(type);
     }
+
+    @Override
+    public List<Lideshow> findListByTypeAndCategory(int type,int category) {
+        return lideshowDao.findListByTypeAndCategory(type,category);
+    }
+
 
     @Override
     public void deleteService(String id) {

@@ -4,9 +4,13 @@ import com.google.gson.Gson;
 import com.wink.livemall.admin.util.IMUtil;
 import com.wink.livemall.admin.util.JsonResult;
 import com.wink.livemall.admin.util.Md5Util;
+import com.wink.livemall.admin.util.TokenUtil;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
+import com.wink.livemall.coupon.service.LmCouponsService;
 import com.wink.livemall.member.dto.LmMember;
+import com.wink.livemall.member.dto.LmMemberInvite;
 import com.wink.livemall.member.dto.LmMemberLevel;
+import com.wink.livemall.member.service.LmMemberInviteService;
 import com.wink.livemall.member.service.LmMemberLevelService;
 import com.wink.livemall.member.service.LmMemberService;
 import com.wink.livemall.sys.code.dto.LmSmsVcode;
@@ -38,6 +42,8 @@ public class LoginController {
     private RedisUtil redisUtils;
     @Autowired
     private ConfigsService configsService;
+    @Autowired
+    private LmMemberInviteService lmMemberInviteService;
     /**
      * 登录验证
      */
@@ -50,9 +56,44 @@ public class LoginController {
         String msg="";
         if(!StringUtils.isEmpty(mobile)&&!StringUtils.isEmpty(password)){
             LmMember lmMember = lmMemberService.findByMobile(mobile);
-
             if(lmMember!=null){
                 if(lmMember.getPassword().equals(Md5Util.MD5(password))){
+                    int levelid = lmMember.getLevel_id();
+                    lmMember.setPassword(password);
+                    lmMemberService.updateService(lmMember);
+                    LmMemberLevel lmMemberLevel = lmMemberLevelService.findById(levelid+"");
+                    Map<String,Object> map = new HashMap<>();
+                    map.put("userid",lmMember.getId());
+                    map.put("growth_value",lmMember.getGrowth_value());
+                    map.put("nickname",lmMember.getNickname());
+                    map.put("avatar",lmMember.getAvatar());
+                    if(lmMemberLevel!=null){
+                        map.put("levelname",lmMemberLevel.getName());
+                        map.put("levelcode",lmMemberLevel.getCode());
+                    }else{
+                        LmMemberLevel lmMemberLevels = lmMemberLevelService.findById("1");
+                        map.put("levelname",lmMemberLevels.getName());
+                        map.put("levelcode",lmMemberLevels.getCode());
+                    }
+                    String  uuid = UUID.randomUUID().toString();
+                    Configs configs =configsService.findByTypeId(Configs.type_chat);
+                    Map chat =  com.alibaba.fastjson.JSONObject.parseObject(configs.getConfig());
+                    long appid = Long.parseLong(chat.get("sdk_appid")+"");
+                    String privateinfo = chat.get("privateinfo")+"";
+                    String sigstring = IMUtil.genSig(appid,privateinfo,lmMember.getId()+"");
+                    map.put("usersig",sigstring);
+                   /* Set<String> set = redisUtils.mhget(lmMember.getId()+":"+"*");
+                    redisUtils.deletekeys(set);
+                    redisUtils.set(lmMember.getId()+":"+uuid,lmMember.getId(),3600*24*7);*/
+                    String token = TokenUtil.Token(String.valueOf(lmMember.getId()));
+                    map.put("accessToken",token);
+                    HttpClient httpClient = new HttpClient();
+                    Map<String,Object> memberinfo= new HashMap<>();
+                    memberinfo.put("nickname",lmMember.getNickname());
+                    httpClient.login(lmMember.getAvatar(),lmMember.getId()+"",new Gson().toJson(memberinfo));
+                    jsonResult.setCode(JsonResult.SUCCESS);
+                    jsonResult.setData(map);
+                } else  if(lmMember.getPassword().equals(password)){
                     int levelid = lmMember.getLevel_id();
                     LmMemberLevel lmMemberLevel = lmMemberLevelService.findById(levelid+"");
                     Map<String,Object> map = new HashMap<>();
@@ -64,8 +105,9 @@ public class LoginController {
                     	 map.put("levelname",lmMemberLevel.getName());
                          map.put("levelcode",lmMemberLevel.getCode());
                     }else{
-                        map.put("levelname","");
-                        map.put("levelcode","");
+                        LmMemberLevel lmMemberLevels = lmMemberLevelService.findById("1");
+                        map.put("levelname",lmMemberLevels.getName());
+                        map.put("levelcode",lmMemberLevels.getCode());
                     }
                     String  uuid = UUID.randomUUID().toString();
                     Configs configs =configsService.findByTypeId(Configs.type_chat);
@@ -74,26 +116,18 @@ public class LoginController {
                     String privateinfo = chat.get("privateinfo")+"";
                     String sigstring = IMUtil.genSig(appid,privateinfo,lmMember.getId()+"");
                     map.put("usersig",sigstring);
-                    Set<String> set = redisUtils.mhget(lmMember.getId()+":"+"*");
+                   /* Set<String> set = redisUtils.mhget(lmMember.getId()+":"+"*");
                     redisUtils.deletekeys(set);
-                    redisUtils.set(lmMember.getId()+":"+uuid,lmMember.getId(),3600*24*7);
-                    map.put("accessToken",lmMember.getId()+":"+uuid);
+                    redisUtils.set(lmMember.getId()+":"+uuid,lmMember.getId(),3600*24*7);*/
+                    String token = TokenUtil.Token(String.valueOf(lmMember.getId()));
+                    map.put("accessToken",token);
                     HttpClient httpClient = new HttpClient();
                     Map<String,Object> memberinfo= new HashMap<>();
                     memberinfo.put("nickname",lmMember.getNickname());
-                    if(lmMemberLevel!=null){
-                    	memberinfo.put("levelname",lmMemberLevel.getName());
-                        memberinfo.put("levelcode",lmMemberLevel.getCode());
-                   }else{
-                        memberinfo.put("levelname","");
-                        memberinfo.put("levelcode","");
-                    }
                     httpClient.login(lmMember.getAvatar(),lmMember.getId()+"",new Gson().toJson(memberinfo));
                     jsonResult.setCode(JsonResult.SUCCESS);
                     jsonResult.setData(map);
-                }
-                else
-                {
+                } else {
                     jsonResult.setCode(JsonResult.ERROR);
                     msg="密码错误";
                 }
@@ -116,8 +150,10 @@ public class LoginController {
     public JsonResult register(HttpServletRequest request,
                                @ApiParam(name = "mobile", value = "用户名",defaultValue = "13812117597", required = true)@RequestParam(required = true) String mobile,
                                @ApiParam(name = "password", value = "密码",defaultValue = "13812117597", required = true)@RequestParam(required = true) String password,
-                               @ApiParam(name = "vcode", value = "验证码",defaultValue = "123456", required = true)@RequestParam(required = true) String vcode){
+                               @ApiParam(name = "vcode", value = "验证码",defaultValue = "123456", required = true)@RequestParam(required = true) String vcode,
+                               @ApiParam(name = "inviteCode", value = "分享的邀请码",defaultValue = "0", required = false)@RequestParam(required = false) String inviteCode){
         JsonResult jsonResult = new JsonResult();
+        jsonResult.setCode(JsonResult.SUCCESS);
         String msg="";
         if(!StringUtils.isEmpty(mobile)&&!StringUtils.isEmpty(password)){
             List<LmSmsVcode> list = lmSmsVcodeService.findByMobile(mobile);
@@ -147,7 +183,9 @@ public class LoginController {
                     lmMember.setUsertype(0);
                     lmMember.setCredit2(new BigDecimal(0));
                     lmMember.setState(0);
-                    lmMember.setPassword(Md5Util.MD5(password));
+                    lmMember.setPassword(password);
+                    lmMember.setGrowth_value(0);
+                    lmMember.setLevel_id(0);
                     lmMember.setCreated_at(new Date());
                     lmMember.setUpdated_at(new Date());
                     lmMemberService.insertService(lmMember);
@@ -157,6 +195,10 @@ public class LoginController {
                     memberinfo.put("levelname","");
                     memberinfo.put("levelcode","");
                     httpClient.login(lmMember.getAvatar(),lmMember.getId()+"", new Gson().toJson(memberinfo));
+                    LmMemberInvite lmMemberInvite = lmMemberInviteService.getInviteCode(String.valueOf(lmMember.getId()));
+                    if(!StringUtils.isEmpty(inviteCode)){
+                    lmMemberInviteService.addShareCoupon(inviteCode,lmMemberInvite);
+                    }
                 }else{
                     msg="验证码错误";
                     jsonResult.setCode(JsonResult.ERROR);
@@ -211,7 +253,7 @@ public class LoginController {
                     return jsonResult;
                 }
                 if(vcode.equals(list.get(0).getVcode())){
-                    if(Md5Util.MD5(password).equals(lmMember.getPassword())){
+                    if((password).equals(lmMember.getPassword())){
                         msg="原密码和新密码的不可重复";
                         jsonResult.setCode(JsonResult.ERROR);
                         jsonResult.setMsg(msg);
@@ -222,7 +264,7 @@ public class LoginController {
                     lmMember.setMobile(mobile);
                     lmMember.setUsertype(0);
                     lmMember.setState(0);
-                    lmMember.setPassword(Md5Util.MD5(password));
+                    lmMember.setPassword(password);
                     lmMember.setCreated_at(new Date());
                     lmMember.setUpdated_at(new Date());
                     lmMemberService.updateService(lmMember);
@@ -241,6 +283,8 @@ public class LoginController {
         jsonResult.setMsg(msg);
         return jsonResult;
     }
+
+
 
 
 

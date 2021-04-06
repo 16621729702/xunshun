@@ -19,6 +19,9 @@ public interface LmMemberDao extends tk.mybatis.mapper.common.Mapper<LmMember> {
     @Select("SELECT * FROM lm_member WHERE mobile = #{mobile}")
     LmMember findByMobile(@Param("mobile")String mobile);
 
+    @Select("SELECT * FROM lm_member WHERE id = #{id}")
+    Map<String ,Object> findByIdList(@Param("id")int id);
+
     class LmMemberDaoprovider{
 
         public String findListByCondient(Map<String, String> condient) {

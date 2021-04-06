@@ -23,8 +23,17 @@ public class LivedGood {
 	private BigDecimal stepprice;
 	private int liveid;
 	private int tomemberid;
+	private int buyway;
 	private String img;
 	private int delaytime;//延时时间
+
+	public int getBuyway() {
+		return buyway;
+	}
+
+	public void setBuyway(int buyway) {
+		this.buyway = buyway;
+	}
 
 	public int getId() {
 		return id;

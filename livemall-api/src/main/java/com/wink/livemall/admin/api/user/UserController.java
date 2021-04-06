@@ -1,17 +1,17 @@
 package com.wink.livemall.admin.api.user;
 
 import com.google.gson.Gson;
-import com.wink.livemall.admin.dtovo.LevelVo;
-import com.wink.livemall.admin.dtovo.UserVo;
-import com.wink.livemall.admin.util.DateUtils;
-import com.wink.livemall.admin.util.JsonResult;
-import com.wink.livemall.admin.util.Md5Util;
-import com.wink.livemall.admin.util.PageUtil;
+import com.wink.livemall.admin.util.*;
+import com.wink.livemall.admin.util.filterUtils.CheckTextAPI;
+import com.wink.livemall.admin.util.filterUtils.GetAuthService;
 import com.wink.livemall.admin.util.httpclient.HttpClient;
 import com.wink.livemall.goods.dto.Good;
 import com.wink.livemall.goods.dto.LmGoodAuction;
 import com.wink.livemall.goods.service.GoodService;
 import com.wink.livemall.goods.service.LmGoodAuctionService;
+import com.wink.livemall.goods.utils.HttpJsonResult;
+import com.wink.livemall.live.dto.LmLive;
+import com.wink.livemall.live.service.LmLiveService;
 import com.wink.livemall.member.dto.*;
 import com.wink.livemall.member.service.*;
 import com.wink.livemall.merch.dto.LmMerchAdmin;
@@ -19,24 +19,18 @@ import com.wink.livemall.merch.dto.LmMerchInfo;
 import com.wink.livemall.merch.service.LmMerchInfoService;
 import com.wink.livemall.order.dto.LmOrder;
 import com.wink.livemall.order.service.LmOrderService;
-import com.wink.livemall.sys.code.dto.LmSmsVcode;
 import com.wink.livemall.sys.consult.service.ConsultService;
-import com.wink.livemall.video.dto.LmVideoCategoary;
-import com.wink.livemall.video.dto.LmVideoCore;
-import com.wink.livemall.video.service.LmVideoCategoaryService;
-import com.wink.livemall.video.service.LmVideoCoreService;
+import com.wink.livemall.sys.withdraw.service.BankService;
 import io.swagger.annotations.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.math.BigDecimal;
 import java.util.*;
 
 import static org.springframework.util.StringUtils.isEmpty;
@@ -65,12 +59,17 @@ public class UserController {
     @Autowired
     private LmMemberLevelService lmMemberLevelService;
     @Autowired
-    private LmMemberCouponService lmMemberCouponService;
-
+    private BankService bankService;
+    @Autowired
+    private CommissionLogService commissionLogService;
     @Autowired
     private LmGoodAuctionService lmGoodAuctionService;
     @Autowired
     private LmOrderService lmOrderService;
+    @Autowired
+    private LmLiveService lmLiveService;
+    @Autowired
+    private AgencyInfoService agencyInfoService;
 
     /**
      * 修改密码接口
@@ -138,8 +137,9 @@ public class UserController {
                 	   map.put("levelname",lmMemberLevel.getName());
                        map.put("levelcode",lmMemberLevel.getCode());
                    }else{
-                	   map.put("levelname","");
-                       map.put("levelcode","");
+                       LmMemberLevel lmMemberLevels = lmMemberLevelService.findById("1");
+                       map.put("levelname",lmMemberLevels.getName());
+                       map.put("levelcode",lmMemberLevels.getCode());
                    }
                }
                List<Map<String,String>> lmMemberAddress = lmMemberAddressService.findByMemberidByapi(lmMember.getId());
@@ -161,6 +161,12 @@ public class UserController {
                            map.put("type","normal");
                        }
                    }
+               }
+               AgencyInfo agencyInfo = agencyInfoService.findListByUserId(Integer.valueOf(userid));
+               if(agencyInfo!=null){
+                   map.put("agencyInfo",1);
+               }else{
+                   map.put("agencyInfo",0);
                }
                //查询是否是商户
                List<LmMerchInfo> lmMerchInfoList = lmMerchInfoService.findByMemberid(lmMember.getId());
@@ -231,7 +237,9 @@ public class UserController {
                            @ApiParam(name = "mobile", value = "手机号码") @RequestParam(required = false) String mobile
                            ){
         JsonResult jsonResult = new JsonResult();
+        String access_token = GetAuthService.getAuth(CheckTextAPI.apiKey,CheckTextAPI.secretKey);
         jsonResult.setCode(JsonResult.SUCCESS);
+        CheckTextAPI checkTextAPI =new CheckTextAPI();
         try {
             LmMember lmMember = lmMemberService.findById(id+"");
             if(lmMember!=null){
@@ -247,6 +255,12 @@ public class UserController {
                 }
                 if(!StringUtils.isEmpty(nickname)){
                     lmMember.setNickname(nickname);
+                    HttpJsonResult check = checkTextAPI.check(nickname, access_token);
+                    if(check.getCode()!=200){
+                        jsonResult.setCode(JsonResult.ERROR);
+                        jsonResult.setMsg(check.getMsg());
+                        return jsonResult;
+                    }
                 }
                 lmMemberService.updateService(lmMember);
                 HttpClient httpClient = new HttpClient();
@@ -327,6 +341,18 @@ public class UserController {
                    }
                    if("1".equals(livetype)){
                        map.put("type","share");
+                   }
+               }else {
+                   Integer id = (int) map.get("id");
+                   Integer ordertype = (int) map.get("type");
+                   if (1 == ordertype) {
+                       int types = 0;
+                       LmGoodAuction lmGoodAuction = lmGoodAuctionService.findnowPriceByGoodidByApi(id, types);
+                       if (!isEmpty(lmGoodAuction)) {
+                           map.put("price", lmGoodAuction.getPrice());
+                       } else {
+                           map.put("price", 0);
+                       }
                    }
                }
             }
@@ -422,6 +448,9 @@ public class UserController {
                         lmMemberFollow.setMember_id(userid);
                         lmMemberFollow.setState(0);
                         lmMemberFollowService.addService(lmMemberFollow);
+                    }else {
+                        lmMemberFollow.setState(0);
+                        lmMemberFollowService.updateService(lmMemberFollow);
                     }
                 }else{
                     lmMemberFav.setVideo_id(id);
@@ -463,6 +492,12 @@ public class UserController {
                     int merchid  = (int)map.get("id");
                     //根据商户id查询商品
                     List<Map<String,Object>> goodlist = goodService.findByMerchIdByApi(merchid);
+                    LmLive lmLive = lmLiveService.findByMerchid(merchid);
+                    if(lmLive!=null){
+                        map.put("live",lmLive);
+                    }else {
+                        map.put("live",null);
+                    }
                     map.put("goodlist",new Gson().toJson(goodlist));
                     returnlist.add(map);
                     returnlist = PageUtil.startPage(returnlist,page,pagesize);
@@ -503,7 +538,25 @@ public class UserController {
                                  HttpServletRequest request){
         JsonResult jsonResult = new JsonResult();
         jsonResult.setCode(JsonResult.SUCCESS);
+        HttpClient httpClient = new HttpClient();
+        Map<String,Object> immap = new HashMap<>();
+        LmLive lmLive =null;
+        if(type==0){
+            LmMember member = lmMemberService.findById(String.valueOf(userid));
+            lmLive = lmLiveService.findbyId(String.valueOf(id));
+            if(member.getLevel_id()==0){
+                immap.put("userLevel",1);
+            }else {
+                immap.put("userLevel",member.getLevel_id());
+            }
+            immap.put("userName",member.getNickname());
+            immap.put("userImg",member.getAvatar());
+            immap.put("userId",member.getId());
+            immap.put("liveName",lmLive.getName());
+        }
+
         try {
+
             LmMemberFollow lmMemberFollow =lmMemberFollowService.findByMemberidAndTypeAndId(userid,type,id);
             if(lmMemberFollow==null){
                 if(type==1){
@@ -520,15 +573,39 @@ public class UserController {
                 lmMemberFollow.setMember_id(userid);
                 lmMemberFollow.setState(0);
                 lmMemberFollowService.addService(lmMemberFollow);
-            }else{
-                if(type==1){
-                    LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
-                    //获取店铺关注人数
-                    int count= lmMerchInfo.getFocusnum();
-                    lmMerchInfo.setFocusnum(count-1);
-                    lmMerchInfoService.updateService(lmMerchInfo);
+                if(type==0){
+                    if(lmLive.getIsstart()==1){
+                        httpClient.sendgroup(lmLive.getLivegroupid(), new Gson().toJson(immap), 23);
+                    }
                 }
-                lmMemberFollowService.deleteService(lmMemberFollow.getId());
+
+            }else{
+                if(lmMemberFollow.getState()==0){
+                    if(type==1){
+                        LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
+                        //获取店铺关注人数
+                        int count= lmMerchInfo.getFocusnum();
+                        lmMerchInfo.setFocusnum(count-1);
+                        lmMerchInfoService.updateService(lmMerchInfo);
+                    }
+                    lmMemberFollow.setState(1);
+                    lmMemberFollowService.updateService(lmMemberFollow);
+                }else {
+                    if(type==1){
+                        LmMerchInfo lmMerchInfo = lmMerchInfoService.findById(id+"");
+                        //获取店铺关注人数
+                        int count= lmMerchInfo.getFocusnum();
+                        lmMerchInfo.setFocusnum(count+1);
+                        lmMerchInfoService.updateService(lmMerchInfo);
+                    }
+                    if(type==0){
+                        if(lmLive.getIsstart()==1){
+                            httpClient.sendgroup(lmLive.getLivegroupid(), new Gson().toJson(immap), 23);
+                        }
+                    }
+                    lmMemberFollow.setState(0);
+                    lmMemberFollowService.updateService(lmMemberFollow);
+                }
             }
 
         } catch (Exception e) {
@@ -540,45 +617,6 @@ public class UserController {
         return jsonResult;
     }
 
-    /**
-     * 获取我的优惠券列表
-     * @return
-     */
-    @ApiOperation(value = "获取我的优惠券列表")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "userid", value = "用户id", defaultValue = "0", required = true)
-    })
-    @PostMapping("/coupon/{userid}")
-    public JsonResult coupon(@PathVariable int userid,HttpServletRequest request){
-        JsonResult jsonResult = new JsonResult();
-        jsonResult.setCode(JsonResult.SUCCESS);
-        try {
-            List<Map<String,String>> list = lmMemberCouponService.findByMemberidByApi(userid);
-            List<Map<String,Object>> returnlist = new ArrayList<>();
-            String merchname ="";
-            for(Map<String,String> map:list){
-                Map<String,Object> returnmap = new HashMap<>();
-                if(!merchname.equals(map.get("merchname"))){
-                    List<Map<String,String>> infolist = new ArrayList<>();
-                    for(Map<String,String> infomap:list){
-                        if(infomap.get("merchname").equals(map.get("merchname"))){
-                            infolist.add(infomap);
-                        }
-                    }
-                    returnmap.put("merchname",map.get("merchname"));
-                    returnmap.put("goodlist",infolist);
-                    returnlist.add(returnmap);
-                }
-                merchname=map.get("merchname");
-            }
-            jsonResult.setData(returnlist);
-        } catch (Exception e) {
-            jsonResult.setMsg(e.getMessage());
-            jsonResult.setCode(JsonResult.ERROR);
-            logger.error(e.getMessage());
-        }
-        return jsonResult;
-    }
 
 
 
@@ -819,6 +857,161 @@ public class UserController {
     }
 
 
+    /**
+     *
+     * @param request
+     * @return
+     */
+    @RequestMapping("userCredit")
+    @ResponseBody
+    @ApiOperation(value = "用户余额",notes = "用户余额接口")
+    @ApiImplicitParams({
+    })
+    public JsonResult userCredit(HttpServletRequest request) {
+        JsonResult jsonResult = new JsonResult();
+        String header = request.getHeader("Authorization");
+        String userId="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userId = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                jsonResult.setMsg(Errors.TOKEN_PAST.getMsg());
+                return jsonResult;
+            }
+        }
+        LmMember lmMember = lmMemberService.findById(userId);
+        jsonResult.setCode(jsonResult.SUCCESS);
+        try{
+            Map<String,Object> map=new HashMap<>();
+            map.put("credit2",lmMember.getCredit2());
+            map.put("blance",lmMember.getBlance());
+            map.put("openId",lmMember.getOpen_id());
+            List<Map<String,Object>> listByUserId = bankService.findListByUserId(Integer.valueOf(userId));
+            map.put("bankList",listByUserId);
+            jsonResult.setData(map);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return  jsonResult;
+    }
+
+
+    /**
+     *
+     * @param request
+     * @return
+     */
+    @RequestMapping("userAgencyInfo")
+    @ResponseBody
+    @ApiOperation(value = "用户成为推广者",notes = "用户成为推广者接口")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "agencyInfoVo", value = "接收商家填写信息对象", dataType = "Object",paramType = "query")
+    })
+    public JsonResult userAgencyInfo(HttpServletRequest request,AgencyInfo agencyInfoVo) {
+        JsonResult jsonResult = new JsonResult();
+        String header = request.getHeader("Authorization");
+        String userId="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userId = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                jsonResult.setMsg(Errors.TOKEN_PAST.getMsg());
+                return jsonResult;
+            }
+        }
+        jsonResult.setCode(jsonResult.SUCCESS);
+        try{
+            AgencyInfo listByUserId = agencyInfoService.findListByUserId(Integer.valueOf(userId));
+            if(listByUserId!=null){
+                jsonResult.setCode(jsonResult.ERROR);
+                jsonResult.setMsg("您已成为推广者，无需重复申请");
+                return  jsonResult;
+            }
+            agencyInfoVo.setUser_id(Integer.valueOf(userId));
+            agencyInfoVo.setState(2);
+            agencyInfoService.insertAgencyInfo(agencyInfoVo);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return  jsonResult;
+    }
+
+    /**
+     *
+     * @param request
+     * @return
+     */
+    @RequestMapping("userListCredit")
+    @ResponseBody
+    @ApiOperation(value = "用户提现记录",notes = "用户提现记录接口")
+    @ApiImplicitParams({
+    })
+    public JsonResult userListCredit(HttpServletRequest request) {
+        JsonResult jsonResult = new JsonResult();
+        String header = request.getHeader("Authorization");
+        String userId="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userId = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                jsonResult.setMsg(Errors.TOKEN_PAST.getMsg());
+                return jsonResult;
+            }
+        }
+        jsonResult.setCode(jsonResult.SUCCESS);
+        try{
+            List<Map<String, Object>> listCredit = commissionLogService.findListCredit(Integer.valueOf(userId));
+            jsonResult.setData(listCredit);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return  jsonResult;
+    }
+
+
+    /**
+     *
+     * @param request
+     * @return
+     */
+    @RequestMapping("userCommissionLog")
+    @ResponseBody
+    @ApiOperation(value = "用户佣金记录",notes = "用户佣金记录接口")
+    @ApiImplicitParams({
+    })
+    public JsonResult userCommissionLog(HttpServletRequest request) {
+        JsonResult jsonResult = new JsonResult();
+        String header = request.getHeader("Authorization");
+        String userId="";
+        if (!StringUtils.isEmpty(header)) {
+            if(!StringUtils.isEmpty(TokenUtil.getUserId(header))){
+                userId = TokenUtil.getUserId(header);
+            }else{
+                jsonResult.setCode(JsonResult.LOGIN);
+                jsonResult.setMsg(Errors.TOKEN_PAST.getMsg());
+                return jsonResult;
+            }
+        }
+        jsonResult.setCode(jsonResult.SUCCESS);
+        try{
+            List<Map<String, Object>> userCommissionLog = commissionLogService.userCommissionLog(Integer.valueOf(userId));
+            jsonResult.setData(userCommissionLog);
+        } catch (Exception e) {
+            jsonResult.setMsg(e.getMessage());
+            jsonResult.setCode(JsonResult.ERROR);
+            logger.error(e.getMessage());
+        }
+        return  jsonResult;
+    }
 
 
 }

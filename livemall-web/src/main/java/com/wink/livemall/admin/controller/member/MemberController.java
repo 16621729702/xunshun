@@ -81,6 +81,7 @@ public class MemberController {
     @RequestMapping("editpage7")
     public ModelAndView editpage7(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             //查询用户足迹信息
             List<LmMemberTrace> lmMemberTraceList =lmMemberTraceService.findByMemberid(Integer.parseInt(id));
@@ -101,6 +102,7 @@ public class MemberController {
     @RequestMapping("editpage5")
     public ModelAndView editpage5(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             List<LmMemberFollow> lmMemberFollowList = lmMemberFollowService.findByMemberid(Integer.parseInt(id));
             model.addAttribute("lmMemberFollowList",lmMemberFollowList);
@@ -120,6 +122,7 @@ public class MemberController {
     @RequestMapping("editpage4")
     public ModelAndView editpage4(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             List<LmMemberFav> lmMemberFavList = lmMemberFavService.findByMemberid(Integer.parseInt(id));
             model.addAttribute("lmMemberFavList",lmMemberFavList);
@@ -135,6 +138,7 @@ public class MemberController {
     @RequestMapping("editpage3")
     public ModelAndView editpage3(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
 
             List<LmMemberCoupon> lmMemberCouponList = lmMemberCouponService.findByMemberid(Integer.parseInt(id));
@@ -155,6 +159,7 @@ public class MemberController {
     @RequestMapping("editpage2")
     public ModelAndView editpage2(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             List<LmMemberAddress> lmMemberAddressList = lmMemberAddressService.findByMemberid(Integer.parseInt(id));
             model.addAttribute("lmMemberAddressList",lmMemberAddressList);
@@ -175,6 +180,7 @@ public class MemberController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model) {
         String id = StringUtils.isEmpty(request.getParameter("id")) ? null : request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             LmMember lmMember = lmMemberService.findById(id);
             model.addAttribute("lmMember",lmMember);
@@ -235,6 +241,7 @@ public class MemberController {
     @RequestMapping("leveleditpage")
     public ModelAndView leveleditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         LmMemberLevel lmMemberLevel = lmMemberLevelService.findById(id);
         model.addAttribute("lmMemberLevel",lmMemberLevel);
         return new ModelAndView("/member/leveleditpage");
@@ -283,6 +290,7 @@ public class MemberController {
     @ResponseBody
     public JsonResult leveledit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?"":request.getParameter("name");
         String growth_value = StringUtils.isEmpty(request.getParameter("growth_value"))?"0":request.getParameter("growth_value");
 //        String days = StringUtils.isEmpty(request.getParameter("days"))?"0":request.getParameter("days");
@@ -317,6 +325,7 @@ public class MemberController {
     @ResponseBody
     public JsonResult leveldelete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmMemberLevelService.deleteService(id);
         } catch (Exception e) {
@@ -391,6 +400,7 @@ public class MemberController {
     @ResponseBody
     public JsonResult memberedit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         String nickname = StringUtils.isEmpty(request.getParameter("nickname"))?"":request.getParameter("nickname");
         String avatar = StringUtils.isEmpty(request.getParameter("avatar"))?"":request.getParameter("avatar");
         String realname = StringUtils.isEmpty(request.getParameter("realname"))?"":request.getParameter("realname");
@@ -441,6 +451,7 @@ public class MemberController {
     @ResponseBody
     public JsonResult memberdelete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?"":request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             lmMemberService.deleteService(id);
         } catch (Exception e) {

@@ -84,6 +84,7 @@ public class TagController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         Tag tag = tagService.findById(id);
         model.addAttribute("tag",tag);
         return new ModelAndView("setting/tageditpage");
@@ -100,6 +101,7 @@ public class TagController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             tagService.deleteById(id);
         } catch (Exception e) {
@@ -158,6 +160,7 @@ public class TagController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String type = StringUtils.isEmpty(request.getParameter("type"))?"1":request.getParameter("type");
         String title = StringUtils.isEmpty(request.getParameter("title"))?null:request.getParameter("title");
@@ -205,6 +208,7 @@ public class TagController {
     @ResponseBody
     public JsonResult changestatus(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             Tag tag = tagService.findById(id);
             if(Tag.active==tag.getIsshow()){

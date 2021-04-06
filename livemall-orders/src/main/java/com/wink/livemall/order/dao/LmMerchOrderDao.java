@@ -54,10 +54,10 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 	Map<String, Object> staticOrderPay(String merchid);
 
 	@SelectProvider(type = sqlprovider.class, method = "staticOrderRefund")
-	Map<String, Object> staticOrderRefund(String merchid);
+	Map<String, Object> staticOrderRefund(String merchid,int backStatus);
 
 	@SelectProvider(type = sqlprovider.class, method = "staticOrderEarn")
-	Map<String, Object> staticOrderEarn(String merchid);
+	Map<String, Object> staticOrderEarn(String merchid,int status);
 
 	@SelectProvider(type = sqlprovider.class, method = "orderOkList")
 	List<Map<String, Object>> orderOkList(Map<String, String> params);
@@ -73,6 +73,12 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 
 	@SelectProvider(type = sqlprovider.class, method = "staticLive")
 	Map<String, Object> staticLive(String merchid);
+
+	@SelectProvider(type = sqlprovider.class, method = "staticLiveNum")
+	int staticLiveNum(String merchid);
+
+	@SelectProvider(type = sqlprovider.class, method = "staticLiveList")
+	Map<String, Object> staticLiveList(String merId, String startTime, String entTime);
 
 	@SelectProvider(type = sqlprovider.class, method = "orderLiveList")
 	List<Map<String, Object>> orderLiveList(Map<String, String> params);
@@ -90,8 +96,31 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 	@Select("SELECT * FROM lm_orders WHERE porderid = #{porderid}")
 	List<LmOrder> findChippedOrder2(@Param("porderid") int porderid);
 
+	@SelectProvider(type = sqlprovider.class, method = "orderLogList")
+	Map<String, Object> orderLogList(String merId, Integer type, String startTime, String entTime);
 
     class sqlprovider {
+
+		public String orderLogList(String merId, Integer type, String startTime, String entTime) {
+			StringBuilder sql = new StringBuilder();
+			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders  where merchid=" + merId);
+			if(type==1) {
+				//成拍
+				sql.append(" and type=2 and status!=-1 ");
+			}else if(type==2) {
+				//已付款
+				sql.append(" and status>0 and (backstatus=0 or backstatus=3) ");
+			}else if(type==3) {
+				//已退款
+				sql.append(" and backstatus=2 ");
+			}else if(type==4) {
+				//已收款
+				sql.append(" and status>2 and status<5 and  (backstatus=0 or backstatus=3) ");
+			}
+			sql.append(" and createtime between '" + startTime + "'" + " and " + "'" + entTime + "'");
+			return sql.toString();
+		}
+
 		//type 1当月 2上月
 		public String staticOrderMonth(String merchid,String type) {
 			SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -175,12 +204,29 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			String date_start = calc_date(-1);
 			String date_end = calc_date(0);
 			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merchid
-					+ " and islive=1 and status>0 ");
+					+ " and islivegood=1 and status>0 ");
 			sql.append(" and createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
-
 			return sql.toString();
 		}
-		
+
+		public String staticLiveNum(String merchid) {
+			StringBuilder sql = new StringBuilder();
+			String date_start = calc_date(-1);
+			String date_end = calc_date(0);
+			sql.append("select count(id) from lm_live_log where merchid=" + merchid
+					+ "  and status=2 and endtime!='NULL' ");
+			sql.append(" and starttime between '" + date_start + "'" + " and " + "'" + date_end + "'");
+			return sql.toString();
+		}
+
+		public String staticLiveList(String merId, String startTime, String entTime) {
+			StringBuilder sql = new StringBuilder();
+			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merId
+					+ " and islivegood=1 and status>0 ");
+			sql.append(" and createtime between '" + startTime + "'" + " and " + "'" + entTime + "'");
+			return sql.toString();
+		}
+
 		public String staticAll(String merchid) {
 			StringBuilder sql = new StringBuilder();
 //			String date_start = calc_date(-1);
@@ -214,13 +260,30 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			return sql.toString();
 		}
 
-		public String staticOrderEarn(String merchid) {
+		public String staticOrderEarn(String merchid,int status) {
 			StringBuilder sql = new StringBuilder();
 			String date_start = calc_date(0);
 			String date_end = calc_date(1);
-			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merchid
-					+ " and status=4 ");
-			sql.append(" and createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
+			sql.append("select IFNULL(sum(lo.realpayprice),0) price,count(lo.id) num from lm_orders lo ");
+					if(status==3){
+						sql.append(" left join lm_order_refund_log log on log.orderid=lo.id ");
+					}
+					sql.append("where lo.merchid=" + merchid);
+					if(status==1){
+						//待收货
+						sql.append(" and lo.status=1  and  (lo.backstatus=0 or lo.backstatus=3) ");
+					}else if(status==2){
+						//待发货
+						sql.append(" and lo.status=2 and  (lo.backstatus=0 or lo.backstatus=3) ");
+					}else if(status==3){
+						//退货中
+						sql.append(" and lo.backstatus=1 and log.type = 2 ");
+					}else if(status==4){
+						//已收款
+						sql.append(" and lo.status>2 and lo.status< 5 and  (lo.backstatus=0 or lo.backstatus=3) ");
+					}
+
+			sql.append(" and lo.createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
 
 			return sql.toString();
 		}
@@ -247,12 +310,21 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			return sql.toString();
 		}
 
-		public String staticOrderRefund(String merchid) {
+		public String staticOrderRefund(String merchid,int backStatus) {
 			StringBuilder sql = new StringBuilder();
 			String date_start = calc_date(0);
 			String date_end = calc_date(1);
-			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merchid
-					+ " and backstatus>0 ");
+			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merchid);
+					if(backStatus==1){
+						//退款中
+						sql.append(" and backstatus=1 ");
+					}else if(backStatus==2){
+						//退款完成
+						sql.append(" and backstatus=2 ");
+					}else {
+						//已收款
+						sql.append(" and  (backstatus=0 or backstatus=3)  and status > 2 and status <5 ");
+					}
 			sql.append(" and createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
 
 			return sql.toString();
@@ -271,7 +343,7 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			sql.append(" left join lm_goods g on og.goodid=g.id  ");
 			sql.append(" where o.merchid=" + params.get("merchid"));
 			sql.append(" and o.createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
-			sql.append(" and  o.backstatus>0 ");
+			sql.append(" and  (o.backstatus=0 or o.backstatus=3) ");
 			sql.append(" order by o.createtime desc ");
 
 			sql.append(" limit " + (Integer.parseInt(pageindex) - 1) * Integer.parseInt(pagesize) + ","
@@ -285,7 +357,7 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			String date_start = calc_date(0);
 			String date_end = calc_date(1);
 			sql.append("select IFNULL(sum(realpayprice),0) price,count(id) num from lm_orders where merchid=" + merchid
-					+ " and status>0 and backstatus<1 ");
+					+ " and status>0 and (backstatus=0 or backstatus=3)  ");
 			sql.append(" and createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
 
 			return sql.toString();
@@ -304,7 +376,7 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			sql.append(" left join lm_goods g on og.goodid=g.id  ");
 			sql.append(" where o.merchid=" + params.get("merchid"));
 			sql.append(" and o.createtime between '" + date_start + "'" + " and " + "'" + date_end + "'");
-			sql.append(" and o.status>0 and o.backstatus<1 ");
+			sql.append(" and o.status>0 and (o.backstatus=0 or o.backstatus=3) ");
 			sql.append(" order by o.createtime desc ");
 
 			sql.append(" limit " + (Integer.parseInt(pageindex) - 1) * Integer.parseInt(pagesize) + ","
@@ -380,25 +452,32 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 							"o.backstatus," +
 							"o.createtime," +
 							"o.type," +
+							"o.delay," +
 							"o.porderid," +
 							"m.nickname," +
+							"o.realpayprice," +
 							"m.avatar," +
 							"og.goodprice," +
 							"og.goodnum," +
 							"o.islivegood," +
+							"o.violate," +
 							"og.goodid" +
 							" from lm_orders o left join lm_member m on o.memberid=m.id ");
 			sql.append(" left join lm_order_goods og on og.orderid=o.id  ");
 			sql.append(" where o.totalprice is not null and o.merchid=" + params.get("merchid"));
 			if (!StringUtils.isEmpty(params.get("type"))) {
 				if (params.get("type").equals("1")) {// 待付款
-					sql.append(" and o.status=0 and o.backstatus=0 ");
+					sql.append(" and o.status=0 and (o.backstatus=0 or o.backstatus=3) ");
 				} else if (params.get("type").equals("2")) {// 待发货
-					sql.append(" and o.status=1 and o.backstatus=0 ");
+					sql.append(" and o.status=1 and (o.backstatus=0 or o.backstatus=3) ");
 				} else if (params.get("type").equals("3")) {// 待收货
-					sql.append(" and o.status=2 and o.backstatus=0 ");
+					sql.append(" and o.status=2 and (o.backstatus=0 or o.backstatus=3) ");
 				} else if (params.get("type").equals("4")) {// 售后
-					sql.append(" and o.backstatus=1 ");
+					sql.append(" and o.backstatus >0 ");
+				} else if (params.get("type").equals("5")) {// 交易失败
+					sql.append(" and o.status = -1 ");
+				} else if (params.get("type").equals("6")) {// 已完成
+					sql.append(" and  o.status> 2  and  o.status <5  and o.backstatus=0  ");
 				}
 			}
 			sql.append(" order by o.createtime desc ");
@@ -443,16 +522,16 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 			if (!StringUtils.isEmpty(params.get("status"))) {
 				String status = params.get("status");
 				if (status.equals("0")) {
-					sql.append(" and o.status=0 and backstatus=0");
+					sql.append(" and o.status=0 and (o.backstatus=0 or o.backstatus=3)  ");
 				}
 				if (status.equals("1")) {
-					sql.append(" and o.status=1 and backstatus=0");
+					sql.append(" and o.status=1 and (o.backstatus=0 or o.backstatus=3)  ");
 				}
 				if (status.equals("2")) {
-					sql.append(" and o.status=2 and backstatus=0");
+					sql.append(" and o.status=2 and (o.backstatus=0 or o.backstatus=3)  ");
 				}
 				if (status.equals("4")) {
-					sql.append(" and o.backstatus>0");
+					sql.append(" and o.backstatus>0 and o.backstatus<3 ");
 				}
 			}
 			sql.append(" where o.merchid=" + Integer.parseInt(params.get("merchid")));
@@ -474,7 +553,7 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 	}
 	
 	public static void main(String[] args) {
-		SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	/*	SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		Calendar c1 = Calendar.getInstance();
 		c1.add(Calendar.MONTH, -1);
 		c1.set(Calendar.DAY_OF_MONTH, 1);
@@ -499,7 +578,7 @@ public interface LmMerchOrderDao extends tk.mybatis.mapper.common.Mapper<LmOrder
 		c4.set(Calendar.HOUR_OF_DAY, 23);
 		c4.set(Calendar.MINUTE, 59);
 		c4.set(Calendar.SECOND, 59);
-		String month_end=sf.format(c4.getTime());
+		String month_end=sf.format(c4.getTime());*/
 		
 	}
 	

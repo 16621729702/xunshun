@@ -89,9 +89,19 @@
                                         <div class="layui-inline">
                                             <label class="layui-form-label">商户id:</label>
                                             <div class="layui-input-inline">
-                                                <input type="text" name="merchid" lay-verify=""
+                                                <#--<input type="text" name="merchid" lay-verify=""
                                                        placeholder="商户id"
-                                                       value="${merchid!}" autocomplete="off" class="layui-input">
+                                                       value="${merchid!}" autocomplete="off" class="layui-input">-->
+                                                <select name="merchid" lay-verify="">
+                                                    <option selected value="${merchid!}">${merchid!}</option>
+                                                    <#if (activeMerch)??>
+                                                        <#if (activeMerch?size > 0)>
+                                                            <#list activeMerch as list>
+                                                                <option  value="${list.id}">${list.store_name}:${list.categoryid}</option>
+                                                            </#list>
+                                                        </#if>
+                                                    </#if>
+                                                </select>
                                             </div>
                                         </div>
                                         <div class="layui-inline">
@@ -124,21 +134,21 @@
                                             <div class="layui-input-inline">
                                                 <select name="timetype" lay-verify="">
                                                     <option selected value="">全部</option>
-                                                    <option ${(timetype=='1')?string('selected','')}  value="1">按下单时间</option>
-                                                    <option ${(timetype=='2')?string('selected','')}  value="2">按付款时间</option>
-                                                    <option ${(timetype=='3')?string('selected','')}  value="3">按发货时间</option>
-                                                    <option ${(timetype=='4')?string('selected','')}  value="4">按完成时间</option>
+                                                    <option ${(timetype=='createtime')?string('selected','')}  value="1">按下单时间</option>
+                                                    <option ${(timetype=='paytime')?string('selected','')}  value="2">按付款时间</option>
+                                                    <option ${(timetype=='deliverytime')?string('selected','')}  value="3">按发货时间</option>
+                                                    <option ${(timetype=='finishtime')?string('selected','')}  value="4">按完成时间</option>
                                                 </select>
                                             </div>
                                         </div>
                                         <div class="layui-inline">
                                             <label class="layui-form-label">时间:</label>
                                             <div class="layui-input-inline" style="width: 150px;">
-                                                <input type="text" class="layui-input  start_time" value="" name="startdate" readonly>
+                                                <input type="text" class="layui-input  start_time" value="${startdate!}" name="startdate" readonly>
                                             </div>
                                             -
                                             <div class="layui-input-inline" style="width: 150px;">
-                                                <input type="text" class="layui-input end_time" value="" name="enddate" readonly>
+                                                <input type="text" class="layui-input end_time" value="${enddate!}" name="enddate" readonly>
                                             </div>
                                         </div>
                                         <div class="layui-inline" style="padding-bottom: 5px">
@@ -195,7 +205,7 @@
                                                 <#if (returninfo[k]?size > 0)>
                                                     <#list returninfo[k] as list>
                                                         <tr class="">
-                                                            <td><input type="checkbox" name="pkey" class="check_item" value="${list.id!}"></td>
+                                                            <td><input type="checkbox" name="pkey"  value="${list.id!}"></td>
                                                             <td>
                                                                 ${list.orderid!}
                                                             </td>

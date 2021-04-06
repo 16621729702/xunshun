@@ -14,7 +14,15 @@ public class LmOrderLog {
   private String orderid;
   private String operate;
   private java.util.Date operatedate;
+  private int order_id;
 
+  public int getOrder_id() {
+    return order_id;
+  }
+
+  public void setOrder_id(int order_id) {
+    this.order_id = order_id;
+  }
 
   public int getId() {
     return id;

@@ -90,6 +90,13 @@
                                     </div>
                                 </div>
                                 <div class="layui-form-item">
+                                    <label class="layui-form-label">直播权限</label>
+                                    <div class="layui-input-block">
+                                        <input type="radio" name="islive" value="0" title="待认证" lay-filter="is_show">
+                                        <input type="radio" name="islive" value="1" title="正常使用"  lay-filter="is_show">
+                                    </div>
+                                </div>
+                                <div class="layui-form-item">
                                     <label class="layui-form-label">状态</label>
                                     <div class="layui-input-block">
                                         <input type="radio" name="state" value="0" title="待认证" lay-filter="is_show">

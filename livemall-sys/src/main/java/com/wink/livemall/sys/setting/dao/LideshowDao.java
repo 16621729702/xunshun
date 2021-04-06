@@ -30,6 +30,14 @@ public interface LideshowDao extends tk.mybatis.mapper.common.Mapper<Lideshow>{
     @Select("SELECT * FROM lm_setting_lideshows WHERE type = #{type} ORDER BY sort ")
     List<Lideshow> findListBytype(@Param("type")int type);
 
+    /**
+     * 查询轮播图NEW
+     * @param type
+     * @return
+     */
+    @SelectProvider(type = LideshowDaoprovider.class, method = "findListByTypeAndCategory")
+    List<Lideshow> findListByTypeAndCategory(@Param("type")int type,@Param("category")int category);
+
     class LideshowDaoprovider{
 
         public String findListByCondient(Map<String, String> condient) {
@@ -52,5 +60,17 @@ public interface LideshowDao extends tk.mybatis.mapper.common.Mapper<Lideshow>{
             sql += " order by sort desc ";
             return sql;
         }
+
+        public String findListByTypeAndCategory(@Param("type")int type,@Param("category")int category) {
+            String sql = "SELECT * from lm_setting_lideshows WHERE type = #{type} ";
+            if(type==3){
+                sql += " and mer_category =  #{category} ";
+            }else if(type==2){
+                sql += " and live_category =  #{category} ";
+            }
+            sql += " order by sort ";
+            return sql;
+        }
+
     }
 }

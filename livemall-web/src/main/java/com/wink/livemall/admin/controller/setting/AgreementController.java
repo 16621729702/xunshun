@@ -85,6 +85,7 @@ public class AgreementController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmBasicConfig lmBasicConfig = lmBasicConfigService.findById(id);
         model.addAttribute("lmBasicConfig",lmBasicConfig);
         return new ModelAndView("agreement/agreementeditpage");
@@ -93,6 +94,7 @@ public class AgreementController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String type = StringUtils.isEmpty(request.getParameter("type"))?"1":request.getParameter("type");
         String comment = StringUtils.isEmpty(request.getParameter("comment"))?null:request.getParameter("comment");
@@ -115,6 +117,7 @@ public class AgreementController {
     @ResponseBody
     public JsonResult changestatus(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             LmBasicConfig lmBasicConfig = lmBasicConfigService.findById(id);
             if(lmBasicConfig.ACTIVE.equals(lmBasicConfig.getStatus())){

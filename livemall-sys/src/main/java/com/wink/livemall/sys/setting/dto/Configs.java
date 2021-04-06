@@ -34,6 +34,12 @@ public class Configs {
     public static int falsify_pay=12;
     //微信支付配置
     public static int vx_pay=13;
+    //直播支付配置
+    public static int live_pay=14;
+    //保证金续费支付配置
+    public static int margin_pay=15;
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY,generator = "JDBC")
     private int id;

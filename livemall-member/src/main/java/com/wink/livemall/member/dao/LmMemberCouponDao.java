@@ -16,6 +16,5 @@ public interface LmMemberCouponDao  extends tk.mybatis.mapper.common.Mapper<LmMe
     @Select("SELECT * FROM lm_member_coupon WHERE member_id = #{memberid}")
     List<LmMemberCoupon> findByMemberid(@Param("memberid")int memberid);
 
-    @Select("SELECT lm.store_name as merchname ,lmc.price as pirce , lmc.comment as comment, lmc.start_time as starttime, lmc.end_time as endtime FROM lm_member_coupon lmc left join lm_merch_info lm on lmc.merch_id = lm.id WHERE lmc.member_id = #{memberid} ")
-    List<Map<String, String>> findByMemberidByApi(@Param("memberid")int memberid);
+
 }

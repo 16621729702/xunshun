@@ -8,4 +8,6 @@ public interface LmSmsVcodeService {
     void addservice(LmSmsVcode lmSmsVcode);
 
     List<LmSmsVcode> findByMobile(String mobile);
+
+    List<LmSmsVcode> restrictMobile(String mobile);
 }

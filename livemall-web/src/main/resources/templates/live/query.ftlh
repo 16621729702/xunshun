@@ -102,7 +102,9 @@
                                                         ${(list.isrecommend==0) ? string('否','是')}
                                                     </td>
                                                     <td>
-                                                        ${(list.isstart==0) ? string('否','是')}
+                                                        <#if list.isstart==0>否</#if>
+                                                        <#if list.isstart==1>是</#if>
+                                                        <#if list.isstart==2>预展</#if>
                                                     </td>
                                                     <td>
                                                         ${list.livegroupid!}

@@ -54,7 +54,9 @@ public class GoodController {
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String categoryid = StringUtils.isEmpty(request.getParameter("categoryid"))?null:request.getParameter("categoryid");
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
-
+        if(merchid!=null){
+            merchid = merchid.replaceAll(",","");
+        }
         String state = StringUtils.isEmpty(request.getParameter("state"))?"":request.getParameter("state");
         String startdate = StringUtils.isEmpty(request.getParameter("startdate"))?null:request.getParameter("startdate");
         String enddate = StringUtils.isEmpty(request.getParameter("enddate"))?null:request.getParameter("enddate");
@@ -120,6 +122,9 @@ public class GoodController {
     @RequestMapping("merchquery")
     public ModelAndView merchquery(HttpServletRequest request, Model model){
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
+        if(merchid!=null){
+            merchid = merchid.replaceAll(",","");
+        }
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"20":request.getParameter("pagesize");
         Map<String,String> condient = new HashMap<>(16);
@@ -147,6 +152,7 @@ public class GoodController {
     @RequestMapping("editpage")
     public ModelAndView edit(HttpServletRequest request,Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         //商品信息
         Good good = null;
         if(id!=null){
@@ -223,6 +229,7 @@ public class GoodController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(id!=null){
                 goodService.delete(id);
@@ -245,6 +252,7 @@ public class GoodController {
     @ResponseBody
     public JsonResult delSpec(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(id!=null){
                 goodSpecService.delete(id);
@@ -267,6 +275,7 @@ public class GoodController {
     @ResponseBody
     public JsonResult delSpecItem(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             if(id!=null){
                 goodSpecitemService.delete(id);
@@ -362,6 +371,7 @@ public class GoodController {
     @Transactional
     public JsonResult edit(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String title = StringUtils.isEmpty(request.getParameter("title"))?null:request.getParameter("title");
         String subtitle = StringUtils.isEmpty(request.getParameter("subtitle"))?null:request.getParameter("subtitle");
         String keyword = StringUtils.isEmpty(request.getParameter("keyword"))?null:request.getParameter("keyword");
@@ -534,6 +544,7 @@ public class GoodController {
     @Transactional
     public JsonResult changestatus(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id==null){
             return new JsonResult(JsonResult.ERROR,"参数异常");
         }
@@ -565,6 +576,7 @@ public class GoodController {
     @Transactional
     public JsonResult batchoption(HttpServletRequest request){
         String ids = StringUtils.isEmpty(request.getParameter("ids"))?null:request.getParameter("ids");
+
         String operate = StringUtils.isEmpty(request.getParameter("operate"))?null:request.getParameter("operate");
         String categoryid = StringUtils.isEmpty(request.getParameter("categoryid"))?null:request.getParameter("categoryid");
 

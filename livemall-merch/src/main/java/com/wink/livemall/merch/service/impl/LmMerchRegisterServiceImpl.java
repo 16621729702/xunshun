@@ -48,7 +48,16 @@ public class LmMerchRegisterServiceImpl implements LmMerchRegisterService {
 		return lmMerchInfoDao.selectByPrimaryKey(id);
 	}
 
-
+	@Override
+	public  int isRepeat(String store_name) {
+		String replace = store_name.replace(" ", "");
+		List<Map<String, Object>> repeat = lmMerchInfoDao.isRepeat(replace);
+		int isRepeat=0;
+		if(repeat!=null&&repeat.size()>0){
+			isRepeat =1;
+		}
+		return isRepeat;
+	}
 
 
 	@Override

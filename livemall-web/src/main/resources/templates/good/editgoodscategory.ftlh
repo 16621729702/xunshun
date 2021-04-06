@@ -32,7 +32,7 @@
                         <div class="layui-form-item">
                             <label class="layui-form-label">父级</label>
                             <div class="layui-input-block">
-                                <select name="parent_id" lay-verify="required" lay-filter="parent_id">
+                                <select name="pid" lay-verify="required" lay-filter="parent_id">
                                     <option value="0">顶级菜单</option>
                                     <#if goodcategory.parent_id!=0>
                                         <#if (topcategory)??>

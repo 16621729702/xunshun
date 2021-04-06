@@ -81,6 +81,7 @@ public class TemplateController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         Templates templates = templateService.findById(id);
         model.addAttribute("templates",templates);
         return new ModelAndView("setting/templateeditpage");
@@ -97,6 +98,7 @@ public class TemplateController {
     @ResponseBody
     public JsonResult delete(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             templateService.deleteById(id);
         } catch (Exception e) {
@@ -151,6 +153,7 @@ public class TemplateController {
     @ResponseBody
     public JsonResult edit(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String tempkey = StringUtils.isEmpty(request.getParameter("tempkey"))?null:request.getParameter("tempkey");
         String tempid = StringUtils.isEmpty(request.getParameter("tempid"))?null:request.getParameter("tempid");
@@ -194,6 +197,7 @@ public class TemplateController {
     @ResponseBody
     public JsonResult changestatus(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         try {
             Templates templates = templateService.findById(id);
             if(templates.active==templates.getStatus()){

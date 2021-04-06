@@ -95,6 +95,7 @@ public class LiveController {
     @RequestMapping("categoryeditpage")
     public ModelAndView categoryeditpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmLiveCategory lmLiveCategory = lmLiveCategoryService.findbyId(id);
         ModelAndView modelAndView = new ModelAndView();
         modelAndView.setViewName("live/categoryeditpage");
@@ -155,6 +156,7 @@ public class LiveController {
     @ResponseBody
     public JsonResult editgoodcategory(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String orderno = StringUtils.isEmpty(request.getParameter("orderno"))?"0":request.getParameter("orderno");
         String status = StringUtils.isEmpty(request.getParameter("status"))?null:request.getParameter("status");
@@ -188,6 +190,9 @@ public class LiveController {
     @RequestMapping("query")
     public ModelAndView query(HttpServletRequest request, Model model){
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
+        if(merchid!=null){
+            merchid = merchid.replaceAll(",","");
+        }
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"20":request.getParameter("pagesize");
@@ -211,6 +216,9 @@ public class LiveController {
     @RequestMapping("merchquery")
     public ModelAndView merchquery(HttpServletRequest request, Model model){
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
+        if(merchid!=null){
+            merchid = merchid.replaceAll(",","");
+        }
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"20":request.getParameter("pagesize");
         Map<String,String> condient = new HashMap<>();
@@ -272,6 +280,7 @@ public class LiveController {
     @ResponseBody
     public JsonResult livedelete(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         if(id!=null){
             try {
                 lmLiveService.deleteService(Integer.parseInt(id));
@@ -289,6 +298,7 @@ public class LiveController {
     @ResponseBody
     public JsonResult liveedit(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String isstart = StringUtils.isEmpty(request.getParameter("isstart"))?"":request.getParameter("isstart");
         String status = StringUtils.isEmpty(request.getParameter("status"))?"":request.getParameter("status");
@@ -349,6 +359,9 @@ public class LiveController {
     @RequestMapping("addpage")
     public ModelAndView addpage(HttpServletRequest request, Model model){
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
+        if(merchid!=null){
+            merchid = merchid.replaceAll(",","");
+        }
         List<LmLiveCategory> list = lmLiveCategoryService.findActiveList();
         model.addAttribute("categorylist",list);
         model.addAttribute("merchid",merchid);
@@ -364,6 +377,7 @@ public class LiveController {
     @RequestMapping("editpage")
     public ModelAndView editpage(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmLive lmLive = lmLiveService.findbyId(id);
         List<LmLiveCategory> list = lmLiveCategoryService.findActiveList();
         List<Map> CategoaryList = new ArrayList<>();
@@ -392,6 +406,7 @@ public class LiveController {
     @RequestMapping("livevideo")
     public ModelAndView livevideo(HttpServletRequest request, Model model){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
+        id = id.replaceAll(",","");
         LmLive lmLive = lmLiveService.findbyId(id);
         Configs configs = configsService.findByTypeId(Configs.type_flow);
         ModelAndView modelAndView = new ModelAndView();
@@ -437,6 +452,7 @@ public class LiveController {
     @RequestMapping("managerlist")
     public ModelAndView managerlist(HttpServletRequest request, Model model){
         String liveid = StringUtils.isEmpty(request.getParameter("liveid"))?null:request.getParameter("liveid");
+        liveid = liveid.replaceAll(",","");
         model.addAttribute("liveid",liveid);
         return new ModelAndView("live/setting");
     }
@@ -449,6 +465,7 @@ public class LiveController {
     @RequestMapping("goodlist")
     public ModelAndView goodlist(HttpServletRequest request,Model model){
         String liveid = StringUtils.isEmpty(request.getParameter("liveid"))?null:request.getParameter("liveid");
+        liveid = liveid.replaceAll(",","");
         String name = StringUtils.isEmpty(request.getParameter("name"))?null:request.getParameter("name");
         String pagesize = StringUtils.isEmpty(request.getParameter("pagesize"))?"10":request.getParameter("pagesize");
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
@@ -478,6 +495,7 @@ public class LiveController {
     @RequestMapping("selectgood")
     public ModelAndView selectgood(HttpServletRequest request, Model model){
         String liveid = StringUtils.isEmpty(request.getParameter("liveid"))?null:request.getParameter("liveid");
+        liveid = liveid.replaceAll(",","");
         String merchid = StringUtils.isEmpty(request.getParameter("merchid"))?null:request.getParameter("merchid");
         String title = StringUtils.isEmpty(request.getParameter("title"))?null:request.getParameter("title");
         String page = StringUtils.isEmpty(request.getParameter("page"))?"1":request.getParameter("page");
@@ -521,6 +539,8 @@ public class LiveController {
     public JsonResult changelivegood(HttpServletRequest request){
         String id = StringUtils.isEmpty(request.getParameter("id"))?null:request.getParameter("id");
         String liveid = StringUtils.isEmpty(request.getParameter("liveid"))?null:request.getParameter("liveid");
+        liveid = liveid.replaceAll(",","");
+        id = id.replaceAll(",","");
         try {
             if(id==null){
                 return  new JsonResult(JsonResult.ERROR,"参数异常");
@@ -555,6 +575,7 @@ public class LiveController {
     @RequestMapping("playback")
     public ModelAndView playback(HttpServletRequest request,Model model)   {
         String liveid = StringUtils.isEmpty(request.getParameter("liveid"))?null:request.getParameter("liveid");
+        liveid = liveid.replaceAll(",","");
         Configs configs = configsService.findByTypeId(Configs.type_flow);
         try {
             if(configs!=null) {
